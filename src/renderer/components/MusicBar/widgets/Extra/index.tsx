@@ -16,10 +16,30 @@ import { RepeatMode } from "@/common/constant";
 import { useQuality, useRepeatMode, useSpeed, useVolume } from "@renderer/core/track-player/hooks";
 import { appWindowUtil } from "@shared/utils/renderer";
 import { musicDetailShownStore } from "@renderer/components/MusicDetail/store";
+import { getUserPreference } from "@/renderer/utils/user-perference";
+import XiaoaiService from "@renderer/services/xiaoai-service";
 
 export default function Extra() {
     const repeatMode = useRepeatMode();
     const { t } = useTranslation();
+    const [useXiaoai, setUseXiaoai] = useState(!!getUserPreference("xiaoaiDeviceId"));
+
+    const handleDeviceSwitch = async () => {
+        const newMode = !useXiaoai;
+        setUseXiaoai(newMode);
+
+        if (newMode) {
+            const deviceId = getUserPreference("xiaoaiDeviceId");
+            if (deviceId && XiaoaiService.isLoggedIn()) {
+                await trackPlayer.setOutputController("xiaoai");
+            } else {
+                alert("请先在设置中登录小米账号并选择设备");
+                setUseXiaoai(false);
+            }
+        } else {
+            await trackPlayer.setOutputController("audio");
+        }
+    };
 
     return (
         <div className="music-extra">
@@ -51,6 +71,17 @@ export default function Extra() {
                         <SvgAsset iconName="shuffle"></SvgAsset>
                     </SwitchCase.Case>
                 </SwitchCase.Switch>
+            </div>
+            <div
+                className={classNames({
+                    "extra-btn": true,
+                    highlight: useXiaoai,
+                })}
+                title={useXiaoai ? "切换到本地播放" : "切换到小米音箱"}
+                role="button"
+                onClick={handleDeviceSwitch}
+            >
+                <SvgAsset iconName={useXiaoai ? "speaker-wave" : "speaker-x-mark"}></SvgAsset>
             </div>
             <div
                 className="extra-btn"
@@ -88,7 +119,7 @@ function VolumeBtn() {
             onMouseOut={() => {
                 setShowVolumeBubble(false);
             }}
-            onClick={(e) => {
+            onClick={(_e) => {
                 if (tmpVolumeRef.current === null) {
                     tmpVolumeRef.current = 0;
                 }

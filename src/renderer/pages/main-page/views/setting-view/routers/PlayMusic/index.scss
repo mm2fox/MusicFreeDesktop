@@ -1,4 +1,184 @@
 .setting-view--play-music-container {
   width: 100%;
-  
 }
+
+.setting-item {
+  margin-bottom: 24px;
+}
+
+.setting-item-label {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.setting-item-content {
+  display: flex;
+  align-items: center;
+}
+
+.radio-group {
+  display: flex;
+  gap: 16px;
+}
+
+.radio-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.xiaoai-login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 320px;
+}
+
+.input-field {
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 14px;
+  color: var(--text-primary);
+  background: var(--bg-primary);
+
+  &:focus {
+    outline: none;
+    border-color: var(--primary-color);
+  }
+
+  &::placeholder {
+    color: var(--text-placeholder);
+  }
+}
+
+.login-button,
+.logout-button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.login-button {
+  background: var(--primary-color);
+  color: white;
+
+  &:hover:not(:disabled) {
+    opacity: 0.9;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.logout-button {
+  background: var(--danger-color);
+  color: white;
+
+  &:hover {
+    opacity: 0.9;
+  }
+}
+
+.device-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.device-item {
+  padding: 12px 16px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+
+  &:hover:not(.offline) {
+    border-color: var(--primary-color);
+    background: var(--bg-hover);
+  }
+
+  &.selected {
+    border-color: var(--primary-color);
+    background: var(--bg-selected);
+  }
+
+  &.offline {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.device-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.device-info {
+  display: flex;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.offline-badge {
+  color: var(--danger-color);
+  font-weight: 500;
+}
+
+.lan-ip-setting {
+  margin-top: 8px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.lan-ip-input {
+  flex: 1;
+  padding: 6px 10px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  font-size: 13px;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+
+  &:focus {
+    outline: none;
+    border-color: var(--primary-color);
+  }
+
+  &::placeholder {
+    color: var(--text-placeholder);
+    font-size: 12px;
+  }
+}
+
+.save-ip-button {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  background: var(--primary-color);
+  color: white;
+  cursor: pointer;
+  transition: opacity 0.2s;
+
+  &:hover {
+    opacity: 0.9;
+  }
+}
+

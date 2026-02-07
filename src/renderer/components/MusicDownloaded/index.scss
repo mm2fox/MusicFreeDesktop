@@ -5,7 +5,11 @@
 }
 
 .music-downloaded {
-  color: var(--infoColor, #0a95c8);
+  color: var(--successColor, #08a34c);
+}
+
+.music-local-match {
+  color: var(--successColor, #08a34c);
 }
 
 .music-can-download {

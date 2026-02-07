@@ -22,6 +22,7 @@ import _trackPlayerStore from "./store";
 import EventEmitter from "eventemitter3";
 import { IAudioController } from "@/types/audio-controller";
 import AudioController from "@renderer/core/track-player/controller/audio-controller";
+import XiaoaiController from "@renderer/core/track-player/controller/xiaoai-controller";
 import logger from "@shared/logger/renderer";
 import voidCallback from "@/common/void-callback";
 import { delay } from "@/common/time-util";
@@ -167,8 +168,14 @@ class TrackPlayer {
     }
 
 
-    private createAudioController() {
-        const audioController = new AudioController();
+    private createAudioController(controllerType: "audio" | "xiaoai" = "audio") {
+        let audioController: IAudioController;
+
+        if (controllerType === "xiaoai") {
+            audioController = new XiaoaiController();
+        } else {
+            audioController = new AudioController();
+        }
         // 播放结束
         audioController.onEnded = () => {
             this.resetProgress();
@@ -598,6 +605,32 @@ class TrackPlayer {
             await this.audioController.setSinkId(deviceId ?? "");
         } catch (e) {
             logger.logError("设置音频输出设备失败", e);
+        }
+    }
+
+    public async setOutputController(controllerType: "audio" | "xiaoai") {
+        const currentMusic = this.currentMusic;
+        const currentProgress = this.progress.currentTime;
+        const currentVolume = this.volume;
+        const currentSpeed = this.speed;
+
+        this.audioController.destroy();
+        this.createAudioController(controllerType);
+
+        if (currentMusic) {
+            this.audioController.prepareTrack(currentMusic);
+        }
+
+        if (currentVolume) {
+            this.audioController.setVolume(currentVolume);
+        }
+
+        if (currentSpeed) {
+            this.audioController.setSpeed(currentSpeed);
+        }
+
+        if (controllerType === "xiaoai" && currentProgress) {
+            this.audioController.seekTo(currentProgress);
         }
     }
 

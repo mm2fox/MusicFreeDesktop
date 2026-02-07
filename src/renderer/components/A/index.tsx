@@ -6,15 +6,19 @@ export default function A(
         HTMLAnchorElement
     >,
 ) {
+    const { href, onClick, ...restProps } = props;
+
     return (
         <a
-            {...props}
-            href={"javascript:void(0);"}
-            onClick={(...args) => {
-                if (props.href) {
-                    shellUtil.openExternal(props.href);
+            {...restProps}
+            href={href ? "#" : undefined}
+            role="button"
+            onClick={(e) => {
+                if (href) {
+                    e.preventDefault();
+                    shellUtil.openExternal(href);
                 }
-                props?.onClick?.(...args);
+                onClick?.(e);
             }}
         ></a>
     );

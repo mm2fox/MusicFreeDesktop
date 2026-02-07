@@ -21,6 +21,7 @@ import utils from "@shared/utils/main";
 import messageBus from "@shared/message-bus/main";
 import shortCut from "@shared/short-cut/main";
 import voidCallback from "@/common/void-callback";
+import { xiaoaiService } from "./xiaoai-service";
 
 // portable
 if (process.platform === "win32") {
@@ -117,6 +118,7 @@ app.whenReady().then(async () => {
     TrayManager.setup(windowManager);
     WindowDrag.setup();
     shortCut.setup().then(voidCallback);
+    xiaoaiService.init();
     logger.logPerf("Create Main Window");
     // Setup message bus & app state
     messageBus.onAppStateChange((_, patch) => {
