@@ -35,6 +35,11 @@ class XiaoaiService {
     private passToken: string | null = null;
     private ssecurity: string | null = null;
     private sid: string = "micoapi";
+    private deviceHardwareMap: Map<string, string> = new Map();
+
+    // 存储登录凭据以便自动重新登录
+    private savedUsername: string | null = null;
+    private savedPassword: string | null = null;
 
     constructor() {
         this.axiosInstance = axios.create({
@@ -45,6 +50,10 @@ class XiaoaiService {
     async login(username: string, password: string): Promise<boolean> {
         try {
             logger.logInfo("开始小米账号登录", { username });
+
+            // 保存凭据以便自动重新登录
+            this.savedUsername = username;
+            this.savedPassword = password;
 
             // 生成设备ID
             this.deviceId = getRandom(16).toUpperCase();
@@ -70,7 +79,7 @@ class XiaoaiService {
                 logger.logInfo("serviceLoginAuth2 响应", authResp);
 
                 if (authResp.code !== 0) {
-                    logger.logError("小米账号登录失败", authResp);
+                    logger.logError("小米账号登录失败", new Error(JSON.stringify(authResp)));
                     return false;
                 }
 
@@ -108,9 +117,22 @@ class XiaoaiService {
             this.useServerMode = false;
             return true;
         } catch (error) {
-            logger.logError("小米账号登录失败", error);
+            logger.logError("小米账号登录失败", error as Error);
             return false;
         }
+    }
+
+    private async relogin(): Promise<boolean> {
+        if (!this.savedUsername || !this.savedPassword) {
+            logger.logError("无法重新登录：未保存登录凭据", new Error("No saved credentials"));
+            return false;
+        }
+
+        logger.logInfo("尝试重新登录...");
+        this.serviceToken = null;
+        this.cookieJar = {};
+
+        return await this.login(this.savedUsername, this.savedPassword);
     }
 
     private cookieJar: Record<string, string> = {};
@@ -259,7 +281,7 @@ class XiaoaiService {
 
             throw new Error(`无法获取 serviceToken，响应状态: ${response.status}`);
         } catch (error: any) {
-            logger.logError("securityTokenService 请求失败", error.message);
+            logger.logError("securityTokenService 请求失败", new Error(error.message));
             throw error;
         }
     }
@@ -284,10 +306,10 @@ class XiaoaiService {
                 return true;
             }
 
-            logger.logError("xiaomusic 连接失败", response.data);
+            logger.logError("xiaomusic 连接失败", new Error(JSON.stringify(response.data)));
             return false;
         } catch (error) {
-            logger.logError("xiaomusic 连接失败", error);
+            logger.logError("xiaomusic 连接失败", error as Error);
             return false;
         }
     }
@@ -328,48 +350,90 @@ class XiaoaiService {
                 serialNumber: device.serialNumber || "",
             }));
         } catch (error) {
-            logger.logError("获取设备列表失败", error);
+            logger.logError("获取设备列表失败", error as Error);
             return [];
         }
+    }
+
+    private async minaRequest(uri: string, data: Record<string, any> | null = null, relogin: boolean = true): Promise<any> {
+        const requestId = "app_ios_" + getRandom(30);
+        const headers: Record<string, string> = {
+            "User-Agent": "MiHome/6.0.103 (com.xiaomi.mihome; build:6.0.103.1; iOS 14.4.0) Alamofire/6.0.103 MICO/iOSApp/appStore/6.0.103",
+            "Cookie": `userId=${this.userId}; serviceToken=${this.serviceToken}`,
+        };
+
+        let url = `https://api2.mina.mi.com${uri}`;
+        let response: any;
+
+        if (data !== null) {
+            data.requestId = requestId;
+            response = await axios.post(url, new URLSearchParams(data as any), { headers });
+        } else {
+            url += (url.includes("?") ? "&" : "?") + `requestId=${requestId}`;
+            response = await axios.get(url, { headers });
+        }
+
+        logger.logInfo("MiNA 请求响应", { url, code: response.data?.code, message: response.data?.message });
+
+        // 检查认证错误
+        if (response.data?.code === 1 &&
+            (response.data?.message?.toLowerCase().includes("auth") ||
+                response.data?.message?.toLowerCase().includes("admin"))) {
+            logger.logInfo("检测到认证错误，尝试重新登录");
+
+            if (relogin && await this.relogin()) {
+                // 重新登录成功，重试请求
+                return this.minaRequest(uri, data, false);
+            }
+        }
+
+        return response.data;
     }
 
     private async getDevicesFromXiaoai(): Promise<IXiaoaiDevice[]> {
         try {
             logger.logInfo("从小米 API 获取设备列表");
 
-            const url = "https://api2.mina.mi.com/admin/v2/device_list";
-            const headers: Record<string, string> = {
-                "User-Agent": "Mozilla/5.0 (Linux; Android 10; MI 9) AppleWebKit/537.36",
-                "Cookie": `userId=${this.userId}; serviceToken=${this.serviceToken}`,
-            };
+            const result = await this.minaRequest("/admin/v2/device_list?master=0");
 
-            const response = await axios.get(url, { headers });
+            logger.logInfo("小米 API 设备列表原始响应", JSON.stringify(result, null, 2));
 
-            logger.logInfo("小米 API 设备列表响应", response.data);
-
-            if (response.data?.code === 0 && response.data?.data) {
-                this.deviceList = response.data.data.map((device: any) => ({
-                    deviceID: device.miotDID || device.deviceID,
-                    name: device.name,
-                    hardware: device.hardware,
-                    isOnline: device.presence === "online",
-                    isSleepMode: device.isSleepMode || false,
-                    roomName: device.roomName || "",
-                    serialNumber: device.serialNumber || "",
-                    address: device.address || "unknown",
-                }));
+            if (result?.code === 0 && result?.data) {
+                this.deviceList = result.data.map((device: any) => {
+                    const deviceId = String(device.deviceID || device.deviceId || device.did || "");
+                    const hardware = device.hardware || "";
+                    if (deviceId && hardware) {
+                        this.deviceHardwareMap.set(deviceId, hardware);
+                    }
+                    logger.logInfo("设备信息", {
+                        deviceID: deviceId,
+                        name: device.name,
+                        hardware: hardware,
+                        presence: device.presence
+                    });
+                    return {
+                        deviceID: deviceId,
+                        name: device.name,
+                        hardware: hardware,
+                        isOnline: device.presence === "online",
+                        isSleepMode: device.isSleepMode || false,
+                        roomName: device.roomName || "",
+                        serialNumber: device.serialNumber || "",
+                        address: device.address || "unknown",
+                    };
+                });
+                logger.logInfo("解析后的设备列表", this.deviceList);
                 return this.deviceList;
             }
 
             return [];
         } catch (error) {
-            logger.logError("从小米 API 获取设备列表失败", error);
+            logger.logError("从小米 API 获取设备列表失败", error as Error);
             return [];
         }
     }
 
     async play(deviceId: string, options: IXiaoaiPlayOptions): Promise<boolean> {
-        // 如果是直接小米账号登录模式，使用小米 API
         if (!this.useServerMode && this.serviceToken) {
             return this.playFromXiaoai(deviceId, options);
         }
@@ -390,14 +454,13 @@ class XiaoaiService {
 
             return response.status === 200 || response.data?.code === 0;
         } catch (error) {
-            logger.logError("播放失败", error);
+            logger.logError("播放失败", error as Error);
             return false;
         }
     }
 
     private deviceList: IXiaoaiDevice[] = [];
 
-    // 局域网 IP 映射表 (设备ID -> 局域网IP)
     private lanIpMap: Map<string, string> = new Map();
 
     async setDeviceLanIp(deviceId: string, lanIp: string): Promise<void> {
@@ -407,108 +470,126 @@ class XiaoaiService {
 
     private async playFromXiaoai(deviceId: string, options: IXiaoaiPlayOptions): Promise<boolean> {
         try {
-            logger.logInfo("从小米 API 播放", { deviceId, url: options.url, title: options.title });
+            logger.logInfo("从小米 API 播放", {
+                deviceId,
+                url: options.url,
+                title: options.title,
+                userId: this.userId,
+                hasServiceToken: !!this.serviceToken,
+                serviceTokenPreview: this.serviceToken ? this.serviceToken.substring(0, 20) + "..." : "null"
+            });
 
-            // 确保音乐服务器已启动
+            if (!this.serviceToken) {
+                logger.logError("serviceToken 为空，请重新登录", new Error("serviceToken is null"));
+                return false;
+            }
+
             if (!musicServer.isRunning()) {
                 logger.logInfo("启动音乐服务器...");
                 await musicServer.start(0);
                 logger.logInfo("音乐服务器已启动", { url: musicServer.getServerUrl() });
             }
 
-            // 将本地文件路径转换为可通过网络访问的 URL
             let playUrl = options.url;
+            if (!playUrl) {
+                logger.logError("播放 URL 为空", new Error("playUrl is empty"));
+                return false;
+            }
+
             if (playUrl.startsWith("file:///")) {
-                // 从 file:/// 路径提取实际文件路径
                 const filePath = decodeURIComponent(playUrl.slice("file:///".length));
                 playUrl = musicServer.getMusicUrl(filePath);
                 logger.logInfo("转换后的播放 URL", { original: options.url, converted: playUrl });
+            } else if (playUrl.startsWith("http://") || playUrl.startsWith("https://")) {
+                playUrl = musicServer.getProxyUrl(playUrl);
+                logger.logInfo("使用代理 URL", { original: options.url, converted: playUrl });
             }
 
-            // 获取设备信息
-            const device = this.deviceList.find(d => d.deviceID === deviceId);
-            const hardware = device?.hardware || "";
+            const hardware = this.deviceHardwareMap.get(deviceId) || "";
             logger.logInfo("设备硬件型号", { deviceId, hardware });
 
-            // 使用小米云端 API 播放音乐
-            // 参考 xiaomusic 的实现，使用 ubus 接口
-            const url = "https://api2.mina.mi.com/remote/ubus";
-            const headers: Record<string, string> = {
-                "User-Agent": "MiHome/6.0.103 (com.xiaomi.mihome; build:6.0.103.1; iOS 14.4.0) Alamofire/6.0.103 MICO/iOSApp/appStore/6.0.103",
-                "Cookie": `userId=${this.userId}; serviceToken=${this.serviceToken}`,
-            };
-
-            // 根据 xiaomusic 的逻辑，根据设备硬件型号选择播放方法
-            // 需要使用 play_by_music_url 的设备型号
-            const NEED_USE_PLAY_MUSIC_API = ["X08C", "X08E", "X8F", "X4B", "LX05", "OH2", "OH2P", "X6A"];
-            const useMusicApi = NEED_USE_PLAY_MUSIC_API.includes(hardware);
+            const USE_PLAY_MUSIC_API = [
+                "LX04", "LX05", "L05B", "L05C", "L06", "L06A",
+                "X08A", "X10A", "X08C", "M01", "X08E", "X8F",
+            ];
+            const useMusicApi = USE_PLAY_MUSIC_API.includes(hardware);
 
             logger.logInfo("选择播放方法", { hardware, useMusicApi });
 
+            let message: any;
+            let method: string;
+
             if (useMusicApi) {
-                // 使用 play_by_music_url 方法
-                const musicParams = new URLSearchParams();
-                musicParams.append("deviceId", deviceId);
-                musicParams.append("path", "mediaplayer");
-                musicParams.append("method", "play_by_music_url");
-                musicParams.append("message", JSON.stringify({
-                    url: playUrl,
-                    audio_id: "1582971365183456177",  // 默认音频 ID
-                }));
+                const audioId = "1582971365183456177";
+                const music = {
+                    payload: {
+                        audio_type: "",
+                        audio_items: [
+                            {
+                                item_id: {
+                                    audio_id: audioId,
+                                    cp: {
+                                        album_id: "-1",
+                                        episode_index: 0,
+                                        id: "355454500",
+                                        name: "xiaowei",
+                                    },
+                                },
+                                stream: { url: playUrl },
+                            },
+                        ],
+                        list_params: {
+                            listId: "-1",
+                            loadmore_offset: 0,
+                            origin: "xiaowei",
+                            type: "MUSIC",
+                        },
+                    },
+                    play_behavior: "REPLACE_ALL",
+                };
 
-                logger.logInfo("使用 play_by_music_url 方法", { deviceId, url: playUrl });
-                const musicResponse = await axios.post(url, musicParams, { headers });
-                logger.logInfo("play_by_music_url 响应", musicResponse.data);
-
-                if (musicResponse.data?.code === 0) {
-                    return true;
-                }
+                method = "player_play_music";
+                message = {
+                    startaudioid: audioId,
+                    music: JSON.stringify(music),
+                };
+                logger.logInfo("使用 player_play_music 方法", { deviceId, url: playUrl });
             } else {
-                // 使用 play_by_url 方法
-                const playByUrlParams = new URLSearchParams();
-                playByUrlParams.append("deviceId", deviceId);
-                playByUrlParams.append("path", "mediaplayer");
-                playByUrlParams.append("method", "play_by_url");
-                playByUrlParams.append("message", JSON.stringify({
+                method = "player_play_url";
+                message = {
                     url: playUrl,
-                }));
-
-                logger.logInfo("使用 play_by_url 方法", { deviceId, url: playUrl });
-                const playByUrlResponse = await axios.post(url, playByUrlParams, { headers });
-                logger.logInfo("play_by_url 响应", playByUrlResponse.data);
-
-                if (playByUrlResponse.data?.code === 0) {
-                    return true;
-                }
+                    type: 2,
+                    media: "app_ios",
+                };
+                logger.logInfo("使用 player_play_url 方法", { deviceId, url: playUrl });
             }
 
-            // 如果上述方法都失败，尝试使用 player_play_url 方法
-            logger.logInfo("尝试 player_play_url 方法");
-            const params = new URLSearchParams();
-            params.append("deviceId", deviceId);
-            params.append("path", "mediaplayer");
-            params.append("method", "player_play_url");
-            params.append("message", JSON.stringify({
-                url: playUrl,
-                type: 2,  // 0: 普通音乐, 1: 电台, 2: URL
-                media: "app_ios",
-            }));
+            const result = await this.ubusRequest(deviceId, method, "mediaplayer", message);
+            logger.logInfo("播放响应", result);
 
-            const response = await axios.post(url, params, { headers });
-            logger.logInfo("player_play_url 响应", response.data);
-
-            return response.data?.code === 0;
+            return result?.code === 0;
         } catch (error) {
-            logger.logError("从小米 API 播放失败", error);
+            logger.logError("从小米 API 播放失败", error as Error);
             return false;
         }
+    }
+
+    private async ubusRequest(deviceId: string, method: string, path: string, message: any, relogin: boolean = true): Promise<any> {
+        const data = {
+            deviceId: deviceId,
+            path: path,
+            method: method,
+            message: JSON.stringify(message),
+        };
+
+        const result = await this.minaRequest("/remote/ubus", data, relogin);
+        return result;
     }
 
     private async playByLan(deviceIp: string, options: IXiaoaiPlayOptions): Promise<boolean> {
         try {
             logger.logInfo("尝试局域网播放", { deviceIp, url: options.url });
 
-            // 首先尝试 miio 协议 (端口 54321)
             try {
                 const success = await this.sendMiioCommand(deviceIp, 54321, {
                     method: "player_play_url",
@@ -525,12 +606,10 @@ class XiaoaiService {
                 logger.logInfo(`miio 协议失败: ${miioError.message}，尝试 HTTP 接口`);
             }
 
-            // 尝试多个可能的 HTTP 端口
             const ports = [8080, 8095, 49152, 49153];
 
             for (const port of ports) {
                 try {
-                    // 尝试小米音箱的局域网 HTTP 接口
                     const url = `http://${deviceIp}:${port}/play`;
                     const response = await axios.post(url, {
                         url: options.url,
@@ -546,16 +625,15 @@ class XiaoaiService {
                         logger.logInfo(`端口 ${port} 返回 404，尝试下一个端口`);
                         continue;
                     }
-                    // 其他错误（如连接超时）也尝试下一个端口
                     logger.logInfo(`端口 ${port} 失败: ${portError.message}，尝试下一个端口`);
                     continue;
                 }
             }
 
-            logger.logError("所有端口都失败");
+            logger.logError("所有端口都失败", new Error("All ports failed"));
             return false;
         } catch (error) {
-            logger.logError("局域网播放失败", error);
+            logger.logError("局域网播放失败", error as Error);
             return false;
         }
     }
@@ -565,18 +643,15 @@ class XiaoaiService {
             try {
                 const socket = dgram.createSocket("udp4");
 
-                // 构建 miio 协议数据包
-                // miio 协议格式: 0x21 0x31 + 长度(2字节) + 未知(4字节) + 设备ID(4字节) + 时间戳(4字节) + 校验和(4字节) + 数据
                 const data = Buffer.from(JSON.stringify(command));
                 const header = Buffer.alloc(32);
-                header.writeUInt8(0x21, 0);  // 魔数
-                header.writeUInt8(0x31, 1);  // 魔数
-                header.writeUInt16BE(32 + data.length, 2);  // 总长度
-                header.writeUInt32BE(0, 4);  // 未知
-                header.writeUInt32BE(0, 8);  // 设备ID (需要从设备获取)
-                header.writeUInt32BE(Math.floor(Date.now() / 1000), 12);  // 时间戳
+                header.writeUInt8(0x21, 0);
+                header.writeUInt8(0x31, 1);
+                header.writeUInt16BE(32 + data.length, 2);
+                header.writeUInt32BE(0, 4);
+                header.writeUInt32BE(0, 8);
+                header.writeUInt32BE(Math.floor(Date.now() / 1000), 12);
 
-                // 计算校验和
                 const checksum = crypto.createHash("md5").update(header.slice(0, 16)).update(data).digest();
                 checksum.copy(header, 16);
 
@@ -591,13 +666,11 @@ class XiaoaiService {
                         return;
                     }
 
-                    // 设置超时
                     const timeout = setTimeout(() => {
                         socket.close();
                         reject(new Error("miio 命令超时"));
                     }, 5000);
 
-                    // 监听响应
                     socket.on("message", (msg) => {
                         clearTimeout(timeout);
                         socket.close();
@@ -619,6 +692,10 @@ class XiaoaiService {
     }
 
     async pause(deviceId: string): Promise<boolean> {
+        if (!this.useServerMode && this.serviceToken) {
+            return this.pauseFromXiaoai(deviceId);
+        }
+
         if (!this.config) {
             throw new Error("未配置 xiaomusic 服务器");
         }
@@ -631,12 +708,34 @@ class XiaoaiService {
 
             return response.status === 200 || response.data?.code === 0;
         } catch (error) {
-            logger.logError("暂停失败", error);
+            logger.logError("暂停失败", error as Error);
+            return false;
+        }
+    }
+
+    private async pauseFromXiaoai(deviceId: string): Promise<boolean> {
+        try {
+            logger.logInfo("从小米 API 暂停", { deviceId });
+
+            const result = await this.ubusRequest(deviceId, "player_play_operation", "mediaplayer", {
+                action: "pause",
+                media: "app_ios",
+            });
+
+            logger.logInfo("小米 API 暂停响应", result);
+
+            return result?.code === 0;
+        } catch (error) {
+            logger.logError("从小米 API 暂停失败", error as Error);
             return false;
         }
     }
 
     async stop(deviceId: string): Promise<boolean> {
+        if (!this.useServerMode && this.serviceToken) {
+            return this.stopFromXiaoai(deviceId);
+        }
+
         if (!this.config) {
             throw new Error("未配置 xiaomusic 服务器");
         }
@@ -649,12 +748,34 @@ class XiaoaiService {
 
             return response.status === 200 || response.data?.code === 0;
         } catch (error) {
-            logger.logError("停止失败", error);
+            logger.logError("停止失败", error as Error);
+            return false;
+        }
+    }
+
+    private async stopFromXiaoai(deviceId: string): Promise<boolean> {
+        try {
+            logger.logInfo("从小米 API 停止", { deviceId });
+
+            const result = await this.ubusRequest(deviceId, "player_play_operation", "mediaplayer", {
+                action: "stop",
+                media: "app_ios",
+            });
+
+            logger.logInfo("小米 API 停止响应", result);
+
+            return result?.code === 0;
+        } catch (error) {
+            logger.logError("从小米 API 停止失败", error as Error);
             return false;
         }
     }
 
     async next(deviceId: string): Promise<boolean> {
+        if (!this.useServerMode && this.serviceToken) {
+            return this.nextFromXiaoai(deviceId);
+        }
+
         if (!this.config) {
             throw new Error("未配置 xiaomusic 服务器");
         }
@@ -667,12 +788,34 @@ class XiaoaiService {
 
             return response.status === 200 || response.data?.code === 0;
         } catch (error) {
-            logger.logError("下一首失败", error);
+            logger.logError("下一首失败", error as Error);
+            return false;
+        }
+    }
+
+    private async nextFromXiaoai(deviceId: string): Promise<boolean> {
+        try {
+            logger.logInfo("从小米 API 下一首", { deviceId });
+
+            const result = await this.ubusRequest(deviceId, "player_play_operation", "mediaplayer", {
+                action: "next",
+                media: "app_ios",
+            });
+
+            logger.logInfo("小米 API 下一首响应", result);
+
+            return result?.code === 0;
+        } catch (error) {
+            logger.logError("从小米 API 下一首失败", error as Error);
             return false;
         }
     }
 
     async prev(deviceId: string): Promise<boolean> {
+        if (!this.useServerMode && this.serviceToken) {
+            return this.prevFromXiaoai(deviceId);
+        }
+
         if (!this.config) {
             throw new Error("未配置 xiaomusic 服务器");
         }
@@ -685,13 +828,30 @@ class XiaoaiService {
 
             return response.status === 200 || response.data?.code === 0;
         } catch (error) {
-            logger.logError("上一首失败", error);
+            logger.logError("上一首失败", error as Error);
+            return false;
+        }
+    }
+
+    private async prevFromXiaoai(deviceId: string): Promise<boolean> {
+        try {
+            logger.logInfo("从小米 API 上一首", { deviceId });
+
+            const result = await this.ubusRequest(deviceId, "player_play_operation", "mediaplayer", {
+                action: "prev",
+                media: "app_ios",
+            });
+
+            logger.logInfo("小米 API 上一首响应", result);
+
+            return result?.code === 0;
+        } catch (error) {
+            logger.logError("从小米 API 上一首失败", error as Error);
             return false;
         }
     }
 
     async setVolume(deviceId: string, volume: number): Promise<boolean> {
-        // 如果是直接小米账号登录模式，使用小米 API
         if (!this.useServerMode && this.serviceToken) {
             return this.setVolumeFromXiaoai(deviceId, volume);
         }
@@ -708,7 +868,7 @@ class XiaoaiService {
 
             return response.status === 200 || response.data?.code === 0;
         } catch (error) {
-            logger.logError("设置音量失败", error);
+            logger.logError("设置音量失败", error as Error);
             return false;
         }
     }
@@ -717,28 +877,16 @@ class XiaoaiService {
         try {
             logger.logInfo("从小米 API 设置音量", { deviceId, volume });
 
-            const url = "https://api2.mina.mi.com/remote/ubus";
-            const headers: Record<string, string> = {
-                "User-Agent": "MiHome/6.0.103 (com.xiaomi.mihome; build:6.0.103.1; iOS 14.4.0) Alamofire/6.0.103 MICO/iOSApp/appStore/6.0.103",
-                "Cookie": `userId=${this.userId}; serviceToken=${this.serviceToken}`,
-            };
-
-            const params = new URLSearchParams();
-            params.append("deviceId", deviceId);
-            params.append("path", "mediaplayer");
-            params.append("method", "player_set_volume");
-            params.append("message", JSON.stringify({
+            const result = await this.ubusRequest(deviceId, "player_set_volume", "mediaplayer", {
                 volume,
                 media: "app_ios",
-            }));
+            });
 
-            const response = await axios.post(url, params, { headers });
+            logger.logInfo("小米 API 设置音量响应", result);
 
-            logger.logInfo("小米 API 设置音量响应", response.data);
-
-            return response.data?.code === 0;
+            return result?.code === 0;
         } catch (error) {
-            logger.logError("从小米 API 设置音量失败", error);
+            logger.logError("从小米 API 设置音量失败", error as Error);
             return false;
         }
     }
@@ -756,7 +904,7 @@ class XiaoaiService {
 
             return response.data?.volume || response.data?.data?.volume || 0;
         } catch (error) {
-            logger.logError("获取音量失败", error);
+            logger.logError("获取音量失败", error as Error);
             return 0;
         }
     }

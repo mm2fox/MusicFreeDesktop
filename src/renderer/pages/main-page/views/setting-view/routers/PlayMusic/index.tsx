@@ -35,10 +35,34 @@ export default function PlayMusic() {
                 setUseXiaoai(true);
             }
 
+            const savedUsername = getUserPreference("xiaoaiUsername") || "";
+            const savedPassword = getUserPreference("xiaoaiPassword") || "";
+            const savedLoginMode = getUserPreference("xiaoaiLoginMode") || "direct";
+            const savedServerUrl = getUserPreference("xiaoaiServerUrl") || "http://192.168.31.29:8090";
+
+            setXiaoaiUsername(savedUsername);
+            setXiaoaiPassword(savedPassword);
+            setLoginMode(savedLoginMode);
+            setXiaoaiServerUrl(savedServerUrl);
+
             const loggedIn = await XiaoaiService.isLoggedIn();
             if (loggedIn) {
                 setIsLoggedIn(true);
                 await loadDevices();
+            } else if (savedUsername && savedPassword) {
+                if (savedLoginMode === "direct") {
+                    const success = await XiaoaiService.login(savedUsername, savedPassword);
+                    if (success) {
+                        setIsLoggedIn(true);
+                        await loadDevices();
+                    }
+                } else if (savedLoginMode === "server" && savedServerUrl) {
+                    const success = await XiaoaiService.configure(savedServerUrl, "", "");
+                    if (success) {
+                        setIsLoggedIn(true);
+                        await loadDevices();
+                    }
+                }
             }
         };
         init();
@@ -62,6 +86,9 @@ export default function PlayMusic() {
             setLoading(true);
             const success = await XiaoaiService.login(xiaoaiUsername, xiaoaiPassword);
             if (success) {
+                setUserPreference("xiaoaiUsername", xiaoaiUsername);
+                setUserPreference("xiaoaiPassword", xiaoaiPassword);
+                setUserPreference("xiaoaiLoginMode", "direct");
                 setIsLoggedIn(true);
                 await loadDevices();
             } else {
@@ -81,6 +108,8 @@ export default function PlayMusic() {
             setLoading(true);
             const success = await XiaoaiService.configure(xiaoaiServerUrl, "", "");
             if (success) {
+                setUserPreference("xiaoaiServerUrl", xiaoaiServerUrl);
+                setUserPreference("xiaoaiLoginMode", "server");
                 setIsLoggedIn(true);
                 await loadDevices();
             } else {
@@ -101,6 +130,10 @@ export default function PlayMusic() {
         setUseXiaoai(false);
         setXiaoaiUsername("");
         setXiaoaiPassword("");
+        setUserPreference("xiaoaiUsername", "");
+        setUserPreference("xiaoaiPassword", "");
+        setUserPreference("xiaoaiLoginMode", "direct");
+        setUserPreference("xiaoaiDeviceId", "");
     };
 
     const handleDeviceSelect = async (deviceId: string) => {

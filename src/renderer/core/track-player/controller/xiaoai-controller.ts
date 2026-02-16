@@ -12,7 +12,7 @@ class XiaoaiController extends ControllerBase implements IAudioController {
     private _speed: number = 1;
     private _deviceId: string | null = null;
     private _musicItem: IMusic.IMusicItem | null = null;
-    private _progressTimer: number | null = null;
+    private _progressTimer: ReturnType<typeof setInterval> | null = null;
     private _currentTime: number = 0;
     private _duration: number = 0;
 
@@ -57,7 +57,7 @@ class XiaoaiController extends ControllerBase implements IAudioController {
         this._deviceId = getUserPreference("xiaoaiDeviceId");
 
         if (!this.hasSource || !this._deviceId) {
-            logger.logError("无法播放：没有音源或设备 ID", { hasSource: this.hasSource, deviceId: this._deviceId });
+            logger.logError("无法播放：没有音源或设备 ID", new Error(`hasSource: ${this.hasSource}, deviceId: ${this._deviceId}`));
             return;
         }
 
@@ -160,9 +160,15 @@ class XiaoaiController extends ControllerBase implements IAudioController {
 
     async setTrackSource(trackSource: IMusic.IMusicSource, musicItem: IMusic.IMusicItem): Promise<void> {
         this._musicItem = { ...musicItem };
-        this._currentUrl = trackSource.url;
-        this._duration = trackSource.duration || 0;
+        this._currentUrl = trackSource.url || musicItem.url || null;
+        this._duration = musicItem.duration || 0;
         this._currentTime = 0;
+        logger.logInfo("setTrackSource", {
+            url: this._currentUrl,
+            trackSourceUrl: trackSource.url,
+            musicItemUrl: musicItem.url,
+            title: musicItem.title
+        });
     }
 
     destroy(): void {

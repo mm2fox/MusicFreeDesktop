@@ -1,7 +1,6 @@
 import { IXiaoaiDevice, IXiaoaiPlayOptions } from "@/types/xiaoai-service";
 import logger from "@shared/logger/renderer";
 
-// 从 window 对象获取暴露的 API
 function getXiaoai() {
     return (window as any)["@main/xiaoai"];
 }
@@ -11,13 +10,13 @@ class XiaoaiService {
         try {
             const xiaoai = getXiaoai();
             if (!xiaoai) {
-                logger.logError("xiaoai API 未初始化");
+                logger.logError("xiaoai API 未初始化", new Error("xiaoai API not initialized"));
                 return false;
             }
             const success = await xiaoai.login(username, password);
             return success;
         } catch (error) {
-            logger.logError("小米音箱登录失败", error);
+            logger.logError("小米音箱登录失败", error as Error);
             return false;
         }
     }
@@ -26,13 +25,13 @@ class XiaoaiService {
         try {
             const xiaoai = getXiaoai();
             if (!xiaoai) {
-                logger.logError("xiaoai API 未初始化");
+                logger.logError("xiaoai API 未初始化", new Error("xiaoai API not initialized"));
                 return false;
             }
             const success = await xiaoai.configure(serverUrl, username, password);
             return success;
         } catch (error) {
-            logger.logError("小米音箱配置失败", error);
+            logger.logError("小米音箱配置失败", error as Error);
             return false;
         }
     }
@@ -41,13 +40,13 @@ class XiaoaiService {
         try {
             const xiaoai = getXiaoai();
             if (!xiaoai) {
-                logger.logError("xiaoai API 未初始化");
+                logger.logError("xiaoai API 未初始化", new Error("xiaoai API not initialized"));
                 return [];
             }
             const devices = await xiaoai.getDevices();
             return devices || [];
         } catch (error) {
-            logger.logError("获取小米音箱设备列表失败", error);
+            logger.logError("获取小米音箱设备列表失败", error as Error);
             return [];
         }
     }
@@ -56,13 +55,13 @@ class XiaoaiService {
         try {
             const xiaoai = getXiaoai();
             if (!xiaoai) {
-                logger.logError("xiaoai API 未初始化");
+                logger.logError("xiaoai API 未初始化", new Error("xiaoai API not initialized"));
                 return false;
             }
             const success = await xiaoai.play(deviceId, options);
             return success;
         } catch (error) {
-            logger.logError("小米音箱播放失败", error);
+            logger.logError("小米音箱播放失败", error as Error);
             return false;
         }
     }
@@ -71,13 +70,13 @@ class XiaoaiService {
         try {
             const xiaoai = getXiaoai();
             if (!xiaoai) {
-                logger.logError("xiaoai API 未初始化");
+                logger.logError("xiaoai API 未初始化", new Error("xiaoai API not initialized"));
                 return false;
             }
             const success = await xiaoai.pause(deviceId);
             return success;
         } catch (error) {
-            logger.logError("小米音箱暂停失败", error);
+            logger.logError("小米音箱暂停失败", error as Error);
             return false;
         }
     }
@@ -86,13 +85,13 @@ class XiaoaiService {
         try {
             const xiaoai = getXiaoai();
             if (!xiaoai) {
-                logger.logError("xiaoai API 未初始化");
+                logger.logError("xiaoai API 未初始化", new Error("xiaoai API not initialized"));
                 return false;
             }
             const success = await xiaoai.stop(deviceId);
             return success;
         } catch (error) {
-            logger.logError("小米音箱停止失败", error);
+            logger.logError("小米音箱停止失败", error as Error);
             return false;
         }
     }
@@ -101,13 +100,13 @@ class XiaoaiService {
         try {
             const xiaoai = getXiaoai();
             if (!xiaoai) {
-                logger.logError("xiaoai API 未初始化");
+                logger.logError("xiaoai API 未初始化", new Error("xiaoai API not initialized"));
                 return false;
             }
             const success = await xiaoai.next(deviceId);
             return success;
         } catch (error) {
-            logger.logError("小米音箱下一首失败", error);
+            logger.logError("小米音箱下一首失败", error as Error);
             return false;
         }
     }
@@ -116,13 +115,13 @@ class XiaoaiService {
         try {
             const xiaoai = getXiaoai();
             if (!xiaoai) {
-                logger.logError("xiaoai API 未初始化");
+                logger.logError("xiaoai API 未初始化", new Error("xiaoai API not initialized"));
                 return false;
             }
             const success = await xiaoai.prev(deviceId);
             return success;
         } catch (error) {
-            logger.logError("小米音箱上一首失败", error);
+            logger.logError("小米音箱上一首失败", error as Error);
             return false;
         }
     }
@@ -131,13 +130,13 @@ class XiaoaiService {
         try {
             const xiaoai = getXiaoai();
             if (!xiaoai) {
-                logger.logError("xiaoai API 未初始化");
+                logger.logError("xiaoai API 未初始化", new Error("xiaoai API not initialized"));
                 return false;
             }
             const success = await xiaoai.setVolume(deviceId, volume);
             return success;
         } catch (error) {
-            logger.logError("小米音箱设置音量失败", error);
+            logger.logError("小米音箱设置音量失败", error as Error);
             return false;
         }
     }
@@ -146,13 +145,13 @@ class XiaoaiService {
         try {
             const xiaoai = getXiaoai();
             if (!xiaoai) {
-                logger.logError("xiaoai API 未初始化");
+                logger.logError("xiaoai API 未初始化", new Error("xiaoai API not initialized"));
                 return 0;
             }
             const volume = await xiaoai.getVolume(deviceId);
             return volume || 0;
         } catch (error) {
-            logger.logError("小米音箱获取音量失败", error);
+            logger.logError("小米音箱获取音量失败", error as Error);
             return 0;
         }
     }
@@ -161,13 +160,13 @@ class XiaoaiService {
         try {
             const xiaoai = getXiaoai();
             if (!xiaoai) {
-                logger.logError("xiaoai API 未初始化");
+                logger.logError("xiaoai API 未初始化", new Error("xiaoai API not initialized"));
                 return false;
             }
             const loggedIn = await xiaoai.isLoggedIn();
             return loggedIn;
         } catch (error) {
-            logger.logError("检查小米音箱登录状态失败", error);
+            logger.logError("检查小米音箱登录状态失败", error as Error);
             return false;
         }
     }
@@ -176,12 +175,12 @@ class XiaoaiService {
         try {
             const xiaoai = getXiaoai();
             if (!xiaoai) {
-                logger.logError("xiaoai API 未初始化");
+                logger.logError("xiaoai API 未初始化", new Error("xiaoai API not initialized"));
                 return;
             }
             await xiaoai.logout();
         } catch (error) {
-            logger.logError("小米音箱登出失败", error);
+            logger.logError("小米音箱登出失败", error as Error);
         }
     }
 
@@ -189,12 +188,12 @@ class XiaoaiService {
         try {
             const xiaoai = getXiaoai();
             if (!xiaoai) {
-                logger.logError("xiaoai API 未初始化");
+                logger.logError("xiaoai API 未初始化", new Error("xiaoai API not initialized"));
                 return;
             }
             await xiaoai.setDeviceLanIp(deviceId, lanIp);
         } catch (error) {
-            logger.logError("设置设备局域网 IP 失败", error);
+            logger.logError("设置设备局域网 IP 失败", error as Error);
         }
     }
 }

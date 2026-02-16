@@ -1,7 +1,9 @@
 import * as http from "http";
+import * as https from "https";
 import * as fs from "fs";
 import * as path from "path";
 import * as url from "url";
+import axios from "axios";
 import logger from "@shared/logger/main";
 
 /**
@@ -109,6 +111,18 @@ export class MusicServer {
                 return;
             }
 
+            // 处理代理请求 /proxy?url={encodedUrl}
+            if (pathname === "/proxy") {
+                const targetUrl = parsedUrl.query.url as string;
+                if (targetUrl) {
+                    this.proxyAudioStream(decodeURIComponent(targetUrl), res, req);
+                } else {
+                    res.writeHead(400, { "Content-Type": "text/plain" });
+                    res.end("Missing url parameter");
+                }
+                return;
+            }
+
             // 处理健康检查
             if (pathname === "/health") {
                 res.writeHead(200, { "Content-Type": "application/json" });
@@ -133,7 +147,7 @@ export class MusicServer {
         try {
             // 检查文件是否存在
             if (!fs.existsSync(filePath)) {
-                logger.logError(`音乐文件不存在`, { filePath });
+                logger.logError(`音乐文件不存在`, new Error(`File not found: ${filePath}`));
                 res.writeHead(404, { "Content-Type": "text/plain" });
                 res.end("File Not Found");
                 return;
@@ -173,7 +187,7 @@ export class MusicServer {
             stream.pipe(res);
 
             stream.on("error", (error) => {
-                logger.logError(`读取文件失败`, { filePath, error });
+                logger.logError(`读取文件失败`, error, { filePath });
                 // 如果响应还没结束，发送错误
                 if (!res.writableEnded) {
                     res.end();
@@ -182,7 +196,7 @@ export class MusicServer {
 
             logger.logInfo(`正在提供音乐文件`, { filePath, size: stat.size, contentType });
         } catch (error) {
-            logger.logError(`提供音乐文件失败`, { filePath, error });
+            logger.logError(`提供音乐文件失败`, error as Error, { filePath });
             res.writeHead(500, { "Content-Type": "text/plain" });
             res.end("Internal Server Error");
         }
@@ -194,6 +208,95 @@ export class MusicServer {
     getMusicUrl(filePath: string): string {
         const encodedPath = encodeURIComponent(filePath);
         return `${this.getServerUrl()}/music/${encodedPath}`;
+    }
+
+    /**
+     * 将网络音频 URL 转换为代理 URL
+     */
+    getProxyUrl(audioUrl: string): string {
+        const encodedUrl = encodeURIComponent(audioUrl);
+        return `${this.getServerUrl()}/proxy?url=${encodedUrl}`;
+    }
+
+    /**
+     * 代理音频流
+     */
+    private async proxyAudioStream(targetUrl: string, res: http.ServerResponse, req: http.IncomingMessage): Promise<void> {
+        try {
+            logger.logInfo(`代理音频请求`, { url: targetUrl });
+
+            const parsedTarget = new URL(targetUrl);
+            const isHttps = parsedTarget.protocol === "https:";
+            const httpModule = isHttps ? https : http;
+
+            const headers: Record<string, string> = {
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                "Accept": "*/*",
+                "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8",
+                "Referer": `${parsedTarget.protocol}//${parsedTarget.host}/`,
+            };
+
+            const range = req.headers.range;
+            if (range) {
+                headers["Range"] = range;
+            }
+
+            const proxyReq = httpModule.request(targetUrl, {
+                method: "GET",
+                headers: headers,
+            }, (proxyRes) => {
+                const statusCode = proxyRes.statusCode || 200;
+                const responseHeaders = proxyRes.headers;
+
+                const resHeaders: Record<string, string | number | string[] | undefined> = {
+                    "Content-Type": responseHeaders["content-type"] || "audio/mpeg",
+                    "Accept-Ranges": responseHeaders["accept-ranges"] || "bytes",
+                    "Access-Control-Allow-Origin": "*",
+                };
+
+                if (responseHeaders["content-length"]) {
+                    resHeaders["Content-Length"] = responseHeaders["content-length"];
+                }
+                if (responseHeaders["content-range"]) {
+                    resHeaders["Content-Range"] = responseHeaders["content-range"];
+                }
+
+                res.writeHead(statusCode, resHeaders);
+                proxyRes.pipe(res);
+
+                proxyRes.on("error", (error) => {
+                    logger.logError(`代理响应流错误`, error, { url: targetUrl });
+                    if (!res.writableEnded) {
+                        res.end();
+                    }
+                });
+            });
+
+            proxyReq.on("error", (error) => {
+                logger.logError(`代理请求失败`, error, { url: targetUrl });
+                if (!res.headersSent) {
+                    res.writeHead(502, { "Content-Type": "text/plain" });
+                    res.end("Proxy Error");
+                }
+            });
+
+            proxyReq.setTimeout(30000, () => {
+                logger.logError(`代理请求超时`, new Error("Proxy timeout"), { url: targetUrl });
+                proxyReq.destroy();
+                if (!res.headersSent) {
+                    res.writeHead(504, { "Content-Type": "text/plain" });
+                    res.end("Gateway Timeout");
+                }
+            });
+
+            proxyReq.end();
+        } catch (error) {
+            logger.logError(`代理音频失败`, error as Error, { url: targetUrl });
+            if (!res.headersSent) {
+                res.writeHead(500, { "Content-Type": "text/plain" });
+                res.end("Internal Server Error");
+            }
+        }
     }
 }
 

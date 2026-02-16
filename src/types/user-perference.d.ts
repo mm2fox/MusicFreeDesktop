@@ -19,6 +19,16 @@ declare namespace IUserPreference {
     inlineLyricFontSize: string;
     /** 展示翻译 */
     showTranslation: boolean;
+    /** 小米账号用户名 */
+    xiaoaiUsername: string;
+    /** 小米账号密码 */
+    xiaoaiPassword: string;
+    /** 小米登录模式 */
+    xiaoaiLoginMode: "direct" | "server";
+    /** xiaomusic 服务器地址 */
+    xiaoaiServerUrl: string;
+    /** 小米设备ID */
+    xiaoaiDeviceId: string;
   }
 
   interface IDBType {

@@ -8,8 +8,9 @@
 
 .setting-item-label {
   font-size: 14px;
-  color: var(--text-secondary);
+  color: var(--textColor);
   margin-bottom: 8px;
+  opacity: 0.7;
 }
 
 .setting-item-content {
@@ -28,7 +29,7 @@
   gap: 6px;
   cursor: pointer;
   font-size: 14px;
-  color: var(--text-primary);
+  color: var(--textColor);
 }
 
 .xiaoai-login-form {
@@ -41,19 +42,20 @@
 
 .input-field {
   padding: 8px 12px;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--dividerColor);
   border-radius: 4px;
   font-size: 14px;
-  color: var(--text-primary);
-  background: var(--bg-primary);
+  color: var(--textColor);
+  background: var(--placeholderColor);
 
   &:focus {
     outline: none;
-    border-color: var(--primary-color);
+    border-color: var(--primaryColor);
   }
 
   &::placeholder {
-    color: var(--text-placeholder);
+    color: var(--textColor);
+    opacity: 0.5;
   }
 }
 
@@ -65,11 +67,14 @@
   font-size: 14px;
   cursor: pointer;
   transition: all 0.2s;
+  min-width: 80px;
+  text-align: center;
+  font-weight: 500;
 }
 
 .login-button {
-  background: var(--primary-color);
-  color: white;
+  background: var(--primaryColor);
+  color: white !important;
 
   &:hover:not(:disabled) {
     opacity: 0.9;
@@ -82,8 +87,8 @@
 }
 
 .logout-button {
-  background: var(--danger-color);
-  color: white;
+  background: var(--dangerColor);
+  color: white !important;
 
   &:hover {
     opacity: 0.9;
@@ -100,19 +105,19 @@
 
 .device-item {
   padding: 12px 16px;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--dividerColor);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s;
 
   &:hover:not(.offline) {
-    border-color: var(--primary-color);
-    background: var(--bg-hover);
+    border-color: var(--primaryColor);
+    background: var(--listHoverColor);
   }
 
   &.selected {
-    border-color: var(--primary-color);
-    background: var(--bg-selected);
+    border-color: var(--primaryColor);
+    background: var(--listActiveColor);
   }
 
   &.offline {
@@ -124,7 +129,7 @@
 .device-name {
   font-size: 14px;
   font-weight: 500;
-  color: var(--text-primary);
+  color: var(--textColor);
   margin-bottom: 4px;
 }
 
@@ -132,11 +137,12 @@
   display: flex;
   gap: 8px;
   font-size: 12px;
-  color: var(--text-secondary);
+  color: var(--textColor);
+  opacity: 0.6;
 }
 
 .offline-badge {
-  color: var(--danger-color);
+  color: var(--dangerColor);
   font-weight: 500;
 }
 
@@ -150,19 +156,20 @@
 .lan-ip-input {
   flex: 1;
   padding: 6px 10px;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--dividerColor);
   border-radius: 4px;
   font-size: 13px;
-  background: var(--bg-primary);
-  color: var(--text-primary);
+  background: var(--placeholderColor);
+  color: var(--textColor);
 
   &:focus {
     outline: none;
-    border-color: var(--primary-color);
+    border-color: var(--primaryColor);
   }
 
   &::placeholder {
-    color: var(--text-placeholder);
+    color: var(--textColor);
+    opacity: 0.5;
     font-size: 12px;
   }
 }
@@ -172,8 +179,8 @@
   border: none;
   border-radius: 4px;
   font-size: 12px;
-  background: var(--primary-color);
-  color: white;
+  background: var(--primaryColor);
+  color: white !important;
   cursor: pointer;
   transition: opacity 0.2s;
 
@@ -181,4 +188,3 @@
     opacity: 0.9;
   }
 }
-
