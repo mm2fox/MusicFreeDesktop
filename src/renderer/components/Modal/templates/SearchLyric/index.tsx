@@ -8,6 +8,11 @@ import { Tab } from "@headlessui/react";
 import SearchResult from "./searchResult";
 import { useTranslation } from "react-i18next";
 import PluginManager from "@shared/plugin-manager/renderer";
+import { dialogUtil, fsUtil } from "@shared/utils/renderer";
+import { linkLyric } from "@/renderer/core/link-lyric";
+import { toast } from "react-toastify";
+import { hideModal } from "../..";
+import trackPlayer from "@renderer/core/track-player";
 
 interface IProps {
     defaultTitle?: string;
@@ -31,6 +36,45 @@ export default function SearchLyric(props: IProps) {
             searchLyric(inputSearch);
         }
     }, []);
+
+    const handleLoadLocalLyric = async () => {
+        const result = await dialogUtil.showOpenDialog({
+            title: t("modal.load_local_lyric"),
+            filters: [
+                { name: "LRC", extensions: ["lrc"] },
+                { name: "TXT", extensions: ["txt"] },
+            ],
+            properties: ["openFile"],
+        });
+
+        if (result.canceled || !result.filePaths?.length) {
+            return;
+        }
+
+        const filePath = result.filePaths[0];
+        try {
+            const lrcContent = await fsUtil.readFile(filePath, "utf-8");
+            const fileName = filePath.split(/[/\\]/).pop() || "Local Lyric";
+            const localLyricItem: ILyric.ILyricItem = {
+                id: `local-${Date.now()}`,
+                platform: "local",
+                title: fileName.replace(/\.(lrc|txt)$/i, ""),
+                artist: "",
+                rawLrcTxt: lrcContent,
+            };
+
+            if (musicItem) {
+                await linkLyric(musicItem, localLyricItem);
+                if (trackPlayer.isCurrentMusic(musicItem)) {
+                    trackPlayer.fetchCurrentLyric(true);
+                }
+                toast.success(t("modal.media_lyric_linked"));
+                hideModal();
+            }
+        } catch (e) {
+            toast.error(`${t("modal.media_lyric_link_failed")} ${e?.message ?? e}`);
+        }
+    };
 
     return (
         <Base defaultClose withBlur={false}>
@@ -59,6 +103,15 @@ export default function SearchLyric(props: IProps) {
                         >
                             <SvgAsset iconName="magnifying-glass"></SvgAsset>
                         </div>
+                    </div>
+                    <div
+                        className="load-local-lyric-btn"
+                        role="button"
+                        data-type="normalButton"
+                        onClick={handleLoadLocalLyric}
+                    >
+                        <SvgAsset iconName="document-plus"></SvgAsset>
+                        <span>{t("modal.load_local_lyric")}</span>
                     </div>
                 </Base.Header>
                 <Tab.Group>

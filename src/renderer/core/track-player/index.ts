@@ -660,11 +660,17 @@ class TrackPlayer {
             let lyricSource: ILyric.ILyricSource;
 
             if (linkedLyricItem) {
-                lyricSource = await PluginManager.callPluginDelegateMethod(
-                    linkedLyricItem,
-                    "getLyric",
-                    linkedLyricItem,
-                );
+                if ((linkedLyricItem as any).rawLrcTxt) {
+                    lyricSource = {
+                        rawLrc: (linkedLyricItem as any).rawLrcTxt,
+                    };
+                } else {
+                    lyricSource = await PluginManager.callPluginDelegateMethod(
+                        linkedLyricItem,
+                        "getLyric",
+                        linkedLyricItem,
+                    );
+                }
             }
             if (!lyricSource && this.isCurrentMusic(currentMusic)) {
                 lyricSource = await PluginManager.callPluginDelegateMethod(

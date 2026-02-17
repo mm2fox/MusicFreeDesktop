@@ -225,6 +225,7 @@
     "subscription_save_success": "訂閱地址已保存",
     "search_lyric": "搜尋歌詞",
     "search_lyric_result_empty": "未找到相關結果",
+    "load_local_lyric": "載入本地歌詞",
     "media_lyric_linked": "歌詞已鏈接~",
     "media_lyric_link_failed": "鏈接歌詞失敗：",
     "new_version_found": "發現新版本",
@@ -395,5 +396,14 @@
     "how_to_submit_new_theme": "💡如何提交新主題: 主題市場中的主題與 <Github>MusicFreeThemePacks</Github> 倉庫同步，如果需要提交新主題請直接提PR。",
     "load_remote_theme_error": "出錯啦...",
     "invalid_theme": "主題無效: {{reason}}"
+  },
+  "music_info": {
+    "title": "歌曲資訊",
+    "basic_info": "基本資訊",
+    "extra_info": "其他資訊",
+    "album_info": "專輯資訊",
+    "release_date": "發行日期",
+    "searching": "正在搜尋...",
+    "web_search_results": "網路搜尋結果"
   }
 }

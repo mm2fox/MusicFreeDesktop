@@ -204,6 +204,7 @@
     "subscription_save_success": "已保存订阅地址",
     "search_lyric": "搜索歌词",
     "search_lyric_result_empty": "搜索结果为空",
+    "load_local_lyric": "载入本地歌词",
     "media_lyric_linked": "已关联歌词~",
     "media_lyric_link_failed": "关联歌词失败:",
     "new_version_found": "发现新版本",
@@ -373,5 +374,14 @@
     "how_to_submit_new_theme": "💡如何提交新主题: 主题市场中的主题与 <Github>MusicFreeThemePacks</Github> 仓库同步，如果需要提交新主题请直接提PR。",
     "load_remote_theme_error": "出错啦...",
     "invalid_theme": "主题无效: {{reason}}"
+  },
+  "music_info": {
+    "title": "歌曲信息",
+    "basic_info": "基本信息",
+    "extra_info": "其他信息",
+    "album_info": "专辑信息",
+    "release_date": "发行日期",
+    "searching": "正在搜索...",
+    "web_search_results": "网络搜索结果"
   }
 }

@@ -225,6 +225,7 @@
     "subscription_save_success": "Subscription Address Saved",
     "search_lyric": "Search Lyric",
     "search_lyric_result_empty": "No Search Results",
+    "load_local_lyric": "Load Local Lyric",
     "media_lyric_linked": "Lyric Linked~",
     "media_lyric_link_failed": "Link Lyric Failed:",
     "new_version_found": "New Version Found",
@@ -395,5 +396,14 @@
     "how_to_submit_new_theme": "💡How to submit a new theme: The themes in the theme marketplace are synchronized with the <Github>MusicFreeThemePacks</Github> repository. If you need to submit a new theme, please make a pull request directly.",
     "load_remote_theme_error": "An error occurred...",
     "invalid_theme": "Invalid theme: {{reason}}"
+  },
+  "music_info": {
+    "title": "Song Info",
+    "basic_info": "Basic Info",
+    "extra_info": "Extra Info",
+    "album_info": "Album Info",
+    "release_date": "Release Date",
+    "searching": "Searching...",
+    "web_search_results": "Web Search Results"
   }
 }

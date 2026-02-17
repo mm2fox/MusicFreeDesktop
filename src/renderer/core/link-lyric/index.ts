@@ -19,12 +19,15 @@ export async function linkLyric(
     to: IMusic.IMusicItem,
 ) {
     // 如果歌曲已经入库，更新数据库中的meta信息
-    const filteredMusicItem: IMedia.IUnique = {
+    const filteredMusicItem: IMedia.IUnique & { rawLrcTxt?: string } = {
         platform: to.platform,
         id: to.id,
     };
     for (const toPk of PluginManager.getPluginPrimaryKey(to)) {
         filteredMusicItem[toPk] = to[toPk];
+    }
+    if ((to as ILyric.ILyricItem).rawLrcTxt) {
+        filteredMusicItem.rawLrcTxt = (to as ILyric.ILyricItem).rawLrcTxt;
     }
     const fromPk = getMediaPrimaryKey(from);
     linkLyricCache.set(fromPk, filteredMusicItem);
@@ -65,7 +68,7 @@ export async function unlinkLyric(musicItem: IMusic.IMusicItem) {
                 );
             }
         });
-    } catch {}
+    } catch { }
 }
 
 export async function getLinkedLyric(musicItem: IMusic.IMusicItem) {
