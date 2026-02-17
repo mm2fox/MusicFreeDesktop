@@ -36,6 +36,7 @@ import isLocalMusic from "@/renderer/utils/is-local-music";
 import localMusicListStore from "@/renderer/core/local-music/store";
 import AppConfig from "@shared/app-config/renderer";
 import { shellUtil } from "@shared/utils/renderer";
+import { navigateTo } from "@/renderer/utils/navigate";
 
 interface IMusicListProps {
     /** 展示的播放列表 */
@@ -164,6 +165,10 @@ export function showMusicContextMenu(
                     musicItems.artist ?? i18n.t("media.unknown_artist")
                 }`,
                 icon: "user",
+                onClick() {
+                    const artist = musicItems.artist ?? i18n.t("media.unknown_artist");
+                    navigateTo(`/main/search/${encodeURIComponent(artist)}`);
+                },
             },
             {
                 title: `${i18n.t("media.media_type_album")}: ${
@@ -171,6 +176,11 @@ export function showMusicContextMenu(
                 }`,
                 icon: "album",
                 show: !!musicItems.album,
+                onClick() {
+                    if (musicItems.album) {
+                        navigateTo(`/main/search/${encodeURIComponent(musicItems.album)}`);
+                    }
+                },
             },
             {
                 divider: true,
@@ -308,7 +318,7 @@ export function showMusicContextMenu(
             show: !isArray && !Downloader.isDownloaded(musicItems) && musicItems?.platform !== localPluginName && (() => {
                 const localMusicList = localMusicListStore.getValue();
                 const match = localMusicList.find(
-                    local => local.title === musicItems.title && local.artist === musicItems.artist
+                    local => local.title === musicItems.title && local.artist === musicItems.artist,
                 );
                 return !!match;
             })(),
@@ -317,7 +327,7 @@ export function showMusicContextMenu(
                     if (!isArray) {
                         const localMusicList = localMusicListStore.getValue();
                         const match = localMusicList.find(
-                            local => local.title === musicItems.title && local.artist === musicItems.artist
+                            local => local.title === musicItems.title && local.artist === musicItems.artist,
                         );
                         
                         if (match && (match as any).$$localPath) {

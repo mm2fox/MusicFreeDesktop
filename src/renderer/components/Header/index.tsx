@@ -2,7 +2,7 @@ import SvgAsset from "../SvgAsset";
 import "./index.scss";
 import { showModal } from "../Modal";
 import { useNavigate } from "react-router-dom";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import HeaderNavigator from "./widgets/Navigator";
 import MusicDetail from "../MusicDetail";
 import Condition from "../Condition";
@@ -13,6 +13,7 @@ import useAppConfig from "@/hooks/useAppConfig";
 import AppConfig from "@shared/app-config/renderer";
 import { appUtil, appWindowUtil } from "@shared/utils/renderer";
 import { musicDetailShownStore } from "@renderer/components/MusicDetail/store";
+import { setNavigateRef } from "@/renderer/utils/navigate";
 
 export default function AppHeader() {
     const navigate = useNavigate();
@@ -23,6 +24,10 @@ export default function AppHeader() {
     const isMiniMode = useAppConfig("private.minimode");
 
     const { t } = useTranslation();
+
+    useEffect(() => {
+        setNavigateRef(navigate);
+    }, [navigate]);
 
     if (!showSearchHistory) {
         isHistoryFocusRef.current = false;
