@@ -47,6 +47,22 @@ export async function linkLyric(
     } catch (e) {
         console.log(e);
     }
+
+    try {
+        await musicSheetDB.transaction("rw", musicSheetDB.localMusicStore, async () => {
+            const localMusicItem = await musicSheetDB.localMusicStore.get([
+                from.platform,
+                from.id,
+            ]);
+            if (localMusicItem) {
+                await musicSheetDB.localMusicStore.put(
+                    setInternalData(localMusicItem, linkLyricKey, filteredMusicItem, true),
+                );
+            }
+        });
+    } catch (e) {
+        console.log(e);
+    }
 }
 
 export async function unlinkLyric(musicItem: IMusic.IMusicItem) {
@@ -65,6 +81,20 @@ export async function unlinkLyric(musicItem: IMusic.IMusicItem) {
             if (dbMusicItem) {
                 await musicSheetDB.musicStore.put(
                     setInternalData(dbMusicItem, linkLyricKey, undefined, true),
+                );
+            }
+        });
+    } catch { }
+
+    try {
+        await musicSheetDB.transaction("rw", musicSheetDB.localMusicStore, async () => {
+            const dbLocalMusicItem = await musicSheetDB.localMusicStore.get([
+                musicItem.platform,
+                musicItem.id,
+            ]);
+            if (dbLocalMusicItem) {
+                await musicSheetDB.localMusicStore.put(
+                    setInternalData(dbLocalMusicItem, linkLyricKey, undefined, true),
                 );
             }
         });
@@ -90,6 +120,29 @@ export async function getLinkedLyric(musicItem: IMusic.IMusicItem) {
                 ]);
                 if (dbMusicItem) {
                     const linkedLyric = getInternalData(dbMusicItem, linkLyricKey);
+                    return linkedLyric;
+                }
+            },
+        );
+        if (result) {
+            linkLyricCache.set(pk, result);
+            return result;
+        }
+    } catch (e) {
+        console.log(e);
+    }
+
+    try {
+        const result = await musicSheetDB.transaction(
+            "r",
+            musicSheetDB.localMusicStore,
+            async () => {
+                const dbLocalMusicItem = await musicSheetDB.localMusicStore.get([
+                    musicItem.platform,
+                    musicItem.id,
+                ]);
+                if (dbLocalMusicItem) {
+                    const linkedLyric = getInternalData(dbLocalMusicItem, linkLyricKey);
                     return linkedLyric;
                 }
             },
