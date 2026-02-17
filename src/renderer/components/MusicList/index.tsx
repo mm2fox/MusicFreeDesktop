@@ -33,6 +33,7 @@ import musicSheetDB from "@/renderer/core/db/music-sheet-db";
 import DragReceiver, { startDrag } from "../DragReceiver";
 import { i18n } from "@/shared/i18n/renderer";
 import isLocalMusic from "@/renderer/utils/is-local-music";
+import localMusicListStore from "@/renderer/core/local-music/store";
 import AppConfig from "@shared/app-config/renderer";
 import { shellUtil } from "@shared/utils/renderer";
 
@@ -288,6 +289,42 @@ export function showMusicContextMenu(
                         const result = await shellUtil.showItemInFolder(downloadPath);
                         if (!result) {
                             throw new Error();
+                        }
+                    }
+                } catch (e) {
+                    toast.error(
+                        `${i18n.t(
+                            "music_list_context_menu.reveal_local_music_in_file_explorer_fail",
+                        )} ${e?.message ?? ""}`,
+                    );
+                }
+            },
+        },
+        {
+            title: i18n.t(
+                "music_list_context_menu.reveal_local_music_in_file_explorer",
+            ),
+            icon: "folder-open",
+            show: !isArray && !Downloader.isDownloaded(musicItems) && musicItems?.platform !== localPluginName && (() => {
+                const localMusicList = localMusicListStore.getValue();
+                const match = localMusicList.find(
+                    local => local.title === musicItems.title && local.artist === musicItems.artist
+                );
+                return !!match;
+            })(),
+            async onClick() {
+                try {
+                    if (!isArray) {
+                        const localMusicList = localMusicListStore.getValue();
+                        const match = localMusicList.find(
+                            local => local.title === musicItems.title && local.artist === musicItems.artist
+                        );
+                        
+                        if (match && (match as any).$$localPath) {
+                            const result = await shellUtil.showItemInFolder((match as any).$$localPath);
+                            if (!result) {
+                                throw new Error();
+                            }
                         }
                     }
                 } catch (e) {

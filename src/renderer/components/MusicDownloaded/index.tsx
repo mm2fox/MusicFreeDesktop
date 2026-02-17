@@ -7,7 +7,7 @@ import Downloader from "@/renderer/core/downloader";
 import { useTranslation } from "react-i18next";
 import localMusicListStore from "@/renderer/core/local-music/store";
 import { showContextMenu, IContextMenuItem } from "@/renderer/components/ContextMenu";
-import shellUtil from "@/shared/utils/renderer";
+import { shellUtil } from "@/shared/utils/renderer";
 import { toast } from "react-toastify";
 
 interface IMusicDownloadedProps {
