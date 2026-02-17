@@ -31,7 +31,7 @@ export class MusicServer {
                 const address = this.server?.address();
                 if (address && typeof address === "object") {
                     this.port = address.port;
-                    logger.logInfo(`音乐服务器启动成功`, { port: this.port });
+                    logger.logInfo("音乐服务器启动成功", { port: this.port });
                     resolve(this.port);
                 } else {
                     reject(new Error("无法获取服务器地址"));
@@ -101,7 +101,7 @@ export class MusicServer {
             const parsedUrl = url.parse(req.url || "", true);
             const pathname = parsedUrl.pathname || "";
 
-            logger.logInfo(`音乐服务器收到请求`, { method: req.method, path: pathname });
+            logger.logInfo("音乐服务器收到请求", { method: req.method, path: pathname });
 
             // 处理音乐文件请求 /music/{filepath}
             if (pathname.startsWith("/music/")) {
@@ -147,7 +147,7 @@ export class MusicServer {
         try {
             // 检查文件是否存在
             if (!fs.existsSync(filePath)) {
-                logger.logError(`音乐文件不存在`, new Error(`File not found: ${filePath}`));
+                logger.logError("音乐文件不存在", new Error(`File not found: ${filePath}`));
                 res.writeHead(404, { "Content-Type": "text/plain" });
                 res.end("File Not Found");
                 return;
@@ -187,16 +187,16 @@ export class MusicServer {
             stream.pipe(res);
 
             stream.on("error", (error) => {
-                logger.logError(`读取文件失败`, error, { filePath });
+                logger.logError("读取文件失败", error, { filePath });
                 // 如果响应还没结束，发送错误
                 if (!res.writableEnded) {
                     res.end();
                 }
             });
 
-            logger.logInfo(`正在提供音乐文件`, { filePath, size: stat.size, contentType });
+            logger.logInfo("正在提供音乐文件", { filePath, size: stat.size, contentType });
         } catch (error) {
-            logger.logError(`提供音乐文件失败`, error as Error, { filePath });
+            logger.logError("提供音乐文件失败", error as Error, { filePath });
             res.writeHead(500, { "Content-Type": "text/plain" });
             res.end("Internal Server Error");
         }
@@ -223,7 +223,7 @@ export class MusicServer {
      */
     private async proxyAudioStream(targetUrl: string, res: http.ServerResponse, req: http.IncomingMessage): Promise<void> {
         try {
-            logger.logInfo(`代理音频请求`, { url: targetUrl });
+            logger.logInfo("代理音频请求", { url: targetUrl });
 
             const parsedTarget = new URL(targetUrl);
             const isHttps = parsedTarget.protocol === "https:";
@@ -265,7 +265,7 @@ export class MusicServer {
                 proxyRes.pipe(res);
 
                 proxyRes.on("error", (error) => {
-                    logger.logError(`代理响应流错误`, error, { url: targetUrl });
+                    logger.logError("代理响应流错误", error, { url: targetUrl });
                     if (!res.writableEnded) {
                         res.end();
                     }
@@ -273,7 +273,7 @@ export class MusicServer {
             });
 
             proxyReq.on("error", (error) => {
-                logger.logError(`代理请求失败`, error, { url: targetUrl });
+                logger.logError("代理请求失败", error, { url: targetUrl });
                 if (!res.headersSent) {
                     res.writeHead(502, { "Content-Type": "text/plain" });
                     res.end("Proxy Error");
@@ -281,7 +281,7 @@ export class MusicServer {
             });
 
             proxyReq.setTimeout(30000, () => {
-                logger.logError(`代理请求超时`, new Error("Proxy timeout"), { url: targetUrl });
+                logger.logError("代理请求超时", new Error("Proxy timeout"), { url: targetUrl });
                 proxyReq.destroy();
                 if (!res.headersSent) {
                     res.writeHead(504, { "Content-Type": "text/plain" });
@@ -291,7 +291,7 @@ export class MusicServer {
 
             proxyReq.end();
         } catch (error) {
-            logger.logError(`代理音频失败`, error as Error, { url: targetUrl });
+            logger.logError("代理音频失败", error as Error, { url: targetUrl });
             if (!res.headersSent) {
                 res.writeHead(500, { "Content-Type": "text/plain" });
                 res.end("Internal Server Error");

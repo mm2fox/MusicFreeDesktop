@@ -34,7 +34,7 @@ const downloadingMusicStore = new Store<Array<IMusic.IMusicItem>>([]);
 const downloadingProgress = new Map<string, IDownloadStatus>();
 
 type ProxyMarkedFunction<T extends (...args: any) => void> = T &
-  Comlink.ProxyMarked;
+    Comlink.ProxyMarked;
 
 type IOnStateChangeFunc = (data: IDownloadStatus) => void;
 
@@ -152,15 +152,15 @@ async function downloadMusicImpl(
             }
             realQuality = quality;
             break;
-        } catch {}
+        } catch { }
     }
 
     try {
         if (mediaSource?.url) {
-            const ext = mediaSource.url.match(/.*\/.+\.([^./?#]+)/)?.[1] ?? "mp3";
+            const ext = mediaSource.url.match(/.*\/.+\.([^./?#&]+)/)?.[1] ?? "mp3";
             const downloadBasePath =
-        AppConfig.getConfig("download.path") ??
-        getGlobalContext().appPath.downloads;
+                AppConfig.getConfig("download.path") ??
+                getGlobalContext().appPath.downloads;
             const downloadPath = window.path.resolve(
                 downloadBasePath,
                 `./${fileName}.${ext}`,

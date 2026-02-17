@@ -409,7 +409,7 @@ class XiaoaiService {
                         deviceID: deviceId,
                         name: device.name,
                         hardware: hardware,
-                        presence: device.presence
+                        presence: device.presence,
                     });
                     return {
                         deviceID: deviceId,
@@ -476,7 +476,7 @@ class XiaoaiService {
                 title: options.title,
                 userId: this.userId,
                 hasServiceToken: !!this.serviceToken,
-                serviceTokenPreview: this.serviceToken ? this.serviceToken.substring(0, 20) + "..." : "null"
+                serviceTokenPreview: this.serviceToken ? this.serviceToken.substring(0, 20) + "..." : "null",
             });
 
             if (!this.serviceToken) {

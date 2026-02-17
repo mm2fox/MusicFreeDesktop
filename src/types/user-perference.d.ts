@@ -29,6 +29,8 @@ declare namespace IUserPreference {
     xiaoaiServerUrl: string;
     /** 小米设备ID */
     xiaoaiDeviceId: string;
+    /** 小米设备局域网IP映射 */
+    xiaoaiDeviceLanIps: Record<string, string>;
   }
 
   interface IDBType {

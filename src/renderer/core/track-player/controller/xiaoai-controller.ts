@@ -167,7 +167,7 @@ class XiaoaiController extends ControllerBase implements IAudioController {
             url: this._currentUrl,
             trackSourceUrl: trackSource.url,
             musicItemUrl: musicItem.url,
-            title: musicItem.title
+            title: musicItem.title,
         });
     }
 

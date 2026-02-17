@@ -39,11 +39,13 @@ export default function PlayMusic() {
             const savedPassword = getUserPreference("xiaoaiPassword") || "";
             const savedLoginMode = getUserPreference("xiaoaiLoginMode") || "direct";
             const savedServerUrl = getUserPreference("xiaoaiServerUrl") || "http://192.168.31.29:8090";
+            const savedLanIps = getUserPreference("xiaoaiDeviceLanIps") || {};
 
             setXiaoaiUsername(savedUsername);
             setXiaoaiPassword(savedPassword);
             setLoginMode(savedLoginMode);
             setXiaoaiServerUrl(savedServerUrl);
+            setDeviceLanIps(savedLanIps);
 
             const loggedIn = await XiaoaiService.isLoggedIn();
             if (loggedIn) {
@@ -167,6 +169,8 @@ export default function PlayMusic() {
         const ip = deviceLanIps[deviceId];
         if (ip) {
             await XiaoaiService.setDeviceLanIp(deviceId, ip);
+            const newLanIps = { ...deviceLanIps, [deviceId]: ip };
+            setUserPreference("xiaoaiDeviceLanIps", newLanIps);
             alert(`已保存设备局域网 IP: ${ip}`);
         }
     };
@@ -358,7 +362,9 @@ export default function PlayMusic() {
                                                     className={`device-item ${selectedDeviceId === device.deviceID ? "selected" : ""} ${!device.isOnline ? "offline" : ""}`}
                                                     onClick={() => {
                                                         console.log("点击设备:", device.deviceID, "在线状态:", device.isOnline);
-                                                        device.isOnline && handleDeviceSelect(device.deviceID);
+                                                        if (device.isOnline) {
+                                                            handleDeviceSelect(device.deviceID);
+                                                        }
                                                     }}
                                                 >
                                                     <div className="device-name">{device.name}</div>
@@ -371,7 +377,7 @@ export default function PlayMusic() {
                                                             <input
                                                                 type="text"
                                                                 placeholder="局域网 IP (如: 192.168.31.100)"
-                                                                defaultValue={deviceLanIps[device.deviceID] || ""}
+                                                                value={deviceLanIps[device.deviceID] || ""}
                                                                 onChange={(e) => handleLanIpChange(device.deviceID, e.target.value)}
                                                                 onClick={(e) => e.stopPropagation()}
                                                                 className="lan-ip-input"

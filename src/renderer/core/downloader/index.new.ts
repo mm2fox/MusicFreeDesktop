@@ -200,7 +200,7 @@ class Downloader extends EventEmitter<IDownloaderEvent> {
         }
 
         if (mediaSource?.url) {
-            const ext = mediaSource.url.match(/.*\/.+\.([^./?#]+)/)?.[1] ?? "mp3";
+            const ext = mediaSource.url.match(/.*\/.+\.([^./?#&]+)/)?.[1] ?? "mp3";
 
             const downloadPath = window.path.resolve(
                 downloadBasePath,
