@@ -1,7 +1,7 @@
 import { defaultFont } from "@/common/constant";
 import { IAppConfig } from "@/types/app-config";
 
-const _defaultAppConfig: IAppConfig =  {
+const _defaultAppConfig: IAppConfig = {
     "$schema-version": 1,
     "playMusic.whenQualityMissing": "lower",
     "playMusic.defaultQuality": "standard",
@@ -28,6 +28,7 @@ const _defaultAppConfig: IAppConfig =  {
     "normal.musicListColumnsShown": [],
     "backup.resumeBehavior": "append",
     "normal.language": "zh-CN",
+    "musicInfo.searchEngine": "baidu",
 };
 
 

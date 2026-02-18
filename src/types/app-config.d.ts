@@ -93,6 +93,9 @@ interface _IAppConfig {
     /** 本地音乐配置 */
     "localMusic.watchDir": string[];
 
+    /** 音乐信息搜索引擎 */
+    "musicInfo.searchEngine": "baidu" | "bing";
+
     /** 不需要用户配置的数据 */
     "private.mainWindowSize": ICommon.ISize;
     "private.lyricWindowPosition": ICommon.IPoint;

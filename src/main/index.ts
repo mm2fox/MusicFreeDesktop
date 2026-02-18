@@ -22,6 +22,7 @@ import messageBus from "@shared/message-bus/main";
 import shortCut from "@shared/short-cut/main";
 import voidCallback from "@/common/void-callback";
 import { xiaoaiService } from "./xiaoai-service";
+import MusicSearchUtil from "@shared/music-search/main";
 
 // portable
 if (process.platform === "win32") {
@@ -118,6 +119,7 @@ app.whenReady().then(async () => {
     TrayManager.setup(windowManager);
     WindowDrag.setup();
     shortCut.setup().then(voidCallback);
+    MusicSearchUtil.setup();
     xiaoaiService.init();
     logger.logPerf("Create Main Window");
     // Setup message bus & app state

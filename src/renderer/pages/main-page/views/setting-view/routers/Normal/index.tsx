@@ -8,12 +8,25 @@ import { changeLang, getLangList } from "@/shared/i18n/renderer";
 import { toast } from "react-toastify";
 import { useTranslation } from "react-i18next";
 import { getGlobalContext } from "@/shared/global-context/renderer";
+import MusicSearch from "@/shared/music-search/renderer";
+import { useEffect, useState } from "react";
 
 
 export default function Normal() {
     const { t } = useTranslation();
-
     const allLangs = getLangList();
+    const [currentEngine, setCurrentEngine] = useState<"baidu" | "bing">("baidu");
+
+    useEffect(() => {
+        MusicSearch.getSearchEngine().then((engine) => {
+            setCurrentEngine(engine);
+        });
+    }, []);
+
+    const handleEngineChange = async (engine: "baidu" | "bing") => {
+        await MusicSearch.setSearchEngine(engine);
+        setCurrentEngine(engine);
+    };
 
     return (
         <div className="setting-view--normal-container">
@@ -81,6 +94,16 @@ export default function Normal() {
                 }}
                 options={allLangs}
             ></ListBoxSettingItem>
+            <RadioGroupSettingItem
+                label={t("settings.normal.search_engine")}
+                keyPath="musicInfo.searchEngine"
+                options={[
+                    "baidu",
+                    "bing",
+                ]}
+                renderItem={(item) => t("settings.normal.search_engine_" + item)}
+                onChange={handleEngineChange}
+            ></RadioGroupSettingItem>
         </div>
     );
 }

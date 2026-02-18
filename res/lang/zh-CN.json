@@ -254,7 +254,10 @@
       "max_history_length": "搜索历史记录最多保存条数",
       "music_list_hide_columns": "歌曲列表隐藏列",
       "languages": "语言",
-      "toast_switch_language_fail": "切换语言失败"
+      "toast_switch_language_fail": "切换语言失败",
+      "search_engine": "歌曲信息搜索引擎",
+      "search_engine_baidu": "百度",
+      "search_engine_bing": "必应"
     },
     "play_music": {
       "case_sensitive_in_search": "歌单内搜索时区分大小写",
@@ -378,10 +381,12 @@
   "music_info": {
     "title": "歌曲信息",
     "basic_info": "基本信息",
-    "extra_info": "其他信息",
-    "album_info": "专辑信息",
-    "release_date": "发行日期",
-    "searching": "正在搜索...",
-    "web_search_results": "网络搜索结果"
+    "web_search_results": "网络搜索",
+    "search_by_title": "按标题搜索",
+    "search_by_artist": "按歌手搜索: {{artist}}",
+    "search_by_album": "按专辑搜索: {{album}}",
+    "results": "条结果",
+    "no_results": "暂无搜索结果",
+    "open_in_search_engine": "在{{engine}}中搜索"
   }
 }

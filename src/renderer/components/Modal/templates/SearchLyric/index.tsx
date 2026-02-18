@@ -60,7 +60,7 @@ export default function SearchLyric(props: IProps) {
                 platform: "local",
                 title: fileName.replace(/\.(lrc|txt)$/i, ""),
                 artist: "",
-                rawLrcTxt: lrcContent,
+                rawLrcTxt: lrcContent.toString(),
             };
 
             if (musicItem) {

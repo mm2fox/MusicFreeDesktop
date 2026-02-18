@@ -17,6 +17,7 @@ import Condition, { IfTruthy } from "../Condition";
 import Empty from "../Empty";
 import MusicFavorite from "../MusicFavorite";
 import MusicDownloaded from "../MusicDownloaded";
+import MusicInfo from "../MusicInfo";
 import { localPluginName, RequestStateCode } from "@/common/constant";
 import BottomLoadingState from "../BottomLoadingState";
 import { IContextMenuItem, showContextMenu } from "../ContextMenu";
@@ -71,13 +72,14 @@ const columnHelper = createColumnHelper<IMusic.IMusicItem>();
 const columnDef: ColumnDef<IMusic.IMusicItem>[] = [
     columnHelper.display({
         id: "like",
-        size: 42,
-        minSize: 42,
-        maxSize: 42,
+        size: 64,
+        minSize: 64,
+        maxSize: 64,
         cell: (info) => (
             <div className="music-list-operations">
                 <MusicFavorite musicItem={info.row.original} size={18}></MusicFavorite>
                 <MusicDownloaded musicItem={info.row.original}></MusicDownloaded>
+                <MusicInfo musicItem={info.row.original} size={18}></MusicInfo>
             </div>
         ),
         enableResizing: false,

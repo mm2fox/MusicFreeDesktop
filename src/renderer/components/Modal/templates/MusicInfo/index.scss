@@ -1,0 +1,199 @@
+.modal--music-info-container {
+  width: 520px;
+  max-height: 80vh;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+
+  .music-info-content {
+    display: flex;
+    gap: 16px;
+    padding: 16px;
+    overflow-y: auto;
+
+    .music-info-artwork {
+      flex-shrink: 0;
+      width: 120px;
+      height: 120px;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+    }
+
+    .music-info-details {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+
+      .info-section {
+        .section-title {
+          font-size: 0.85rem;
+          font-weight: 600;
+          color: var(--primaryColor);
+          margin: 0 0 8px 0;
+          padding-bottom: 4px;
+          border-bottom: 1px solid var(--dividerColor);
+        }
+
+        .info-list {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+
+          .info-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8rem;
+
+            .info-label {
+              flex-shrink: 0;
+              display: flex;
+              align-items: center;
+              gap: 4px;
+              min-width: 70px;
+              color: var(--textSecondaryColor);
+              font-weight: 500;
+
+              svg {
+                opacity: 0.7;
+              }
+            }
+
+            .info-value {
+              flex: 1;
+              color: var(--textColor);
+              overflow: hidden;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+            }
+          }
+        }
+
+        .search-categories {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+
+          .search-category {
+            border-radius: 6px;
+            background: var(--hoverColor, rgba(0, 0, 0, 0.03));
+            overflow: hidden;
+
+            .category-header {
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              padding: 8px 10px;
+              cursor: pointer;
+              transition: background-color 0.2s ease;
+
+              &:hover {
+                background: var(--listHoverColor, rgba(0, 0, 0, 0.06));
+              }
+
+              .category-info {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                font-size: 0.8rem;
+                color: var(--textColor);
+
+                svg {
+                  opacity: 0.6;
+                }
+              }
+
+              .category-meta {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                font-size: 0.75rem;
+                color: var(--textSecondaryColor);
+
+                .result-count {
+                  opacity: 0.8;
+                }
+              }
+            }
+
+            .category-results {
+              border-top: 1px solid var(--dividerColor, rgba(0, 0, 0, 0.08));
+              max-height: 200px;
+              overflow-y: auto;
+
+              .search-engine-link {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                padding: 8px 10px;
+                cursor: pointer;
+                background: var(--primaryColor, #e74c3c);
+                color: white;
+                font-size: 0.75rem;
+                font-weight: 500;
+                transition: opacity 0.2s ease;
+
+                &:hover {
+                  opacity: 0.85;
+                }
+
+                svg {
+                  opacity: 0.9;
+                }
+              }
+
+              .result-item {
+                padding: 8px 10px;
+                cursor: pointer;
+                transition: background-color 0.2s ease;
+                border-bottom: 1px solid var(--dividerColor, rgba(0, 0, 0, 0.04));
+
+                &:last-child {
+                  border-bottom: none;
+                }
+
+                &:hover {
+                  background: var(--listHoverColor, rgba(0, 0, 0, 0.06));
+                }
+
+                .result-title {
+                  font-size: 0.75rem;
+                  color: var(--primaryColor);
+                  margin-bottom: 2px;
+                  overflow: hidden;
+                  text-overflow: ellipsis;
+                  white-space: nowrap;
+                }
+
+                .result-snippet {
+                  font-size: 0.7rem;
+                  color: var(--textSecondaryColor);
+                  overflow: hidden;
+                  text-overflow: ellipsis;
+                  white-space: nowrap;
+                }
+              }
+
+              .no-results {
+                padding: 12px;
+                text-align: center;
+                font-size: 0.75rem;
+                color: var(--textSecondaryColor);
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -276,7 +276,10 @@
       "max_history_length": "搜尋歷史記錄最大數量",
       "music_list_hide_columns": "歌曲列表隱藏列",
       "languages": "語言",
-      "toast_switch_language_fail": "切換語言失敗"
+      "toast_switch_language_fail": "切換語言失敗",
+      "search_engine": "歌曲資訊搜尋引擎",
+      "search_engine_baidu": "百度",
+      "search_engine_bing": "必應"
     },
     "play_music": {
       "case_sensitive_in_search": "搜尋歌單時區分大小寫",
@@ -400,10 +403,12 @@
   "music_info": {
     "title": "歌曲資訊",
     "basic_info": "基本資訊",
-    "extra_info": "其他資訊",
-    "album_info": "專輯資訊",
-    "release_date": "發行日期",
-    "searching": "正在搜尋...",
-    "web_search_results": "網路搜尋結果"
+    "web_search_results": "網路搜尋",
+    "search_by_title": "按標題搜尋",
+    "search_by_artist": "按歌手搜尋: {{artist}}",
+    "search_by_album": "按專輯搜尋: {{album}}",
+    "results": "條結果",
+    "no_results": "暫無搜尋結果",
+    "open_in_search_engine": "在{{engine}}中搜尋"
   }
 }
