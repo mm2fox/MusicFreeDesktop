@@ -5,8 +5,12 @@
   display: flex;
   flex-direction: column;
 
-  & .components--modal-base-header {
+  & .search-lyric-header-left {
+    display: flex;
+    align-items: center;
     gap: 12px;
+    flex: 1;
+    min-width: 0;
 
     & .search-lyric-input-container {
       flex: 1;

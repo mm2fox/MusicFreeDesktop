@@ -80,38 +80,40 @@ export default function SearchLyric(props: IProps) {
         <Base defaultClose withBlur={false}>
             <div className="modal--search-lyric-container shadow backdrop-color">
                 <Base.Header>
-                    <div className="search-lyric-input-container">
-                        <input
-                            className="search-lyric-input"
-                            placeholder={t("modal.search_lyric")}
-                            value={inputSearch}
-                            onChange={(evt) => {
-                                setInputSearch(evt.target.value);
-                            }}
-                            onKeyDown={(key) => {
-                                if (key.key === "Enter") {
+                    <div className="search-lyric-header-left">
+                        <div className="search-lyric-input-container">
+                            <input
+                                className="search-lyric-input"
+                                placeholder={t("modal.search_lyric")}
+                                value={inputSearch}
+                                onChange={(evt) => {
+                                    setInputSearch(evt.target.value);
+                                }}
+                                onKeyDown={(key) => {
+                                    if (key.key === "Enter") {
+                                        searchLyric(inputSearch);
+                                    }
+                                }}
+                            ></input>
+                            <div
+                                className="search-lyric-search"
+                                role="button"
+                                onClick={() => {
                                     searchLyric(inputSearch);
-                                }
-                            }}
-                        ></input>
-                        <div
-                            className="search-lyric-search"
-                            role="button"
-                            onClick={() => {
-                                searchLyric(inputSearch);
-                            }}
-                        >
-                            <SvgAsset iconName="magnifying-glass"></SvgAsset>
+                                }}
+                            >
+                                <SvgAsset iconName="magnifying-glass"></SvgAsset>
+                            </div>
                         </div>
-                    </div>
-                    <div
-                        className="load-local-lyric-btn"
-                        role="button"
-                        data-type="normalButton"
-                        onClick={handleLoadLocalLyric}
-                    >
-                        <SvgAsset iconName="document-plus"></SvgAsset>
-                        <span>{t("modal.load_local_lyric")}</span>
+                        <div
+                            className="load-local-lyric-btn"
+                            role="button"
+                            data-type="normalButton"
+                            onClick={handleLoadLocalLyric}
+                        >
+                            <SvgAsset iconName="document-plus"></SvgAsset>
+                            <span>{t("modal.load_local_lyric")}</span>
+                        </div>
                     </div>
                 </Base.Header>
                 <Tab.Group>
