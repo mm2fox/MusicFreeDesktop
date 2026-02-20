@@ -13,6 +13,7 @@ import { linkLyric } from "@/renderer/core/link-lyric";
 import { toast } from "react-toastify";
 import { hideModal } from "../..";
 import trackPlayer from "@renderer/core/track-player";
+import { localPluginName } from "@/common/constant";
 
 interface IProps {
     defaultTitle?: string;
@@ -57,7 +58,7 @@ export default function SearchLyric(props: IProps) {
             const fileName = filePath.split(/[/\\]/).pop() || "Local Lyric";
             const localLyricItem: ILyric.ILyricItem = {
                 id: `local-${Date.now()}`,
-                platform: "local",
+                platform: localPluginName,
                 title: fileName.replace(/\.(lrc|txt)$/i, ""),
                 artist: "",
                 rawLrcTxt: lrcContent.toString(),
