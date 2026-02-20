@@ -5,43 +5,48 @@
   display: flex;
   flex-direction: column;
 
-  & .search-lyric-input-container {
-    flex: 1;
-    position: relative;
+  & .components--modal-base-header {
+    gap: 12px;
 
-    & .search-lyric-input {
-      width: 100%;
-      padding-right: 26px;
-    }
+    & .search-lyric-input-container {
+      flex: 1;
+      position: relative;
+      min-width: 0;
 
-    & .search-lyric-search {
-      position: absolute;
-      top: 0;
-      right: 0;
-      padding: 0 6px;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      & .search-lyric-input {
+        width: 100%;
+        padding-right: 26px;
+      }
 
-      & svg {
-        width: 1.1rem;
-        height: 1.1rem;
+      & .search-lyric-search {
+        position: absolute;
+        top: 0;
+        right: 0;
+        padding: 0 6px;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        & svg {
+          width: 1.1rem;
+          height: 1.1rem;
+        }
       }
     }
-  }
 
-  & .load-local-lyric-btn {
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    margin-left: 12px;
-    white-space: nowrap;
-    font-size: 0.9rem;
+    & .load-local-lyric-btn {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+      font-size: 0.9rem;
+      flex-shrink: 0;
 
-    & svg {
-      width: 1rem;
-      height: 1rem;
+      & svg {
+        width: 1rem;
+        height: 1rem;
+      }
     }
   }
 
