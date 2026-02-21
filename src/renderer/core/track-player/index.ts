@@ -660,7 +660,9 @@ class TrackPlayer {
             let lyricSource: ILyric.ILyricSource;
 
             if (linkedLyricItem) {
+                console.log("[fetchCurrentLyric] linkedLyricItem:", linkedLyricItem);
                 if ((linkedLyricItem as any).rawLrcTxt) {
+                    console.log("[fetchCurrentLyric] using rawLrcTxt, length:", (linkedLyricItem as any).rawLrcTxt?.length);
                     lyricSource = {
                         rawLrc: (linkedLyricItem as any).rawLrcTxt,
                     };
@@ -684,6 +686,8 @@ class TrackPlayer {
                 return;
             }
 
+            console.log("[fetchCurrentLyric] lyricSource:", lyricSource?.rawLrc?.substring(0, 200));
+
             if (!lyricSource?.rawLrc && !lyricSource?.translation) {
                 this.setCurrentLyric({});
             }
@@ -691,6 +695,9 @@ class TrackPlayer {
                 musicItem: currentMusic,
                 translation: lyricSource.translation,
             });
+
+            console.log("[fetchCurrentLyric] parsed lrcItems count:", parser.getLyricItems().length);
+            console.log("[fetchCurrentLyric] first 3 items:", parser.getLyricItems().slice(0, 3));
 
             this.setCurrentLyric({
                 parser,
