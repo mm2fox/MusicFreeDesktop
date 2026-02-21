@@ -690,6 +690,7 @@ class TrackPlayer {
 
             if (!lyricSource?.rawLrc && !lyricSource?.translation) {
                 this.setCurrentLyric({});
+                return;
             }
             const parser = new LyricParser(lyricSource.rawLrc, {
                 musicItem: currentMusic,
@@ -697,7 +698,8 @@ class TrackPlayer {
             });
 
             console.log("[fetchCurrentLyric] parsed lrcItems count:", parser.getLyricItems().length);
-            console.log("[fetchCurrentLyric] first 3 items:", parser.getLyricItems().slice(0, 3));
+            console.log("[fetchCurrentLyric] first 3 items:", parser.getLyricItems().slice(0, 3).map(item => ({ time: item.time, lrc: item.lrc.substring(0, 30) })));
+            console.log("[fetchCurrentLyric] last 3 items:", parser.getLyricItems().slice(-3).map(item => ({ time: item.time, lrc: item.lrc.substring(0, 30) })));
 
             this.setCurrentLyric({
                 parser,
