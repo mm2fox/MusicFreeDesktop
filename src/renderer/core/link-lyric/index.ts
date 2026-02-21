@@ -30,7 +30,6 @@ export async function linkLyric(
         filteredMusicItem.rawLrcTxt = (to as ILyric.ILyricItem).rawLrcTxt;
     }
     const fromPk = getMediaPrimaryKey(from);
-    console.log("[linkLyric] saving:", fromPk, filteredMusicItem);
     linkLyricCache.set(fromPk, filteredMusicItem);
 
     try {
@@ -108,7 +107,6 @@ export async function getLinkedLyric(musicItem: IMusic.IMusicItem) {
     const cachedItem = linkLyricCache.get(pk);
 
     if (cachedItem) {
-        console.log("[getLinkedLyric] from cache:", pk, cachedItem);
         return cachedItem as IMusic.IMusicItem;
     }
     try {
@@ -127,7 +125,6 @@ export async function getLinkedLyric(musicItem: IMusic.IMusicItem) {
             },
         );
         if (result) {
-            console.log("[getLinkedLyric] from musicStore:", pk, result);
             linkLyricCache.set(pk, result);
             return result;
         }
@@ -151,13 +148,11 @@ export async function getLinkedLyric(musicItem: IMusic.IMusicItem) {
             },
         );
         if (result) {
-            console.log("[getLinkedLyric] from localMusicStore:", pk, result);
             linkLyricCache.set(pk, result);
             return result;
         }
     } catch (e) {
         console.log(e);
     }
-    console.log("[getLinkedLyric] not found:", pk);
     return null;
 }
