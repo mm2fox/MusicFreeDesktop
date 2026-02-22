@@ -1,0 +1,471 @@
+import { ColumnDef, createColumnHelper, flexRender, getCoreRowModel, getSortedRowModel, SortingState, useReactTable } from "@tanstack/react-table";
+import { useEffect, useState, useRef, memo, useCallback } from "react";
+import { i18n } from "@/shared/i18n/renderer";
+import { secondsToDuration } from "@/common/time-util";
+import { localPluginName, RequestStateCode } from "@/common/constant";
+import { IContextMenuItem, showContextMenu } from "@/renderer/components/ContextMenu";
+import { getInternalData, getMediaPrimaryKey, isSameMedia } from "@/common/media-util";
+import { showModal } from "@/renderer/components/Modal";
+import { toast } from "react-toastify";
+import hotkeys from "hotkeys-js";
+import trackPlayer from "@renderer/core/track-player";
+import MusicSheet from "@/renderer/core/music-sheet";
+import Downloader from "@/renderer/core/downloader";
+import musicSheetDB from "@/renderer/core/db/music-sheet-db";
+import localMusicListStore from "@/renderer/core/local-music/store";
+import SvgAsset from "@/renderer/components/SvgAsset";
+import SwitchCase from "@/renderer/components/SwitchCase";
+import Condition, { IfTruthy } from "@/renderer/components/Condition";
+import Empty from "@/renderer/components/Empty";
+import BottomLoadingState from "@/renderer/components/BottomLoadingState";
+import MusicFavorite from "@/renderer/components/MusicFavorite";
+import MusicDownloaded from "@/renderer/components/MusicDownloaded";
+import MusicInfo from "@/renderer/components/MusicInfo";
+import Tag from "@/renderer/components/Tag";
+import useVirtualList from "@/hooks/useVirtualList";
+import AppConfig from "@shared/app-config/renderer";
+import currentListSourceStore from "@/renderer/core/current-list-source/store";
+
+interface ILocalMusicListProps {
+    localMusicList: IMusic.IMusicItem[];
+}
+
+const columnHelper = createColumnHelper<IMusic.IMusicItem>();
+
+const estimizeItemHeight = 2.6 * 13;
+
+function showLocalMusicContextMenu(
+    musicItems: IMusic.IMusicItem | IMusic.IMusicItem[],
+    x: number,
+    y: number,
+) {
+    const isArray = Array.isArray(musicItems);
+    const menuItems: IContextMenuItem[] = [];
+
+    if (!isArray) {
+        menuItems.push(
+            {
+                title: `ID: ${getMediaPrimaryKey(musicItems)}`,
+                icon: "identification",
+            },
+            {
+                title: `${i18n.t("media.media_type_artist")}: ${musicItems.artist ?? i18n.t("media.unknown_artist")}`,
+                icon: "user",
+            },
+            {
+                divider: true,
+            },
+        );
+    }
+
+    menuItems.push(
+        {
+            title: i18n.t("music_list_context_menu.next_play"),
+            icon: "motion-play",
+            onClick() {
+                trackPlayer.addNext(musicItems);
+            },
+        },
+        {
+            title: i18n.t("music_list_context_menu.add_to_my_sheets"),
+            icon: "document-plus",
+            onClick() {
+                showModal("AddMusicToSheet", { musicItems });
+            },
+        },
+        {
+            title: i18n.t("music_list_context_menu.edit_tags"),
+            icon: "tag",
+            show: !isArray,
+            onClick() {
+                showModal("TagEditor", { musicItem: musicItems });
+            },
+        },
+        {
+            title: i18n.t("music_list_context_menu.refresh_tag"),
+            icon: "arrow-path",
+            show: !isArray,
+            onClick() {
+                const musicItem = musicItems as IMusic.IMusicItem;
+                const filePath = (musicItem as any).$$localPath || (musicItem as any).localPath;
+                if (!filePath) {
+                    toast.error(i18n.t("music_list_context_menu.refresh_tag_failed"));
+                    return;
+                }
+
+                (async () => {
+                    try {
+                        const tagResult = await (window as any)["@shared/music-tag"].readTags(filePath);
+                        if (tagResult.success && tagResult.tags) {
+                            await musicSheetDB.localMusicStore.update(
+                                [musicItem.platform, musicItem.id],
+                                {
+                                    title: tagResult.tags.title || musicItem.title,
+                                    artist: tagResult.tags.artist || musicItem.artist,
+                                    album: tagResult.tags.album || musicItem.album,
+                                    artwork: tagResult.tags.artwork || musicItem.artwork,
+                                    rawLrc: tagResult.tags.lyrics || undefined,
+                                }
+                            );
+
+                            const currentList = localMusicListStore.getValue();
+                            const updatedList = currentList.map(item => {
+                                if (item.id === musicItem.id && item.platform === musicItem.platform) {
+                                    return {
+                                        ...item,
+                                        title: tagResult.tags.title || item.title,
+                                        artist: tagResult.tags.artist || item.artist,
+                                        album: tagResult.tags.album || item.album,
+                                        artwork: tagResult.tags.artwork || item.artwork,
+                                        rawLrc: tagResult.tags.lyrics || undefined,
+                                    };
+                                }
+                                return item;
+                            });
+                            localMusicListStore.setValue(updatedList);
+
+                            toast.success(i18n.t("music_list_context_menu.refresh_tag_success"));
+                        } else {
+                            toast.error(i18n.t("music_list_context_menu.refresh_tag_failed"));
+                        }
+                    } catch (e) {
+                        console.error("[RefreshTag] Error:", e);
+                        toast.error(i18n.t("music_list_context_menu.refresh_tag_failed"));
+                    }
+                })();
+            },
+        },
+    );
+
+    showContextMenu({ x, y, menuItems });
+}
+
+function _LocalMusicList(props: ILocalMusicListProps) {
+    const { localMusicList } = props;
+    const [sorting, setSorting] = useState<SortingState>([]);
+    const musicListRef = useRef(localMusicList);
+    const columnShownRef = useRef(
+        AppConfig.getConfig("normal.musicListColumnsShown").reduce(
+            (prev, curr) => ({ ...prev, [curr]: false }),
+            {}
+        )
+    );
+
+    const columnDef: ColumnDef<IMusic.IMusicItem>[] = [
+        columnHelper.display({
+            id: "like",
+            size: 64,
+            minSize: 64,
+            maxSize: 64,
+            cell: (info) => (
+                <div className="music-list-operations">
+                    <MusicFavorite musicItem={info.row.original} size={18}></MusicFavorite>
+                    <MusicDownloaded musicItem={info.row.original}></MusicDownloaded>
+                    <MusicInfo musicItem={info.row.original} size={18}></MusicInfo>
+                </div>
+            ),
+            enableResizing: false,
+            enableSorting: false,
+        }),
+        columnHelper.accessor((_, index) => index + 1, {
+            cell: (info) => info.getValue(),
+            header: "#",
+            id: "index",
+            minSize: 40,
+            maxSize: 40,
+            size: 40,
+            enableResizing: false,
+        }),
+        columnHelper.accessor("title", {
+            header: () => i18n.t("media.media_title"),
+            size: 250,
+            maxSize: 300,
+            minSize: 100,
+            cell: (info) => <span title={info.getValue()}>{info.getValue()}</span>,
+            // @ts-ignore
+            fr: 3,
+        }),
+        columnHelper.accessor("artist", {
+            header: () => i18n.t("media.media_type_artist"),
+            size: 130,
+            maxSize: 200,
+            minSize: 60,
+            cell: (info) => <span title={info.getValue()}>{info.getValue()}</span>,
+            // @ts-ignore
+            fr: 2,
+        }),
+        columnHelper.accessor("album", {
+            header: () => i18n.t("media.media_type_album"),
+            size: 120,
+            maxSize: 200,
+            minSize: 60,
+            cell: (info) => <span title={info.getValue()}>{info.getValue()}</span>,
+            // @ts-ignore
+            fr: 2,
+        }),
+        columnHelper.accessor("duration", {
+            header: () => i18n.t("media.media_duration"),
+            size: 64,
+            maxSize: 150,
+            minSize: 48,
+            cell: (info) =>
+                info.getValue() ? secondsToDuration(info.getValue()) : "--:--",
+            // @ts-ignore
+            fr: 1,
+        }),
+        columnHelper.accessor(
+            (row) => {
+                const rawLrc = (row as any).rawLrc;
+                return rawLrc ? "yes" : "no";
+            },
+            {
+                id: "lyrics",
+                header: () => i18n.t("local_music_page.lyrics"),
+                size: 50,
+                minSize: 40,
+                maxSize: 80,
+                cell: (info) => {
+                    const hasLyrics = info.getValue() === "yes";
+                    return (
+                        <span 
+                            className="lyrics-indicator" 
+                            title={hasLyrics ? i18n.t("local_music_page.has_lyrics") : i18n.t("local_music_page.no_lyrics")}
+                        >
+                            {hasLyrics ? "📝" : ""}
+                        </span>
+                    );
+                },
+                enableSorting: true,
+            }
+        ),
+        columnHelper.accessor(
+            (row) => {
+                const localPath = (row as any).$$localPath || (row as any).localPath;
+                if (localPath) {
+                    return window.path.extname(localPath).toLowerCase().replace(".", "").toUpperCase();
+                }
+                return "";
+            },
+            {
+                id: "format",
+                header: () => i18n.t("media.media_format"),
+                size: 60,
+                minSize: 50,
+                maxSize: 80,
+                cell: (info) => {
+                    const format = info.getValue();
+                    if (format) {
+                        return <span className="music-format-tag">{format}</span>;
+                    }
+                    return null;
+                },
+            }
+        ),
+    ];
+
+    const table = useReactTable({
+        debugAll: false,
+        data: localMusicList,
+        columns: columnDef,
+        state: {
+            sorting: sorting,
+            columnVisibility: columnShownRef.current,
+        },
+        onSortingChange: setSorting,
+        getCoreRowModel: getCoreRowModel(),
+        getSortedRowModel: getSortedRowModel(),
+    });
+
+    const tableContainerRef = useRef<HTMLDivElement>();
+    const virtualController = useVirtualList({
+        data: table.getRowModel().rows,
+        getScrollElement: () => document.querySelector("#page-container"),
+        offsetHeight: () => tableContainerRef.current?.offsetTop ?? 0,
+        estimateItemHeight: estimizeItemHeight,
+        fallbackRenderCount: 40,
+    });
+
+    const [activeItems, setActiveItems] = useState<Set<number>>(new Set());
+    const lastActiveIndexRef = useRef(0);
+
+    useEffect(() => {
+        setActiveItems(new Set());
+        lastActiveIndexRef.current = 0;
+        musicListRef.current = localMusicList;
+    }, [localMusicList]);
+
+    useEffect(() => {
+        currentListSourceStore.setValue({
+            type: "local-music",
+            path: "/main/local-music",
+        });
+    }, []);
+
+    useEffect(() => {
+        const ctrlAHandler = (evt: Event) => {
+            evt.preventDefault();
+            setActiveItems(new Set(Array.from({ length: musicListRef.current.length }, (_, i) => i)));
+        };
+        hotkeys("Ctrl+A", "music-list", ctrlAHandler);
+        return () => hotkeys.unbind("Ctrl+A", ctrlAHandler);
+    }, []);
+
+    return (
+        <div
+            className="music-list-container"
+            style={{ marginTop: "12px" }}
+            ref={tableContainerRef}
+            tabIndex={-1}
+            onFocus={() => hotkeys.setScope("music-list")}
+            onBlur={() => hotkeys.setScope("all")}
+        >
+            <table
+                style={{
+                    height: virtualController.totalHeight + estimizeItemHeight,
+                    tableLayout: "fixed",
+                }}
+            >
+                <thead>
+                    <tr>
+                        {table.getHeaderGroups()[0].headers.map((header) => (
+                            <th
+                                key={header.id}
+                                data-id={header.id}
+                                style={{
+                                    //@ts-ignore
+                                    width: header.column.columnDef.fr
+                                        ? //@ts-ignore
+                                          `${header.column.columnDef.fr * 100}%`
+                                        : header.column.columnDef.size,
+                                }}
+                                onClick={header.column.getToggleSortingHandler()}
+                            >
+                                {flexRender(
+                                    header.column.columnDef.header,
+                                    header.getContext()
+                                )}
+                                <div
+                                    className="sort-container"
+                                    data-sorting={header.column.getIsSorted() !== false}
+                                >
+                                    <SwitchCase.Switch switch={header.column.getIsSorted()}>
+                                        <SwitchCase.Case case={"asc"}>
+                                            <SvgAsset iconName="sort-asc"></SvgAsset>
+                                        </SwitchCase.Case>
+                                        <SwitchCase.Case case={"desc"}>
+                                            <SvgAsset iconName="sort-desc"></SvgAsset>
+                                        </SwitchCase.Case>
+                                        <SwitchCase.Case case={false}>
+                                            <SvgAsset iconName="sort"></SvgAsset>
+                                        </SwitchCase.Case>
+                                    </SwitchCase.Switch>
+                                </div>
+                            </th>
+                        ))}
+                    </tr>
+                </thead>
+                <tbody
+                    style={{
+                        transform: `translateY(${virtualController.startTop}px)`,
+                    }}
+                >
+                    {virtualController.virtualItems.map((virtualItem) => {
+                        const row = virtualItem.dataItem;
+
+                        if (!row.original) {
+                            return null;
+                        }
+
+                        return (
+                            <tr
+                                key={row.id}
+                                data-active={activeItems.has(virtualItem.rowIndex)}
+                                onContextMenu={(e) => {
+                                    if (activeItems.size > 1) {
+                                        const selectedItems: IMusic.IMusicItem[] = [];
+                                        const rows = table.getRowModel().rows;
+                                        activeItems.forEach(item => {
+                                            selectedItems.push(rows[item].original);
+                                        });
+                                        showLocalMusicContextMenu(selectedItems, e.clientX, e.clientY);
+                                    } else {
+                                        lastActiveIndexRef.current = virtualItem.rowIndex;
+                                        setActiveItems(new Set([virtualItem.rowIndex]));
+                                        showLocalMusicContextMenu(row.original, e.clientX, e.clientY);
+                                    }
+                                }}
+                                onClick={() => {
+                                    if (hotkeys.shift) {
+                                        let start = lastActiveIndexRef.current;
+                                        let end = virtualItem.rowIndex;
+                                        if (start >= end) {
+                                            [start, end] = [end, start];
+                                        }
+                                        if (end > musicListRef.current.length) {
+                                            end = musicListRef.current.length - 1;
+                                        }
+                                        setActiveItems(
+                                            new Set(
+                                                Array.from({ length: end - start + 1 }, (_, i) => start + i)
+                                            )
+                                        );
+                                    } else if (hotkeys.ctrl) {
+                                        const newSet = new Set(activeItems);
+                                        if (newSet.has(virtualItem.rowIndex)) {
+                                            newSet.delete(virtualItem.rowIndex);
+                                        } else {
+                                            newSet.add(virtualItem.rowIndex);
+                                        }
+                                        setActiveItems(newSet);
+                                    } else {
+                                        setActiveItems(new Set([virtualItem.rowIndex]));
+                                        lastActiveIndexRef.current = virtualItem.rowIndex;
+                                    }
+                                }}
+                                onDoubleClick={() => {
+                                    const config =
+                                        AppConfig.getConfig("playMusic.clickMusicList");
+                                    if (config === "replace") {
+                                        trackPlayer.playMusicWithReplaceQueue(
+                                            table.getRowModel().rows.map((it) => it.original),
+                                            row.original
+                                        );
+                                    } else {
+                                        trackPlayer.playMusic(row.original);
+                                    }
+                                }}
+                            >
+                                {row.getVisibleCells().map((cell) => (
+                                    <td
+                                        key={cell.id}
+                                        style={{
+                                            //@ts-ignore
+                                            width: cell.column.columnDef.fr
+                                                ? //@ts-ignore
+                                                  `${cell.column.columnDef.fr * 100}%`
+                                                : cell.column.columnDef.size,
+                                        }}
+                                    >
+                                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                    </td>
+                                ))}
+                            </tr>
+                        );
+                    })}
+                </tbody>
+                <tfoot
+                    style={{
+                        height:
+                            virtualController.totalHeight -
+                            virtualController.virtualItems.length * estimizeItemHeight,
+                    }}
+                ></tfoot>
+            </table>
+            <Condition condition={localMusicList.length === 0}>
+                <Empty></Empty>
+            </Condition>
+        </div>
+    );
+}
+
+export default memo(_LocalMusicList, (prev, curr) => prev.localMusicList === curr.localMusicList);

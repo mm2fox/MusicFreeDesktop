@@ -369,3 +369,8 @@ export function useMusicSheet(sheetId: string) {
 export async function exportAllSheetDetails() {
     return await backend.exportAllSheetDetails();
 }
+
+/** 查找歌曲所属的歌单 */
+export function findSheetsContainingMusic(musicItem: IMusic.IMusicItem) {
+    return backend.findSheetsContainingMusic(musicItem);
+}

@@ -11,6 +11,8 @@ import ArtistView from "./views/artist";
 import AlbumView from "./views/album";
 import FolderView from "./views/folder";
 import AppConfig from "@shared/app-config/renderer";
+import { toast } from "react-toastify";
+import musicSheetDB from "@/renderer/core/db/music-sheet-db";
 
 enum DisplayView {
     LIST,
@@ -68,6 +70,59 @@ export default function LocalMusicView() {
     }, [inputSearch]);
 
     const finalMusicList = filterMusicList ?? localMusicList;
+    const [refreshing, setRefreshing] = useState(false);
+
+    const handleRefreshTags = async () => {
+        if (refreshing) return;
+        
+        const musicList = localMusicListStore.getValue();
+        if (musicList.length === 0) {
+            toast.info(t("local_music_page.no_music_to_refresh"));
+            return;
+        }
+
+        setRefreshing(true);
+        toast.info(t("local_music_page.refreshing_tags"));
+
+        let successCount = 0;
+        let failCount = 0;
+
+        for (let i = 0; i < musicList.length; i++) {
+            const musicItem = musicList[i];
+            const filePath = (musicItem as any).$$localPath || (musicItem as any).localPath;
+            if (!filePath) continue;
+
+            try {
+                const tagResult = await (window as any)["@shared/music-tag"].readTags(filePath);
+                if (tagResult.success && tagResult.tags) {
+                    await musicSheetDB.localMusicStore.update(
+                        [musicItem.platform, musicItem.id],
+                        {
+                            title: tagResult.tags.title || musicItem.title,
+                            artist: tagResult.tags.artist || musicItem.artist,
+                            album: tagResult.tags.album || musicItem.album,
+                            artwork: tagResult.tags.artwork || musicItem.artwork,
+                        }
+                    );
+                    successCount++;
+                } else {
+                    failCount++;
+                }
+            } catch (e) {
+                console.error("[RefreshTags] Failed:", e);
+                failCount++;
+            }
+        }
+
+        const allMusic = await musicSheetDB.localMusicStore.toArray();
+        localMusicListStore.setValue(allMusic);
+
+        setRefreshing(false);
+        toast.success(t("local_music_page.refresh_tags_complete", { 
+            success: successCount, 
+            fail: failCount 
+        }));
+    };
 
     return (
         <div
@@ -85,6 +140,14 @@ export default function LocalMusicView() {
                     }}
                 >
                     {t("local_music_page.auto_scan")}
+                </div>
+                <div
+                    data-type="normalButton"
+                    role="button"
+                    onClick={handleRefreshTags}
+                    data-disabled={refreshing}
+                >
+                    {refreshing ? t("local_music_page.refreshing") : t("local_music_page.refresh_tags")}
                 </div>
                 <div className="operations-layout">
                     <input

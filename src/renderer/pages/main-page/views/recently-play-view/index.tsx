@@ -5,10 +5,19 @@ import {
     useRecentlyPlaylistSheet,
 } from "@/renderer/core/recently-playlist";
 import { useTranslation } from "react-i18next";
+import { useEffect } from "react";
+import currentListSourceStore from "@/renderer/core/current-list-source/store";
 
 export default function RecentlyPlayView() {
     const recentlyPlaylistSheet = useRecentlyPlaylistSheet();
     const { t } = useTranslation();
+
+    useEffect(() => {
+        currentListSourceStore.setValue({
+            type: "recently-play",
+            path: "/main/recently-play",
+        });
+    }, []);
 
     const options = (
         <>
@@ -26,8 +35,6 @@ export default function RecentlyPlayView() {
             </div>
         </>
     );
-
-    console.log(recentlyPlaylistSheet);
 
     return (
         <div id="page-container" className="page-container">

@@ -1,7 +1,9 @@
-import React, { memo } from "react";
+import React, { memo, useEffect } from "react";
 import MusicList from "@/renderer/components/MusicList";
 import { RequestStateCode } from "@/common/constant";
 import useSearch from "../../../hooks/useSearch";
+import currentListSourceStore from "@/renderer/core/current-list-source/store";
+import { useMatch } from "react-router-dom";
 
 interface IMediaResultProps {
     data: IMusic.IMusicItem[];
@@ -12,6 +14,16 @@ interface IMediaResultProps {
 function MusicResult(props: IMediaResultProps) {
     const { data, state, pluginHash } = props;
     const search = useSearch();
+    const match = useMatch("/main/search/:query");
+    const query = decodeURIComponent(match?.params?.query ?? "");
+
+    useEffect(() => {
+        currentListSourceStore.setValue({
+            type: "search",
+            path: `/main/search/${encodeURIComponent(query)}`,
+            title: query,
+        });
+    }, [query]);
 
     return (
         <MusicList

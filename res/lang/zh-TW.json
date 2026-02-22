@@ -50,6 +50,7 @@
     "media_title": "標題",
     "media_platform": "來源",
     "media_duration": "時長",
+    "media_format": "格式",
     "media_create_at": "創建時間",
     "media_play_count": "播放次數",
     "media_music_count": "歌曲數量",
@@ -124,6 +125,11 @@
   "local_music_page": {
     "local_music": "本地音樂",
     "auto_scan": "自動掃描",
+    "refresh_tags": "刷新標籤",
+    "refreshing": "刷新中...",
+    "refreshing_tags": "正在刷新標籤...",
+    "refresh_tags_complete": "刷新完成，成功 {{success}} 首，失敗 {{fail}} 首",
+    "no_music_to_refresh": "沒有需要刷新的音樂",
     "search_local_music": "搜尋本地音樂",
     "list_view": "列表視圖",
     "artist_view": "藝術家視圖",
@@ -134,14 +140,19 @@
 
   "music_list_context_menu": {
     "next_play": "下一首播放",
-    "add_to_my_sheets": "添加到我的歌單",
-    "remove_from_sheet": "從歌單移除",
+    "add_to_my_sheets": "添加到歌單",
+    "remove_from_sheet": "從歌單內刪除",
     "delete_local_download": "刪除本地下載",
-    "reveal_local_music_in_file_explorer": "打開歌曲文件夾",
+    "reveal_local_music_in_file_explorer": "打開歌曲所在資料夾",
     "reveal_local_music_in_file_explorer_fail": "打開失敗：",
-
     "delete_local_downloaded_songs_success": "已刪除 {{musicNums}} 首本地歌曲",
-    "delete_local_downloaded_song_success": "已刪除本地歌曲 [{{songName}}]"
+    "delete_local_downloaded_song_success": "已刪除本地歌曲 [{{songName}}]",
+    "locate_in_list": "定位到列表中",
+    "locate_in_list_not_found": "該歌曲不在任何歌單中",
+    "edit_tags": "編輯標籤",
+    "refresh_tag": "刷新標籤",
+    "refresh_tag_success": "標籤刷新成功",
+    "refresh_tag_failed": "標籤刷新失敗"
   },
 
   "search_result_page": {
@@ -234,7 +245,8 @@
     "skip_this_version": "跳過此版本",
     "scan_local_music": "掃描本地音樂",
     "scan_local_music_hint": "將自動掃描選擇的文件夾（實時同步）",
-    "add_folder": "添加文件夾"
+    "add_folder": "添加文件夾",
+    "clear_local_music": "清空本地音樂"
   },
   "panel": {
     "play_list_song_num": "播放清單（{{number}} 首歌曲）",
@@ -410,5 +422,35 @@
     "results": "條結果",
     "no_results": "暫無搜尋結果",
     "open_in_search_engine": "在{{engine}}中搜尋"
+  },
+  "tag_editor": {
+    "title": "編輯音樂標籤",
+    "loading": "正在載入標籤資訊...",
+    "title_label": "標題",
+    "title_placeholder": "請輸入歌曲標題",
+    "artist_label": "藝術家",
+    "artist_placeholder": "請輸入藝術家名稱",
+    "album_label": "專輯",
+    "album_placeholder": "請輸入專輯名稱",
+    "year_label": "年份",
+    "year_placeholder": "請輸入發行年份",
+    "genre_label": "流派",
+    "genre_placeholder": "請輸入音樂流派",
+    "comment_label": "備註",
+    "comment_placeholder": "請輸入備註資訊",
+    "save": "保存",
+    "saving": "保存中...",
+    "save_success": "標籤保存成功",
+    "save_error": "標籤保存失敗",
+    "read_error": "讀取標籤失敗",
+    "file_not_found": "未找到本地文件",
+    "format_not_supported": "{{format}} 格式暫不支持寫入標籤",
+    "format_warning": "{{format}} 格式僅支持讀取標籤，暫不支持寫入",
+    "select_cover": "選擇封面圖片",
+    "change_cover": "更換封面",
+    "remove_cover": "移除封面",
+    "swap_title_artist": "交換標題和藝術家",
+    "restore_cover": "恢復原封面",
+    "cover_load_error": "載入封面圖片失敗"
   }
 }

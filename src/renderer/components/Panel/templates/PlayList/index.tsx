@@ -215,7 +215,6 @@ export default function PlayList(props: IProps) {
                                             position="top"
                                             rowIndex={0}
                                             tag={DRAG_TAG}
-                                            insideTable
                                             onDrop={onDrop}
                                         ></DragReceiver>
                                     </IfTruthy>

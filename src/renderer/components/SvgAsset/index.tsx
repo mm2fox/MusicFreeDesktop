@@ -41,6 +41,7 @@ export type SvgAssetIconNames =
     | "musical-note"
     | "pause"
     | "pencil-square"
+    | "photo"
     | "picture-in-picture-line"
     | "play"
     | "playlist"
@@ -60,6 +61,7 @@ export type SvgAssetIconNames =
     | "speaker-wave"
     | "speaker-x-mark"
     | "square"
+    | "tag"
     | "trash"
     | "trophy"
     | "t-shirt-line"
@@ -68,7 +70,9 @@ export type SvgAssetIconNames =
     | "sd"
     | "hq"
     | "sq"
-    | "x-mark";
+    | "x-mark"
+    | "exclamation-circle"
+    | "arrow-path";
 
 interface IProps {
     iconName: SvgAssetIconNames;

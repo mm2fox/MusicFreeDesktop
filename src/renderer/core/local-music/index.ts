@@ -131,8 +131,14 @@ async function changeWatchPath(logs: Map<string, "add" | "delete">) {
 //   ipcRendererSend("sync-local-music");
 // }
 
+async function clearLocalMusic() {
+    await musicSheetDB.localMusicStore.clear();
+    localMusicListStore.setValue([]);
+}
+
 export default {
     setupLocalMusic,
     // syncLocalMusic,
     changeWatchPath,
+    clearLocalMusic,
 };

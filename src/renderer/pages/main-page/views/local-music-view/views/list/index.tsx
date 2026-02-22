@@ -1,5 +1,6 @@
-import MusicList from "@/renderer/components/MusicList";
-import localMusicListStore from "@/renderer/core/local-music/store";
+import LocalMusicList from "./LocalMusicList";
+import { useEffect } from "react";
+import currentListSourceStore from "@/renderer/core/current-list-source/store";
 
 interface IProps {
     localMusicList: IMusic.IMusicItem[];
@@ -8,19 +9,16 @@ interface IProps {
 export default function ListView(props: IProps) {
     const { localMusicList } = props;
 
+    useEffect(() => {
+        currentListSourceStore.setValue({
+            type: "local-music",
+            path: "/main/local-music",
+        });
+    }, []);
+
     return (
-        <MusicList
-            containerStyle={{
-                marginTop: "12px",
-            }}
-            musicList={localMusicList}
-            virtualProps={{
-                fallbackRenderCount: 40,
-                getScrollElement() {
-                    return document.querySelector("#page-container");
-                },
-                offsetHeight: 102,
-            }}
-        ></MusicList>
+        <LocalMusicList
+            localMusicList={localMusicList}
+        />
     );
 }

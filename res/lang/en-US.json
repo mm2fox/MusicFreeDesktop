@@ -50,6 +50,7 @@
     "media_title": "Title",
     "media_platform": "Source",
     "media_duration": "Duration",
+    "media_format": "Format",
     "media_create_at": "Created At",
     "media_play_count": "Play Count",
     "media_music_count": "Song Count",
@@ -124,6 +125,11 @@
   "local_music_page": {
     "local_music": "Local Music",
     "auto_scan": "Auto Scan",
+    "refresh_tags": "Refresh Tags",
+    "refreshing": "Refreshing...",
+    "refreshing_tags": "Refreshing tags...",
+    "refresh_tags_complete": "Refresh complete, {{success}} succeeded, {{fail}} failed",
+    "no_music_to_refresh": "No music to refresh",
     "search_local_music": "Search Local Music",
     "list_view": "List View",
     "artist_view": "Artist View",
@@ -139,9 +145,15 @@
     "delete_local_download": "Delete Local Download",
     "reveal_local_music_in_file_explorer": "Show in File Explorer",
     "reveal_local_music_in_file_explorer_fail": "Open Failed: ",
-
     "delete_local_downloaded_songs_success": "Deleted {{musicNums}} local songs",
-    "delete_local_downloaded_song_success": "Deleted local song [{{songName}}]"
+    "delete_local_downloaded_song_success": "Deleted local song [{{songName}}]",
+    "locate_in_list": "Locate in List",
+    "locate_in_list_not_found": "This song is not in any playlist",
+    "edit_tags": "Edit Tags",
+    "refresh_tag": "Refresh Tag",
+    "refreshing": "Refreshing tag...",
+    "refresh_tag_success": "Tag refreshed successfully",
+    "refresh_tag_failed": "Failed to refresh tag"
   },
 
   "search_result_page": {
@@ -234,7 +246,8 @@
     "skip_this_version": "Skip This Version",
     "scan_local_music": "Scan Local Music",
     "scan_local_music_hint": "Automatically scan selected folders (real-time sync with file changes)",
-    "add_folder": "Add Folder"
+    "add_folder": "Add Folder",
+    "clear_local_music": "Clear Local Music"
   },
   "panel": {
     "play_list_song_num": "Playlist ({{number}} songs)",
@@ -410,5 +423,41 @@
     "results": "results",
     "no_results": "No results found",
     "open_in_search_engine": "Search in {{engine}}"
+  },
+  "tag_editor": {
+    "title": "Edit Music Tags",
+    "loading": "Loading tag information...",
+    "title_label": "Title",
+    "title_placeholder": "Enter song title",
+    "artist_label": "Artist",
+    "artist_placeholder": "Enter artist name",
+    "album_label": "Album",
+    "album_placeholder": "Enter album name",
+    "album_artist_label": "Album Artist",
+    "album_artist_placeholder": "Enter album artist",
+    "year_label": "Year",
+    "year_placeholder": "Enter release year",
+    "date_label": "Date",
+    "date_placeholder": "Enter release date",
+    "genre_label": "Genre",
+    "genre_placeholder": "Enter music genre",
+    "comment_label": "Comment",
+    "comment_placeholder": "Enter comment",
+    "lyrics_label": "Lyrics",
+    "lyrics_placeholder": "Enter lyrics",
+    "save": "Save",
+    "saving": "Saving...",
+    "save_success": "Tags saved successfully",
+    "save_error": "Failed to save tags",
+    "read_error": "Failed to read tags",
+    "file_not_found": "Local file not found",
+    "format_not_supported": "{{format}} format does not support writing tags",
+    "format_warning": "{{format}} format only supports reading tags, writing is not supported",
+    "select_cover": "Select Cover Image",
+    "change_cover": "Change Cover",
+    "remove_cover": "Remove Cover",
+    "swap_title_artist": "Swap Title and Artist",
+    "restore_cover": "Restore Original Cover",
+    "cover_load_error": "Failed to load cover image"
   }
 }

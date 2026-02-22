@@ -1,0 +1,274 @@
+.modal--tag-editor-container {
+  width: 520px;
+  max-height: 85vh;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  cursor: default;
+
+  .tag-editor-header {
+    width: 100%;
+    display: flex;
+    height: 3rem;
+    box-sizing: border-box;
+    padding-left: 1rem;
+    padding-right: 1rem;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 1.2rem;
+    font-weight: 600;
+    user-select: none;
+    border-bottom: 1px solid var(--dividerColor);
+    flex-shrink: 0;
+    cursor: move;
+
+    .tag-editor-title {
+      flex: 1;
+    }
+
+    .tag-editor-close {
+      $size: 18px;
+      width: $size;
+      height: $size;
+      cursor: pointer;
+
+      & svg {
+        width: $size;
+        height: $size;
+      }
+    }
+  }
+
+  .tag-editor-content {
+    display: flex;
+    gap: 20px;
+    padding: 16px;
+    overflow-y: auto;
+
+    .loading-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      width: 100%;
+      padding: 40px;
+      color: var(--textSecondaryColor);
+      font-size: 0.9rem;
+    }
+
+    .tag-editor-artwork {
+      flex-shrink: 0;
+      width: 140px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+
+      img {
+        width: 140px;
+        height: 140px;
+        border-radius: 8px;
+        object-fit: cover;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+
+      .artwork-actions {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+
+        .artwork-btn {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 32px;
+          height: 32px;
+          border: none;
+          border-radius: 6px;
+          background: var(--hoverColor, rgba(0, 0, 0, 0.05));
+          color: var(--textColor);
+          cursor: pointer;
+          transition: all 0.2s ease;
+
+          &:hover {
+            background: var(--primaryColor);
+            color: white;
+          }
+
+          &:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+          }
+        }
+      }
+    }
+
+    .tag-editor-form {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+
+      .form-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+
+        &.full-width {
+          flex-direction: column;
+          align-items: stretch;
+        }
+
+        label {
+          flex-shrink: 0;
+          width: 60px;
+          font-size: 0.8rem;
+          font-weight: 500;
+          color: var(--textSecondaryColor);
+        }
+
+        input[type="text"] {
+          flex: 1;
+          padding: 8px 12px;
+          border: 1px solid var(--dividerColor, rgba(0, 0, 0, 0.1));
+          border-radius: 6px;
+          background: var(--inputBgColor, transparent);
+          color: var(--textColor);
+          font-size: 0.85rem;
+          outline: none;
+          transition: border-color 0.2s ease;
+
+          &:focus {
+            border-color: var(--primaryColor);
+          }
+
+          &:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+          }
+
+          &::placeholder {
+            color: var(--textSecondaryColor);
+            opacity: 0.6;
+          }
+        }
+
+        .swap-btn {
+          flex-shrink: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 32px;
+          height: 32px;
+          border: none;
+          border-radius: 6px;
+          background: var(--hoverColor, rgba(0, 0, 0, 0.05));
+          color: var(--textColor);
+          cursor: pointer;
+          transition: all 0.2s ease;
+
+          &:hover:not(:disabled) {
+            background: var(--primaryColor);
+            color: white;
+          }
+
+          &:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+          }
+        }
+
+        textarea {
+          flex: 1;
+          padding: 8px 12px;
+          border: 1px solid var(--dividerColor, rgba(0, 0, 0, 0.1));
+          border-radius: 6px;
+          background: var(--inputBgColor, transparent);
+          color: var(--textColor);
+          font-size: 0.85rem;
+          outline: none;
+          resize: vertical;
+          min-height: 60px;
+          transition: border-color 0.2s ease;
+
+          &:focus {
+            border-color: var(--primaryColor);
+          }
+
+          &:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+          }
+
+          &::placeholder {
+            color: var(--textSecondaryColor);
+            opacity: 0.6;
+          }
+        }
+      }
+
+      .format-warning {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 12px;
+        background: var(--warningBgColor, rgba(255, 193, 7, 0.1));
+        border-radius: 6px;
+        font-size: 0.75rem;
+        color: var(--warningColor, #ff9800);
+
+        svg {
+          flex-shrink: 0;
+        }
+      }
+
+      .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        margin-top: 8px;
+        padding-top: 12px;
+        border-top: 1px solid var(--dividerColor, rgba(0, 0, 0, 0.08));
+
+        button {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 6px;
+          padding: 8px 20px;
+          border: none;
+          border-radius: 6px;
+          font-size: 0.85rem;
+          font-weight: 500;
+          cursor: pointer;
+          transition: all 0.2s ease;
+
+          &.btn-cancel {
+            background: var(--hoverColor, rgba(0, 0, 0, 0.05));
+            color: var(--textColor);
+
+            &:hover {
+              background: var(--dividerColor, rgba(0, 0, 0, 0.1));
+            }
+          }
+
+          &.btn-save {
+            background: var(--primaryColor);
+            color: white;
+
+            &:hover:not(:disabled) {
+              opacity: 0.9;
+            }
+
+            &:disabled {
+              opacity: 0.6;
+              cursor: not-allowed;
+            }
+          }
+        }
+      }
+    }
+  }
+}

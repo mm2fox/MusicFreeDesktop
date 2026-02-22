@@ -55,3 +55,17 @@
     }
   }
 }
+
+.lyrics-indicator {
+  font-size: 14px;
+  opacity: 0.8;
+}
+
+.music-format-tag {
+  font-size: 10px;
+  padding: 2px 4px;
+  background-color: var(--listActiveColor);
+  border-radius: 3px;
+  color: var(--primaryColor);
+  font-weight: 500;
+}

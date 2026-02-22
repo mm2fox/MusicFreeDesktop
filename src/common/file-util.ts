@@ -19,6 +19,13 @@ export async function parseLocalMusicItem(
     try {
         const { common = {} as ICommonTagsResult } = await parseFile(filePath);
 
+        console.log("[parseLocalMusicItem] Raw common for", filePath, ":", {
+            title: common.title,
+            artist: common.artist,
+            album: common.album,
+            artists: common.artists,
+        });
+
         const jschardet = await import("jschardet");
 
         // 检测编码
@@ -58,7 +65,7 @@ export async function parseLocalMusicItem(
                     encoding,
                 );
             }
-            if (common.artist) {
+            if (common.album) {
                 common.album = iconv.decode(
                     common.album as unknown as Buffer,
                     encoding,
@@ -71,20 +78,40 @@ export async function parseLocalMusicItem(
             }
         }
 
-        return {
+        // 处理 artist 可能是数组的情况
+        let artistStr = "未知作者";
+        if (common.artist) {
+            if (Array.isArray(common.artist)) {
+                artistStr = common.artist.filter(Boolean).join(", ") || "未知作者";
+            } else {
+                artistStr = String(common.artist);
+            }
+        } else if (common.artists && Array.isArray(common.artists)) {
+            artistStr = common.artists.filter(Boolean).join(", ") || "未知作者";
+        }
+
+        const result = {
             title: common.title ?? path.parse(filePath).name,
-            artist: common.artist ?? "未知作者",
+            artist: artistStr,
             artwork: common.picture?.[0]
                 ? getB64Picture(common.picture[0])
                 : undefined,
             album: common.album ?? "未知专辑",
+            year: common.year?.toString(),
+            genre: Array.isArray(common.genre) ? common.genre.join(", ") : common.genre,
+            comment: Array.isArray(common.comment) ? common.comment.join("\n") : common.comment,
             url: addFileScheme(filePath),
             localPath: filePath,
             platform: localPluginName,
             id: hash,
             rawLrc: common.lyrics?.join(""),
         };
+
+        console.log("[parseLocalMusicItem] Result:", result.title, result.artist);
+
+        return result;
     } catch (e) {
+        console.error("[parseLocalMusicItem] Error:", e);
         return {
             title: path.parse(filePath).name || filePath,
             id: hash,

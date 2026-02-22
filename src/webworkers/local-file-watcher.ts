@@ -19,26 +19,49 @@ async function setupWatcher(initPaths?: string[]) {
         depth: 10,
         persistent: true,
         ignorePermissionErrors: true,
+        usePolling: true,
+        interval: 1000,
+        binaryInterval: 3000,
+        ignoreInitial: false,
+        awaitWriteFinish: {
+            stabilityThreshold: 2000,
+            pollInterval: 100,
+        },
     });
+
+    console.log("[LocalFileWatcher] Setting up watcher for paths:", initPaths);
 
     watcher.on("add", async (fp, stats) => {
         if (
             stats.isFile() &&
       supportLocalMediaType.some((postfix) => fp.endsWith(postfix))
         ) {
-            const musicItem = await parseLocalMusicItem(fp);
-            musicItem.$$localPath = fp;
-            setInternalData<IMusic.IMusicItemInternalData>(
-                musicItem,
-                "downloadData",
-                {
-                    path: fp,
-                    quality: "standard",
-                },
-            );
-            addedMusicItems.push(musicItem);
-            syncAddedMusic();
+            console.log("[LocalFileWatcher] Found file:", fp);
+            try {
+                const musicItem = await parseLocalMusicItem(fp);
+                musicItem.$$localPath = fp;
+                setInternalData<IMusic.IMusicItemInternalData>(
+                    musicItem,
+                    "downloadData",
+                    {
+                        path: fp,
+                        quality: "standard",
+                    },
+                );
+                addedMusicItems.push(musicItem);
+                syncAddedMusic();
+            } catch (e) {
+                console.error("[LocalFileWatcher] Failed to parse:", fp, e);
+            }
         }
+    });
+
+    watcher.on("ready", () => {
+        console.log("[LocalFileWatcher] Initial scan complete");
+    });
+
+    watcher.on("error", (error) => {
+        console.error("[LocalFileWatcher] Watcher error:", error);
     });
 
     watcher.on("unlink", (fp) => {

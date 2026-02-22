@@ -13,7 +13,7 @@ import Tag from "../Tag";
 import { secondsToDuration } from "@/common/time-util";
 import MusicSheet from "@/renderer/core/music-sheet";
 import trackPlayer from "@renderer/core/track-player";
-import Condition, { IfTruthy } from "../Condition";
+import Condition, { If, IfTruthy } from "../Condition";
 import Empty from "../Empty";
 import MusicFavorite from "../MusicFavorite";
 import MusicDownloaded from "../MusicDownloaded";
@@ -38,6 +38,8 @@ import localMusicListStore from "@/renderer/core/local-music/store";
 import AppConfig from "@shared/app-config/renderer";
 import { shellUtil } from "@shared/utils/renderer";
 import { navigateTo } from "@/renderer/utils/navigate";
+import { locateMusicStore } from "../MusicSheetlikeView/store";
+import currentListSourceStore from "@/renderer/core/current-list-source/store";
 
 interface IMusicListProps {
     /** 展示的播放列表 */
@@ -58,7 +60,7 @@ interface IMusicListProps {
     };
     containerStyle?: CSSProperties;
     hideRows?: Array<
-        "like" | "index" | "title" | "artist" | "album" | "duration" | "platform"
+        "like" | "index" | "title" | "artist" | "album" | "duration" | "platform" | "format"
     >;
     /** 允许拖拽 */
     enableDrag?: boolean;
@@ -144,6 +146,29 @@ const columnDef: ColumnDef<IMusic.IMusicItem>[] = [
         // @ts-ignore
         fr: 1,
     }),
+    columnHelper.accessor(
+        (row) => {
+            const localPath = (row as any).$$localPath || (row as any).localPath;
+            if (localPath) {
+                return window.path.extname(localPath).toLowerCase().replace(".", "").toUpperCase();
+            }
+            return "";
+        },
+        {
+            id: "format",
+            header: () => i18n.t("media.media_format"),
+            size: 60,
+            minSize: 50,
+            maxSize: 80,
+            cell: (info) => {
+                const format = info.getValue();
+                if (format) {
+                    return <span className="music-format-tag">{format}</span>;
+                }
+                return null;
+            },
+        }
+    ),
 ];
 
 const estimizeItemHeight = 2.6 * 13; // lineheight 2.6rem
@@ -220,6 +245,29 @@ export function showMusicContextMenu(
             show: sheetType === "play-list",
             onClick() {
                 trackPlayer.removeMusic(musicItems);
+            },
+        },
+        {
+            title: i18n.t("music_list_context_menu.locate_in_list"),
+            icon: "musical-note",
+            show: !isArray && sheetType === "play-list",
+            onClick() {
+                const musicItem = musicItems as IMusic.IMusicItem;
+                const source = currentListSourceStore.getValue();
+                if (source) {
+                    let targetPath = source.path;
+                    if (source.type === "music-sheet") {
+                        targetPath = `${source.path}?locateMusicId=${musicItem.id}&locateMusicPlatform=${musicItem.platform}`;
+                    } else {
+                        locateMusicStore.setValue({
+                            musicId: musicItem.id,
+                            musicPlatform: musicItem.platform,
+                        });
+                    }
+                    navigateTo(targetPath);
+                } else {
+                    toast.warn(i18n.t("music_list_context_menu.locate_in_list_not_found"));
+                }
             },
         },
     );
@@ -348,6 +396,66 @@ export function showMusicContextMenu(
                 }
             },
         },
+        {
+            title: i18n.t("music_list_context_menu.edit_tags"),
+            icon: "tag",
+            show: !isArray && (musicItems?.platform === localPluginName || Downloader.isDownloaded(musicItems)),
+            onClick() {
+                showModal("TagEditor", { musicItem: musicItems });
+            },
+        },
+        {
+            title: i18n.t("music_list_context_menu.refresh_tag"),
+            icon: "arrow-path",
+            show: !isArray && (musicItems?.platform === localPluginName || Downloader.isDownloaded(musicItems)),
+            onClick() {
+                const musicItem = musicItems as IMusic.IMusicItem;
+                const filePath = (musicItem as any).$$localPath || (musicItem as any).localPath;
+                if (!filePath) {
+                    toast.error(i18n.t("music_list_context_menu.refresh_tag_failed"));
+                    return;
+                }
+
+                (async () => {
+                    try {
+                        const tagResult = await (window as any)["@shared/music-tag"].readTags(filePath);
+                        if (tagResult.success && tagResult.tags) {
+                            await musicSheetDB.localMusicStore.update(
+                                [musicItem.platform, musicItem.id],
+                                {
+                                    title: tagResult.tags.title || musicItem.title,
+                                    artist: tagResult.tags.artist || musicItem.artist,
+                                    album: tagResult.tags.album || musicItem.album,
+                                    artwork: tagResult.tags.artwork || musicItem.artwork,
+                                }
+                            );
+                            
+                            const currentList = localMusicListStore.getValue();
+                            const updatedList = currentList.map(item => {
+                                if (item.id === musicItem.id && item.platform === musicItem.platform) {
+                                    return {
+                                        ...item,
+                                        title: tagResult.tags.title || item.title,
+                                        artist: tagResult.tags.artist || item.artist,
+                                        album: tagResult.tags.album || item.album,
+                                        artwork: tagResult.tags.artwork || item.artwork,
+                                    };
+                                }
+                                return item;
+                            });
+                            localMusicListStore.setValue(updatedList);
+                            
+                            toast.success(i18n.t("music_list_context_menu.refresh_tag_success"));
+                        } else {
+                            toast.error(i18n.t("music_list_context_menu.refresh_tag_failed"));
+                        }
+                    } catch (e) {
+                        console.error("[RefreshTag] Error:", e);
+                        toast.error(i18n.t("music_list_context_menu.refresh_tag_failed"));
+                    }
+                })();
+            },
+        },
     );
 
     showContextMenu({
@@ -423,6 +531,22 @@ function _MusicList(props: IMusicListProps) {
         lastActiveIndexRef.current = 0;
         musicListRef.current = musicList;
     }, [musicList]);
+
+    const locateMusic = locateMusicStore.useValue();
+
+    useEffect(() => {
+        if (locateMusic && musicList.length > 0) {
+            const index = musicList.findIndex(
+                (item) => item.id === locateMusic.musicId && item.platform === locateMusic.musicPlatform,
+            );
+            if (index !== -1) {
+                setTimeout(() => {
+                    virtualController.scrollToIndex(index, "smooth");
+                }, 100);
+            }
+            locateMusicStore.setValue(null);
+        }
+    }, [locateMusic, musicList, virtualController]);
 
     useEffect(() => {
         const ctrlAHandler = (evt: Event) => {

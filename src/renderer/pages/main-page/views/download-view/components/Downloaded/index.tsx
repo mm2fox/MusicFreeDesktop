@@ -1,10 +1,18 @@
 import MusicList from "@/renderer/components/MusicList";
 import Downloader from "@/renderer/core/downloader";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
+import currentListSourceStore from "@/renderer/core/current-list-source/store";
 
 export default function Downloaded() {
     const downloadedList = Downloader.useDownloadedMusicList();
     const musicListContainerRef = useRef<HTMLDivElement>();
+
+    useEffect(() => {
+        currentListSourceStore.setValue({
+            type: "download",
+            path: "/main/download",
+        });
+    }, []);
 
     return (
         <div ref={musicListContainerRef}>

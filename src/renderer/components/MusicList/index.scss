@@ -64,6 +64,17 @@
     gap: 6px;
   }
 
+  & .music-format-tag {
+    display: inline-block;
+    padding: 2px 6px;
+    font-size: 0.7rem;
+    font-weight: 500;
+    border-radius: 4px;
+    background: var(--tagBgColor, rgba(0, 0, 0, 0.08));
+    color: var(--textSecondaryColor);
+    text-transform: uppercase;
+  }
+
   // & .resizer {
   //   position: absolute;
   //   right: 0;

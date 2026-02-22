@@ -10,6 +10,7 @@ import SearchLyric from "./SearchLyric";
 import SelectOne from "./SelectOne";
 import SimpleInputWithState from "./SimpleInputWithState";
 import Sparkles from "./Sparkles";
+import TagEditor from "./TagEditor";
 import Update from "./Update";
 import WatchLocalDir from "./WatchLocalDir";
 
@@ -28,4 +29,5 @@ export default {
     SearchLyric,
     ImportMusicSheet,
     MusicInfo,
+    TagEditor,
 };

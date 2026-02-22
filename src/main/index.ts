@@ -23,6 +23,19 @@ import shortCut from "@shared/short-cut/main";
 import voidCallback from "@/common/void-callback";
 import { xiaoaiService } from "./xiaoai-service";
 import MusicSearchUtil from "@shared/music-search/main";
+import MusicTagUtil from "@shared/music-tag/main";
+
+// 开发版使用不同的 userData 目录，允许与正式版同时运行
+if (process.defaultApp) {
+    const appDataPath = process.env.APPDATA || path.join(process.env.USERPROFILE || "", "AppData", "Roaming");
+    const devUserDataPath = path.join(appDataPath, "MusicFree-Dev");
+    try {
+        fs.mkdirSync(devUserDataPath, { recursive: true });
+    } catch {}
+    app.setPath("userData", devUserDataPath);
+    app.setPath("appData", devUserDataPath);
+    app.setAppUserModelId("fun.upup.musicfree.dev");
+}
 
 // portable
 if (process.platform === "win32") {
@@ -120,6 +133,7 @@ app.whenReady().then(async () => {
     WindowDrag.setup();
     shortCut.setup().then(voidCallback);
     MusicSearchUtil.setup();
+    MusicTagUtil.setup();
     xiaoaiService.init();
     logger.logPerf("Create Main Window");
     // Setup message bus & app state

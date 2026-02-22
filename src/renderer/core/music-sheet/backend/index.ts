@@ -504,3 +504,15 @@ export async function exportAllSheetDetails() {
         },
     );
 }
+
+/** 查找歌曲所属的歌单 */
+export function findSheetsContainingMusic(musicItem: IMusic.IMusicItem): IMusic.IDBMusicSheetItem[] {
+    const result: IMusic.IDBMusicSheetItem[] = [];
+    for (const sheet of musicSheets) {
+        const musicList = sheet.musicList ?? [];
+        if (musicList.some((mi) => isSameMedia(mi, musicItem))) {
+            result.push(sheet);
+        }
+    }
+    return result;
+}
