@@ -23,6 +23,7 @@ export const supportedMediaType = [
     "album",
     "artist",
     "sheet",
+    "local",
 ] as const;
 
 export const rem = 13;

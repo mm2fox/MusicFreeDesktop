@@ -86,6 +86,7 @@ export default function LocalMusicView() {
 
         let successCount = 0;
         let failCount = 0;
+        const updatedList = [...musicList];
 
         for (let i = 0; i < musicList.length; i++) {
             const musicItem = musicList[i];
@@ -95,15 +96,23 @@ export default function LocalMusicView() {
             try {
                 const tagResult = await (window as any)["@shared/music-tag"].readTags(filePath);
                 if (tagResult.success && tagResult.tags) {
+                    const updatedItem = {
+                        ...musicItem,
+                        title: tagResult.tags.title || musicItem.title,
+                        artist: tagResult.tags.artist || musicItem.artist,
+                        album: tagResult.tags.album || musicItem.album,
+                        artwork: tagResult.tags.artwork || musicItem.artwork,
+                    };
                     await musicSheetDB.localMusicStore.update(
                         [musicItem.platform, musicItem.id],
                         {
-                            title: tagResult.tags.title || musicItem.title,
-                            artist: tagResult.tags.artist || musicItem.artist,
-                            album: tagResult.tags.album || musicItem.album,
-                            artwork: tagResult.tags.artwork || musicItem.artwork,
-                        }
+                            title: updatedItem.title,
+                            artist: updatedItem.artist,
+                            album: updatedItem.album,
+                            artwork: updatedItem.artwork,
+                        },
                     );
+                    updatedList[i] = updatedItem;
                     successCount++;
                 } else {
                     failCount++;
@@ -114,13 +123,12 @@ export default function LocalMusicView() {
             }
         }
 
-        const allMusic = await musicSheetDB.localMusicStore.toArray();
-        localMusicListStore.setValue(allMusic);
+        localMusicListStore.setValue(updatedList);
 
         setRefreshing(false);
         toast.success(t("local_music_page.refresh_tags_complete", { 
             success: successCount, 
-            fail: failCount 
+            fail: failCount, 
         }));
     };
 

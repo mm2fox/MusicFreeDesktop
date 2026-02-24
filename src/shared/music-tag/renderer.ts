@@ -2,9 +2,12 @@ interface IMusicTags {
     title?: string;
     artist?: string;
     album?: string;
+    albumArtist?: string;
     year?: string;
+    date?: string;
     genre?: string;
     comment?: string;
+    lyrics?: string;
     artwork?: string;
 }
 

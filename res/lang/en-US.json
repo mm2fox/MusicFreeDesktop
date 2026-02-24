@@ -46,6 +46,7 @@
     "media_type_sheet": "Playlist",
     "media_type_lyric": "Lyric",
     "media_type_comment": "Comment",
+    "media_type_local": "Local",
 
     "media_title": "Title",
     "media_platform": "Source",
@@ -135,7 +136,11 @@
     "artist_view": "Artist View",
     "album_view": "Album View",
     "folder_view": "Folder View",
-    "total_music_num": "Total {{number}} songs"
+    "total_music_num": "Total {{number}} songs",
+    "lyrics": "Lyrics",
+    "has_lyrics": "Has Lyrics",
+    "no_lyrics": "No Lyrics",
+    "selected_count": "{{count}} selected"
   },
 
   "music_list_context_menu": {
@@ -292,7 +297,8 @@
       "toast_switch_language_fail": "Switching language failed",
       "search_engine": "Song Info Search Engine",
       "search_engine_baidu": "Baidu",
-      "search_engine_bing": "Bing"
+      "search_engine_bing": "Bing",
+      "local_music_auto_refresh": "Auto refresh UI when local files change"
     },
     "play_music": {
       "case_sensitive_in_search": "Case-sensitive search in playlist",
@@ -458,6 +464,8 @@
     "remove_cover": "Remove Cover",
     "swap_title_artist": "Swap Title and Artist",
     "restore_cover": "Restore Original Cover",
-    "cover_load_error": "Failed to load cover image"
+    "cover_load_error": "Failed to load cover image",
+    "open_in_explorer": "Open in Explorer",
+    "open_folder_error": "Failed to open folder"
   }
 }

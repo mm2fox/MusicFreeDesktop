@@ -24,7 +24,9 @@ export default function SearchView() {
     useEffect(() => {
         if (query) {
             const currentType = currentMediaTypeStore.getValue();
-            search(query, 1, currentType);
+            if (currentType !== "local") {
+                search(query, 1, currentType);
+            }
         }
     }, [query]);
 
@@ -40,42 +42,44 @@ export default function SearchView() {
                 <span className="highlight">「{decodeURIComponent(query)}」</span>
                 {t("search_result_page.search_result_title")}
             </div>
-            {plugins.length ? (
-                <Tab.Group
-                    defaultIndex={history.state?.usr?.mediaIndex ?? 0}
-                    onChange={(index) => {
-                        currentMediaTypeStore.setValue(supportedMediaType[index]);
-                        // 获取history
-                        navigate("", {
-                            replace: true,
-                            state: {
-                                mediaIndex: index,
-                            },
-                        });
-                    }}
-                >
-                    <Tab.List className="tab-list-container">
-                        {supportedMediaType.map((type) => (
-                            <Tab key={type} as="div" className="tab-list-item">
-                                {t(`media.media_type_${type}`)}
-                            </Tab>
-                        ))}
-                    </Tab.List>
-                    <Tab.Panels className={"tab-panels-container"}>
-                        {supportedMediaType.map((type) => (
-                            <Tab.Panel className="tab-panel-container" key={type}>
+            <Tab.Group
+                defaultIndex={history.state?.usr?.mediaIndex ?? 0}
+                onChange={(index) => {
+                    currentMediaTypeStore.setValue(supportedMediaType[index]);
+                    // 获取history
+                    navigate("", {
+                        replace: true,
+                        state: {
+                            mediaIndex: index,
+                        },
+                    });
+                }}
+            >
+                <Tab.List className="tab-list-container">
+                    {supportedMediaType.map((type) => (
+                        <Tab key={type} as="div" className="tab-list-item">
+                            {t(`media.media_type_${type}`)}
+                        </Tab>
+                    ))}
+                </Tab.List>
+                <Tab.Panels className={"tab-panels-container"}>
+                    {supportedMediaType.map((type) => (
+                        <Tab.Panel className="tab-panel-container" key={type}>
+                            {type === "local" ? (
+                                <SearchResult type={type} plugins={[]} query={query} />
+                            ) : plugins.length ? (
                                 <SearchResult
                                     type={type}
                                     plugins={PluginManager.getSortedSearchablePlugins(type)}
                                     query={query}
-                                ></SearchResult>
-                            </Tab.Panel>
-                        ))}
-                    </Tab.Panels>
-                </Tab.Group>
-            ) : (
-                <NoPlugin supportMethod={t("plugin.method_search")}></NoPlugin>
-            )}
+                                />
+                            ) : (
+                                <NoPlugin supportMethod={t("plugin.method_search")} />
+                            )}
+                        </Tab.Panel>
+                    ))}
+                </Tab.Panels>
+            </Tab.Group>
         </div>
     );
 }

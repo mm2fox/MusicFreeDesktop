@@ -25,6 +25,8 @@ import Tag from "@/renderer/components/Tag";
 import useVirtualList from "@/hooks/useVirtualList";
 import AppConfig from "@shared/app-config/renderer";
 import currentListSourceStore from "@/renderer/core/current-list-source/store";
+import { shellUtil } from "@shared/utils/renderer";
+import { locateMusicStore } from "@/renderer/components/MusicSheetlikeView/store";
 
 interface ILocalMusicListProps {
     localMusicList: IMusic.IMusicItem[];
@@ -74,11 +76,11 @@ function showLocalMusicContextMenu(
             },
         },
         {
-            title: i18n.t("music_list_context_menu.edit_tags"),
+            title: `${i18n.t("music_list_context_menu.edit_tags")} (Alt+E)`,
             icon: "tag",
             show: !isArray,
             onClick() {
-                showModal("TagEditor", { musicItem: musicItems });
+                showModal("TagEditor", { musicItem: musicItems as IMusic.IMusicItem });
             },
         },
         {
@@ -105,7 +107,7 @@ function showLocalMusicContextMenu(
                                     album: tagResult.tags.album || musicItem.album,
                                     artwork: tagResult.tags.artwork || musicItem.artwork,
                                     rawLrc: tagResult.tags.lyrics || undefined,
-                                }
+                                },
                             );
 
                             const currentList = localMusicListStore.getValue();
@@ -135,6 +137,29 @@ function showLocalMusicContextMenu(
                 })();
             },
         },
+        {
+            title: i18n.t("music_list_context_menu.reveal_local_music_in_file_explorer"),
+            icon: "folder-open",
+            show: !isArray,
+            async onClick() {
+                try {
+                    const musicItem = musicItems as IMusic.IMusicItem;
+                    const filePath = (musicItem as any).$$localPath || (musicItem as any).localPath;
+                    if (!filePath) {
+                        toast.error(i18n.t("music_list_context_menu.reveal_local_music_in_file_explorer_fail"));
+                        return;
+                    }
+                    const result = await shellUtil.showItemInFolder(filePath);
+                    if (!result) {
+                        throw new Error();
+                    }
+                } catch (e) {
+                    toast.error(
+                        `${i18n.t("music_list_context_menu.reveal_local_music_in_file_explorer_fail")} ${e?.message ?? ""}`,
+                    );
+                }
+            },
+        },
     );
 
     showContextMenu({ x, y, menuItems });
@@ -147,8 +172,8 @@ function _LocalMusicList(props: ILocalMusicListProps) {
     const columnShownRef = useRef(
         AppConfig.getConfig("normal.musicListColumnsShown").reduce(
             (prev, curr) => ({ ...prev, [curr]: false }),
-            {}
-        )
+            {},
+        ),
     );
 
     const columnDef: ColumnDef<IMusic.IMusicItem>[] = [
@@ -236,14 +261,16 @@ function _LocalMusicList(props: ILocalMusicListProps) {
                     );
                 },
                 enableSorting: true,
-            }
+            },
         ),
         columnHelper.accessor(
             (row) => {
-                const localPath = (row as any).$$localPath || (row as any).localPath;
-                if (localPath) {
-                    return window.path.extname(localPath).toLowerCase().replace(".", "").toUpperCase();
-                }
+                try {
+                    const localPath = (row as any).$$localPath || (row as any).localPath;
+                    if (localPath && window.path) {
+                        return window.path.extname(localPath).toLowerCase().replace(".", "").toUpperCase();
+                    }
+                } catch {}
                 return "";
             },
             {
@@ -259,7 +286,7 @@ function _LocalMusicList(props: ILocalMusicListProps) {
                     }
                     return null;
                 },
-            }
+            },
         ),
     ];
 
@@ -287,6 +314,7 @@ function _LocalMusicList(props: ILocalMusicListProps) {
 
     const [activeItems, setActiveItems] = useState<Set<number>>(new Set());
     const lastActiveIndexRef = useRef(0);
+    const [isHovering, setIsHovering] = useState(false);
 
     useEffect(() => {
         setActiveItems(new Set());
@@ -295,20 +323,95 @@ function _LocalMusicList(props: ILocalMusicListProps) {
     }, [localMusicList]);
 
     useEffect(() => {
+        console.log("[LocalMusicList] setting currentListSourceStore");
         currentListSourceStore.setValue({
             type: "local-music",
             path: "/main/local-music",
         });
     }, []);
 
+    const locateMusic = locateMusicStore.useValue();
+
+    useEffect(() => {
+        console.log("[LocalMusicList] locateMusic:", locateMusic, "localMusicList.length:", localMusicList.length);
+        if (locateMusic && localMusicList.length > 0) {
+            const index = localMusicList.findIndex(
+                (item) => item.id === locateMusic.musicId && item.platform === locateMusic.musicPlatform,
+            );
+            console.log("[LocalMusicList] found index:", index);
+            if (index !== -1) {
+                setTimeout(() => {
+                    console.log("[LocalMusicList] scrolling to index:", index);
+                    virtualController.scrollToIndex(index, "smooth");
+                }, 100);
+            }
+            locateMusicStore.setValue(null);
+        }
+    }, [locateMusic, localMusicList, virtualController]);
+
+    const activeItemsRef = useRef(activeItems);
+    
+    useEffect(() => {
+        activeItemsRef.current = activeItems;
+    }, [activeItems]);
+    
     useEffect(() => {
         const ctrlAHandler = (evt: Event) => {
             evt.preventDefault();
             setActiveItems(new Set(Array.from({ length: musicListRef.current.length }, (_, i) => i)));
         };
+        
+        const altEHandler = (evt: KeyboardEvent) => {
+            evt.preventDefault();
+            if (activeItemsRef.current.size === 1) {
+                const selectedIndex = Array.from(activeItemsRef.current)[0];
+                const selectedItem = musicListRef.current[selectedIndex];
+                if (selectedItem) {
+                    showModal("TagEditor", { musicItem: selectedItem });
+                }
+            }
+        };
+        
+        const upHandler = (evt: KeyboardEvent) => {
+            evt.preventDefault();
+            if (activeItemsRef.current.size === 0 && musicListRef.current.length > 0) {
+                setActiveItems(new Set([0]));
+                lastActiveIndexRef.current = 0;
+            } else if (activeItemsRef.current.size === 1) {
+                const currentIndex = Array.from(activeItemsRef.current)[0];
+                const newIndex = Math.max(0, currentIndex - 1);
+                setActiveItems(new Set([newIndex]));
+                lastActiveIndexRef.current = newIndex;
+                virtualController.scrollToIndex(newIndex, "auto");
+            }
+        };
+        
+        const downHandler = (evt: KeyboardEvent) => {
+            evt.preventDefault();
+            const totalLength = musicListRef.current.length;
+            if (activeItemsRef.current.size === 0 && totalLength > 0) {
+                setActiveItems(new Set([0]));
+                lastActiveIndexRef.current = 0;
+            } else if (activeItemsRef.current.size === 1) {
+                const currentIndex = Array.from(activeItemsRef.current)[0];
+                const newIndex = Math.min(totalLength - 1, currentIndex + 1);
+                setActiveItems(new Set([newIndex]));
+                lastActiveIndexRef.current = newIndex;
+                virtualController.scrollToIndex(newIndex, "auto");
+            }
+        };
+        
         hotkeys("Ctrl+A", "music-list", ctrlAHandler);
-        return () => hotkeys.unbind("Ctrl+A", ctrlAHandler);
-    }, []);
+        hotkeys("Alt+E", "music-list", altEHandler);
+        hotkeys("up", "music-list", upHandler);
+        hotkeys("down", "music-list", downHandler);
+        return () => {
+            hotkeys.unbind("Ctrl+A", ctrlAHandler);
+            hotkeys.unbind("Alt+E", altEHandler);
+            hotkeys.unbind("up", upHandler);
+            hotkeys.unbind("down", downHandler);
+        };
+    }, [virtualController]);
 
     return (
         <div
@@ -318,7 +421,14 @@ function _LocalMusicList(props: ILocalMusicListProps) {
             tabIndex={-1}
             onFocus={() => hotkeys.setScope("music-list")}
             onBlur={() => hotkeys.setScope("all")}
+            onMouseEnter={() => setIsHovering(true)}
+            onMouseLeave={() => setIsHovering(false)}
         >
+            {activeItems.size > 1 && isHovering && (
+                <div className="selection-count-badge">
+                    {i18n.t("local_music_page.selected_count", { count: activeItems.size })}
+                </div>
+            )}
             <table
                 style={{
                     height: virtualController.totalHeight + estimizeItemHeight,
@@ -335,14 +445,14 @@ function _LocalMusicList(props: ILocalMusicListProps) {
                                     //@ts-ignore
                                     width: header.column.columnDef.fr
                                         ? //@ts-ignore
-                                          `${header.column.columnDef.fr * 100}%`
+                                        `${header.column.columnDef.fr * 100}%`
                                         : header.column.columnDef.size,
                                 }}
                                 onClick={header.column.getToggleSortingHandler()}
                             >
                                 {flexRender(
                                     header.column.columnDef.header,
-                                    header.getContext()
+                                    header.getContext(),
                                 )}
                                 <div
                                     className="sort-container"
@@ -394,7 +504,8 @@ function _LocalMusicList(props: ILocalMusicListProps) {
                                         showLocalMusicContextMenu(row.original, e.clientX, e.clientY);
                                     }
                                 }}
-                                onClick={() => {
+                                onClick={(e) => {
+                                    hotkeys.setScope("music-list");
                                     if (hotkeys.shift) {
                                         let start = lastActiveIndexRef.current;
                                         let end = virtualItem.rowIndex;
@@ -406,8 +517,8 @@ function _LocalMusicList(props: ILocalMusicListProps) {
                                         }
                                         setActiveItems(
                                             new Set(
-                                                Array.from({ length: end - start + 1 }, (_, i) => start + i)
-                                            )
+                                                Array.from({ length: end - start + 1 }, (_, i) => start + i),
+                                            ),
                                         );
                                     } else if (hotkeys.ctrl) {
                                         const newSet = new Set(activeItems);
@@ -428,7 +539,7 @@ function _LocalMusicList(props: ILocalMusicListProps) {
                                     if (config === "replace") {
                                         trackPlayer.playMusicWithReplaceQueue(
                                             table.getRowModel().rows.map((it) => it.original),
-                                            row.original
+                                            row.original,
                                         );
                                     } else {
                                         trackPlayer.playMusic(row.original);
@@ -442,7 +553,7 @@ function _LocalMusicList(props: ILocalMusicListProps) {
                                             //@ts-ignore
                                             width: cell.column.columnDef.fr
                                                 ? //@ts-ignore
-                                                  `${cell.column.columnDef.fr * 100}%`
+                                                `${cell.column.columnDef.fr * 100}%`
                                                 : cell.column.columnDef.size,
                                         }}
                                     >

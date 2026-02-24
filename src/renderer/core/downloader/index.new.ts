@@ -13,6 +13,7 @@ import { DownloadState, localPluginName } from "@/common/constant";
 import { getQualityOrder, isSameMedia, setInternalData } from "@/common/media-util";
 import { downloadingMusicStore } from "@renderer/core/downloader/store";
 import PluginManager from "@shared/plugin-manager/renderer";
+import MusicTag from "@shared/music-tag/renderer";
 
 type ProxyMarkedFunction<T> = T &
     Comlink.ProxyMarked;
@@ -166,7 +167,6 @@ class Downloader extends EventEmitter<IDownloaderEvent> {
     }
 
     private async downloadMusicImpl(musicItem: IMusic.IMusicItem, fileName: string, options: IDownloadFileOptions) {
-        // 1. config
         const [defaultQuality, whenQualityMissing] = [
             AppConfig.getConfig("download.defaultQuality"),
             AppConfig.getConfig("download.whenQualityMissing"),
@@ -216,7 +216,12 @@ class Downloader extends EventEmitter<IDownloaderEvent> {
                     onProgress(progress) {
                         options?.onProgress?.(progress);
                     },
-                    onEnded() {
+                    async onEnded() {
+                        try {
+                            await writeMusicTags(musicItem, downloadPath);
+                        } catch (e) {
+                            console.warn("[Downloader] Failed to write tags:", e);
+                        }
                         options?.onEnded?.();
                         addDownloadedMusicToList(
                             setInternalData<IMusic.IMusicItemInternalData>(
@@ -268,6 +273,73 @@ class Downloader extends EventEmitter<IDownloaderEvent> {
             this.currentTaskStatus.get(platform)?.set(id, taskStatus);
         }
         this.emit(DownloaderEvent.DOWNLOAD_STATE_CHANGED, musicItem, taskStatus);
+    }
+}
+
+
+async function writeMusicTags(musicItem: IMusic.IMusicItem, filePath: string) {
+    console.log("[Downloader] writeMusicTags called for:", musicItem.title, "path:", filePath);
+    const ext = filePath.split(".").pop()?.toLowerCase();
+    if (ext !== "mp3" && ext !== "flac") {
+        console.log("[Downloader] Skipping tag write for unsupported format:", ext);
+        return;
+    }
+
+    const tags: import("@shared/music-tag/renderer").IMusicTags = {
+        title: musicItem.title,
+        artist: musicItem.artist,
+        album: musicItem.album,
+    };
+
+    console.log("[Downloader] Getting lyrics for:", musicItem.title);
+    try {
+        const lyricSource = await PluginManager.callPluginDelegateMethod(
+            musicItem,
+            "getLyric",
+            musicItem,
+        );
+        console.log("[Downloader] Lyric source result:", lyricSource ? "found" : "not found");
+        if (lyricSource?.rawLrc) {
+            tags.lyrics = lyricSource.rawLrc;
+            console.log("[Downloader] Lyrics added, length:", lyricSource.rawLrc.length);
+        }
+    } catch (e) {
+        console.warn("[Downloader] Failed to get lyrics:", e);
+    }
+
+    console.log("[Downloader] Getting artwork for:", musicItem.title, "artwork:", musicItem.artwork ? "exists" : "none");
+    if (musicItem.artwork) {
+        try {
+            let artworkBase64: string;
+            if (musicItem.artwork.startsWith("data:")) {
+                artworkBase64 = musicItem.artwork;
+            } else {
+                console.log("[Downloader] Fetching artwork from URL:", musicItem.artwork);
+                const response = await fetch(musicItem.artwork);
+                const blob = await response.blob();
+                const arrayBuffer = await blob.arrayBuffer();
+                const uint8Array = new Uint8Array(arrayBuffer);
+                let binary = "";
+                for (let i = 0; i < uint8Array.length; i++) {
+                    binary += String.fromCharCode(uint8Array[i]);
+                }
+                const base64 = btoa(binary);
+                const mimeType = blob.type || "image/jpeg";
+                artworkBase64 = `data:${mimeType};base64,${base64}`;
+            }
+            tags.artwork = artworkBase64;
+            console.log("[Downloader] Artwork added, length:", artworkBase64.length);
+        } catch (e) {
+            console.warn("[Downloader] Failed to get artwork:", e);
+        }
+    }
+
+    console.log("[Downloader] Writing tags to file:", filePath);
+    const result = await MusicTag.writeTags(filePath, tags);
+    if (!result.success) {
+        console.warn("[Downloader] Failed to write tags:", result.error);
+    } else {
+        console.log("[Downloader] Tags written successfully for:", musicItem.title);
     }
 }
 

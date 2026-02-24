@@ -29,6 +29,7 @@ const _defaultAppConfig: IAppConfig = {
     "backup.resumeBehavior": "append",
     "normal.language": "zh-CN",
     "musicInfo.searchEngine": "baidu",
+    "localMusic.autoRefreshOnFileChange": false,
 };
 
 

@@ -60,7 +60,7 @@ interface IMusicListProps {
     };
     containerStyle?: CSSProperties;
     hideRows?: Array<
-        "like" | "index" | "title" | "artist" | "album" | "duration" | "platform" | "format"
+        "like" | "index" | "title" | "artist" | "album" | "duration" | "platform" | "format" | "lyrics"
     >;
     /** 允许拖拽 */
     enableDrag?: boolean;
@@ -137,6 +137,31 @@ const columnDef: ColumnDef<IMusic.IMusicItem>[] = [
         // @ts-ignore
         fr: 1,
     }),
+    columnHelper.accessor(
+        (row) => {
+            const rawLrc = (row as any).rawLrc;
+            return rawLrc ? "yes" : "no";
+        },
+        {
+            id: "lyrics",
+            header: () => i18n.t("local_music_page.lyrics"),
+            size: 50,
+            minSize: 40,
+            maxSize: 80,
+            cell: (info) => {
+                const hasLyrics = info.getValue() === "yes";
+                return (
+                    <span 
+                        className="lyrics-indicator" 
+                        title={hasLyrics ? i18n.t("local_music_page.has_lyrics") : i18n.t("local_music_page.no_lyrics")}
+                    >
+                        {hasLyrics ? "📝" : ""}
+                    </span>
+                );
+            },
+            enableSorting: true,
+        },
+    ),
     columnHelper.accessor("platform", {
         header: () => i18n.t("media.media_platform"),
         size: 100,
@@ -167,7 +192,7 @@ const columnDef: ColumnDef<IMusic.IMusicItem>[] = [
                 }
                 return null;
             },
-        }
+        },
     ),
 ];
 
@@ -254,16 +279,21 @@ export function showMusicContextMenu(
             onClick() {
                 const musicItem = musicItems as IMusic.IMusicItem;
                 const source = currentListSourceStore.getValue();
+                console.log("[locate_in_list] source:", source);
+                console.log("[locate_in_list] musicItem:", musicItem);
                 if (source) {
                     let targetPath = source.path;
                     if (source.type === "music-sheet") {
                         targetPath = `${source.path}?locateMusicId=${musicItem.id}&locateMusicPlatform=${musicItem.platform}`;
                     } else {
+                        console.log("[locate_in_list] setting locateMusicStore");
                         locateMusicStore.setValue({
                             musicId: musicItem.id,
                             musicPlatform: musicItem.platform,
                         });
+                        console.log("[locate_in_list] locateMusicStore value:", locateMusicStore.getValue());
                     }
+                    console.log("[locate_in_list] navigating to:", targetPath);
                     navigateTo(targetPath);
                 } else {
                     toast.warn(i18n.t("music_list_context_menu.locate_in_list_not_found"));
@@ -401,7 +431,7 @@ export function showMusicContextMenu(
             icon: "tag",
             show: !isArray && (musicItems?.platform === localPluginName || Downloader.isDownloaded(musicItems)),
             onClick() {
-                showModal("TagEditor", { musicItem: musicItems });
+                showModal("TagEditor", { musicItem: musicItems as IMusic.IMusicItem });
             },
         },
         {
@@ -427,7 +457,7 @@ export function showMusicContextMenu(
                                     artist: tagResult.tags.artist || musicItem.artist,
                                     album: tagResult.tags.album || musicItem.album,
                                     artwork: tagResult.tags.artwork || musicItem.artwork,
-                                }
+                                },
                             );
                             
                             const currentList = localMusicListStore.getValue();
@@ -535,12 +565,15 @@ function _MusicList(props: IMusicListProps) {
     const locateMusic = locateMusicStore.useValue();
 
     useEffect(() => {
+        console.log("[MusicList] locateMusic:", locateMusic, "musicList.length:", musicList.length);
         if (locateMusic && musicList.length > 0) {
             const index = musicList.findIndex(
                 (item) => item.id === locateMusic.musicId && item.platform === locateMusic.musicPlatform,
             );
+            console.log("[MusicList] found index:", index);
             if (index !== -1) {
                 setTimeout(() => {
+                    console.log("[MusicList] scrolling to index:", index);
                     virtualController.scrollToIndex(index, "smooth");
                 }, 100);
             }

@@ -42,6 +42,7 @@
     "media_type_sheet": "歌单",
     "media_type_lyric": "歌词",
     "media_type_comment": "评论",
+    "media_type_local": "本地",
     "media_title": "标题",
     "media_platform": "来源",
     "media_duration": "时长",
@@ -124,7 +125,8 @@
     "total_music_num": "共 {{number}} 首",
     "lyrics": "歌词",
     "has_lyrics": "有歌词",
-    "no_lyrics": "无歌词"
+    "no_lyrics": "无歌词",
+    "selected_count": "已选中 {{count}} 首"
   },
   "music_list_context_menu": {
     "next_play": "下一首播放",
@@ -274,7 +276,8 @@
       "toast_switch_language_fail": "切换语言失败",
       "search_engine": "歌曲信息搜索引擎",
       "search_engine_baidu": "百度",
-      "search_engine_bing": "必应"
+      "search_engine_bing": "必应",
+      "local_music_auto_refresh": "本地文件变动时自动刷新界面"
     },
     "play_music": {
       "case_sensitive_in_search": "歌单内搜索时区分大小写",
@@ -440,6 +443,8 @@
     "remove_cover": "移除封面",
     "swap_title_artist": "交换标题和艺术家",
     "restore_cover": "恢复原封面",
-    "cover_load_error": "加载封面图片失败"
+    "cover_load_error": "加载封面图片失败",
+    "open_in_explorer": "打开文件所在目录",
+    "open_folder_error": "打开文件夹失败"
   }
 }

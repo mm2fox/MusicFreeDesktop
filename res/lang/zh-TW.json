@@ -46,6 +46,7 @@
     "media_type_sheet": "歌單",
     "media_type_lyric": "歌詞",
     "media_type_comment": "評論",
+    "media_type_local": "本地",
 
     "media_title": "標題",
     "media_platform": "來源",
@@ -291,7 +292,8 @@
       "toast_switch_language_fail": "切換語言失敗",
       "search_engine": "歌曲資訊搜尋引擎",
       "search_engine_baidu": "百度",
-      "search_engine_bing": "必應"
+      "search_engine_bing": "必應",
+      "local_music_auto_refresh": "本地文件變動時自動刷新界面"
     },
     "play_music": {
       "case_sensitive_in_search": "搜尋歌單時區分大小寫",

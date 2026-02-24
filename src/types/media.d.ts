@@ -5,6 +5,7 @@ declare namespace IMedia {
     artist: IArtist.IArtistItem;
     sheet: IMusic.IMusicSheetItem;
     lyric: ILyric.ILyricItem;
+    local: IMusic.IMusicItem & { $$localPath: string };
   };
 
   export type SupportMediaType = keyof SupportMediaItem;

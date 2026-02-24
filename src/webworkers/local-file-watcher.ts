@@ -98,6 +98,12 @@ const syncRemovedFilePaths = debounce(
     },
 );
 
+async function flush() {
+    syncAddedMusic.flush();
+    syncRemovedFilePaths.flush();
+    await new Promise(resolve => setTimeout(resolve, 100));
+}
+
 async function changeWatchPath(addPaths?: string[], rmPaths?: string[]) {
     console.log(addPaths, rmPaths);
     try {
@@ -106,25 +112,18 @@ async function changeWatchPath(addPaths?: string[], rmPaths?: string[]) {
         }
         if (rmPaths?.length) {
             watcher.unwatch(rmPaths);
-            /**
-       * chokidar的bug: https://github.com/paulmillr/chokidar/issues/1027
-       * unwatch之后重新watch不会触发文件更新
-       */
             rmPaths.forEach((it) => {
                 // @ts-ignore
                 const watchedDirEntry = watcher._watched.get(it);
                 if (watchedDirEntry) {
-                    // 移除所有子节点的监听
                     watchedDirEntry._removeWatcher(
                         path.dirname(it),
                         path.basename(it),
                         true,
                     );
                 }
-                // watcher._watched.delete(it);
             });
         }
-    // console.log("WATCH PATH CHANGED", addPaths, rmPaths, watcher);
     } catch (e) {
         console.log(e);
     }
@@ -143,4 +142,5 @@ Comlink.expose({
     changeWatchPath,
     onAdd,
     onRemove,
+    flush,
 });

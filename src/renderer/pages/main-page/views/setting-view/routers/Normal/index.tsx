@@ -104,6 +104,10 @@ export default function Normal() {
                 renderItem={(item) => t("settings.normal.search_engine_" + item)}
                 onChange={handleEngineChange}
             ></RadioGroupSettingItem>
+            <CheckBoxSettingItem
+                label={t("settings.normal.local_music_auto_refresh")}
+                keyPath="localMusic.autoRefreshOnFileChange"
+            ></CheckBoxSettingItem>
         </div>
     );
 }

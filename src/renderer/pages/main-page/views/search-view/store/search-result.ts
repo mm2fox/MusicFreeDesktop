@@ -27,6 +27,7 @@ export const initSearchResults: ISearchResults = {
     artist: {},
     sheet: {},
     lyric: {},
+    local: {},
 };
 
 /** key: pluginhash value: searchResult */

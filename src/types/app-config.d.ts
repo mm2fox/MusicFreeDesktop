@@ -92,6 +92,8 @@ interface _IAppConfig {
 
     /** 本地音乐配置 */
     "localMusic.watchDir": string[];
+    /** 本地文件变动时自动刷新界面 */
+    "localMusic.autoRefreshOnFileChange": boolean;
 
     /** 音乐信息搜索引擎 */
     "musicInfo.searchEngine": "baidu" | "bing";

@@ -12,8 +12,9 @@ import { localPluginName } from "@/common/constant";
 import { getInternalData } from "@/common/media-util";
 import musicSheetDB from "@/renderer/core/db/music-sheet-db";
 import localMusicListStore from "@/renderer/core/local-music/store";
-import { dialogUtil } from "@shared/utils/renderer";
+import { dialogUtil, shellUtil } from "@shared/utils/renderer";
 import { useDraggable } from "./useDraggable";
+import hotkeys from "hotkeys-js";
 
 interface ITagEditorProps {
     musicItem: IMusic.IMusicItem;
@@ -99,7 +100,7 @@ export default function TagEditor(props: ITagEditorProps) {
             const result = await MusicTag.readTags(localPath);
             
             console.log("[TagEditor] Read result:", result);
-            console.log("[TagEditor] Read tags detail:", JSON.stringify(result.tags, null, 2));
+            console.log("[TagEditor] Read tags detail:", JSON.stringify((result as any).tags, null, 2));
             
             if (result.success) {
                 let title = result.tags?.title || "";
@@ -176,6 +177,48 @@ export default function TagEditor(props: ITagEditorProps) {
         loadTags();
     }, [loadTags]);
 
+    useEffect(() => {
+        const previousScope = hotkeys.getScope();
+        hotkeys.setScope("tag-editor");
+        
+        hotkeys("alt+m", "tag-editor", (e) => {
+            e.preventDefault();
+            if (canWrite && !saving) {
+                handleSwapTitleArtist();
+            }
+        });
+
+        hotkeys("alt+s", "tag-editor", (e) => {
+            e.preventDefault();
+            if (canWrite && !saving) {
+                handleSave();
+            }
+        });
+
+        hotkeys("alt+o", "tag-editor", (e) => {
+            e.preventDefault();
+            if (filePath) {
+                handleOpenInExplorer();
+            }
+        });
+
+        hotkeys("space", "tag-editor", (e) => {
+            const activeElement = document.activeElement;
+            if (activeElement?.tagName === "INPUT" || activeElement?.tagName === "TEXTAREA") {
+                return;
+            }
+            e.preventDefault();
+            if (canWrite && !saving) {
+                handleSwapTitleArtist();
+            }
+        });
+
+        return () => {
+            hotkeys.deleteScope("tag-editor");
+            hotkeys.setScope(previousScope || "all");
+        };
+    }, [canWrite, saving, formData, filePath]);
+
     const handleInputChange = (field: keyof ITagFormData, value: string) => {
         setFormData(prev => ({ ...prev, [field]: value }));
     };
@@ -226,6 +269,18 @@ export default function TagEditor(props: ITagEditorProps) {
         }));
     };
 
+    const handleOpenInExplorer = async () => {
+        if (!filePath) {
+            toast.error(t("tag_editor.file_not_found"));
+            return;
+        }
+        try {
+            await shellUtil.showItemInFolder(filePath);
+        } catch (e) {
+            toast.error(t("tag_editor.open_folder_error"));
+        }
+    };
+
     const handleSave = async () => {
         if (!canWrite) {
             toast.error(t("tag_editor.format_not_supported", { format: fileExt }));
@@ -263,17 +318,28 @@ export default function TagEditor(props: ITagEditorProps) {
                                 title: formData.title || musicItem.title,
                                 artist: formData.artist || musicItem.artist,
                                 album: formData.album || musicItem.album,
-                            }
+                            },
                         );
-                        const allMusic = await musicSheetDB.localMusicStore.toArray();
-                        localMusicListStore.setValue(allMusic);
+                        const currentList = localMusicListStore.getValue();
+                        const updatedList = currentList.map(item => {
+                            if (item.platform === musicItem.platform && item.id === musicItem.id) {
+                                return {
+                                    ...item,
+                                    title: formData.title || musicItem.title,
+                                    artist: formData.artist || musicItem.artist,
+                                    album: formData.album || musicItem.album,
+                                };
+                            }
+                            return item;
+                        });
+                        localMusicListStore.setValue(updatedList);
                     } catch (e) {
                         console.error("[TagEditor] Failed to update local music store:", e);
                     }
                 }
                 
                 toast.success(t("tag_editor.save_success"));
-                await loadTags();
+                hideModal();
             } else {
                 console.error("[TagEditor] Write error:", result.error);
                 toast.error(result.error || t("tag_editor.save_error"));
@@ -301,12 +367,27 @@ export default function TagEditor(props: ITagEditorProps) {
                     onMouseDown={handleMouseDown}
                 >
                     <span className="tag-editor-title">{t("tag_editor.title")}</span>
-                    <div
-                        role="button"
-                        className="tag-editor-close opacity-button"
-                        onClick={hideModal}
-                    >
-                        <SvgAsset iconName="x-mark"></SvgAsset>
+                    <div className="tag-editor-header-actions">
+                        {filePath && (
+                            <div
+                                role="button"
+                                className="tag-editor-open-folder opacity-button"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleOpenInExplorer();
+                                }}
+                                title={`${t("tag_editor.open_in_explorer")} (Alt+O)`}
+                            >
+                                <SvgAsset iconName="folder-open" size={16}></SvgAsset>
+                            </div>
+                        )}
+                        <div
+                            role="button"
+                            className="tag-editor-close opacity-button"
+                            onClick={hideModal}
+                        >
+                            <SvgAsset iconName="x-mark"></SvgAsset>
+                        </div>
                     </div>
                 </div>
                 <div className="tag-editor-content">
@@ -367,7 +448,7 @@ export default function TagEditor(props: ITagEditorProps) {
                                         className="swap-btn"
                                         onClick={handleSwapTitleArtist}
                                         disabled={!canWrite}
-                                        title={t("tag_editor.swap_title_artist")}
+                                        title={`${t("tag_editor.swap_title_artist")} (Alt+M / Space)`}
                                     >
                                         <SvgAsset iconName="sort" size={16} />
                                     </button>

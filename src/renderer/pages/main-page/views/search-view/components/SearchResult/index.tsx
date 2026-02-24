@@ -11,6 +11,7 @@ import useSearch from "../../hooks/useSearch";
 import SwitchCase from "@/renderer/components/SwitchCase";
 import { useNavigate } from "react-router-dom";
 import SheetResult from "./SheetResult";
+import LocalResult from "./LocalResult";
 
 interface ISearchResultProps {
     type: IMedia.SupportMediaType;
@@ -32,6 +33,10 @@ export default function SearchResult(props: ISearchResultProps) {
     }, [plugins, selectedPlugin]);
 
     const navigate = useNavigate();
+
+    if (type === "local") {
+        return <LocalResult query={query} />;
+    }
 
     return (
         <>
