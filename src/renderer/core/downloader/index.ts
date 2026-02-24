@@ -21,6 +21,7 @@ import { useEffect, useState } from "react";
 import { DownloadEvts, ee } from "./ee";
 import AppConfig from "@shared/app-config/renderer";
 import PluginManager from "@shared/plugin-manager/renderer";
+import MusicTag from "@shared/music-tag/renderer";
 
 
 export interface IDownloadStatus {
@@ -104,7 +105,10 @@ async function startDownload(
             }
 
             downloadingProgress.get(pk).state = DownloadState.DOWNLOADING;
-            const fileName = `${it.title}-${it.artist}`.replace(/[/|\\?*"<>:]/g, "_");
+            let fileName = `${it.title}-${it.artist}`.replace(/[/|\\?*"<>:]/g, "_");
+            if (fileName.length > 100) {
+                fileName = fileName.substring(0, 100);
+            }
             await new Promise<void>((resolve) => {
                 downloadMusicImpl(it, fileName, (stateData) => {
                     downloadingProgress.set(pk, stateData);
@@ -168,9 +172,14 @@ async function downloadMusicImpl(
             downloaderWorker.downloadFile(
                 mediaSource,
                 downloadPath,
-                Comlink.proxy((dataState) => {
+                Comlink.proxy(async (dataState) => {
                     onStateChange(dataState);
                     if (dataState.state === DownloadState.DONE) {
+                        try {
+                            await writeMusicTags(musicItem, downloadPath);
+                        } catch (e) {
+                            console.warn("[Downloader] Failed to write tags:", e);
+                        }
                         addDownloadedMusicToList(
                             setInternalData<IMusic.IMusicItemInternalData>(
                                 musicItem as any,
@@ -221,6 +230,55 @@ function useDownloadStatus(musicItem: IMusic.IMusicItem) {
     }, [musicItem]);
 
     return downloadStatus;
+}
+
+async function writeMusicTags(musicItem: IMusic.IMusicItem, filePath: string) {
+    const ext = filePath.split(".").pop()?.toLowerCase();
+    if (ext !== "mp3" && ext !== "flac") {
+        return;
+    }
+
+    const tags: import("@shared/music-tag/renderer").IMusicTags = {
+        title: musicItem.title,
+        artist: musicItem.artist,
+        album: musicItem.album,
+    };
+
+    try {
+        const lyricSource = await PluginManager.callPluginDelegateMethod(
+            musicItem,
+            "getLyric",
+            musicItem,
+        );
+        if (lyricSource?.rawLrc) {
+            tags.lyrics = lyricSource.rawLrc;
+        }
+    } catch (e) {
+        // ignore
+    }
+
+    if (musicItem.artwork) {
+        try {
+            let artworkBase64: string;
+            if (musicItem.artwork.startsWith("data:")) {
+                artworkBase64 = musicItem.artwork;
+            } else {
+                const response = await fetch(musicItem.artwork);
+                const blob = await response.blob();
+                artworkBase64 = await new Promise<string>((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result as string);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(blob);
+                });
+            }
+            tags.artwork = artworkBase64;
+        } catch (e) {
+            // ignore
+        }
+    }
+
+    await MusicTag.writeTags(filePath, tags);
 }
 
 // 下载状态

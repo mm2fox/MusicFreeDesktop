@@ -102,6 +102,10 @@ class FlacWriter {
         
         const parts: Buffer[] = [];
         
+        const picType = Buffer.alloc(4);
+        picType.writeUInt32BE(pictureType, 0);
+        parts.push(picType);
+        
         const mimeLen = Buffer.alloc(4);
         mimeLen.writeUInt32BE(mimeBuffer.length, 0);
         parts.push(mimeLen);
@@ -111,10 +115,6 @@ class FlacWriter {
         descLen.writeUInt32BE(descBuffer.length, 0);
         parts.push(descLen);
         parts.push(descBuffer);
-        
-        const picType = Buffer.alloc(4);
-        picType.writeUInt32BE(pictureType, 0);
-        parts.push(picType);
         
         const width = Buffer.alloc(4);
         width.writeUInt32BE(0, 0);
@@ -159,7 +159,7 @@ class FlacWriter {
         }
         
         const filteredBlocks = blocks.filter(b => 
-            b.type !== 4 && b.type !== 6
+            b.type !== 4 && b.type !== 6,
         );
         
         const newBlocks: { type: number; isLast: boolean; data: Buffer }[] = [];
@@ -171,14 +171,14 @@ class FlacWriter {
         newBlocks.push({
             type: 4,
             isLast: pictureData === null,
-            data: vorbisData
+            data: vorbisData,
         });
         
         if (pictureData) {
             newBlocks.push({
                 type: 6,
                 isLast: true,
-                data: pictureData
+                data: pictureData,
             });
         }
         
@@ -329,7 +329,7 @@ class MusicTagUtil {
                     date: (tags as any).date || tags.year || undefined,
                     genre: tags.genre || undefined,
                     comment: typeof tags.comment === "object" ? (tags.comment as any).text : tags.comment || undefined,
-                    lyrics: (tags as any).lyrics?.text || (tags as any).lyrics || undefined,
+                    lyrics: (tags as any).unsynchronisedLyrics?.text || (tags as any).unsynchronisedLyrics || undefined,
                     artwork,
                 },
             };
@@ -444,12 +444,26 @@ class MusicTagUtil {
             if (tags.title !== undefined) id3Tags.title = tags.title || "";
             if (tags.artist !== undefined) id3Tags.artist = tags.artist || "";
             if (tags.album !== undefined) id3Tags.album = tags.album || "";
-            if (tags.albumArtist !== undefined) id3Tags.albumArtist = tags.albumArtist || "";
+            if (tags.albumArtist !== undefined) (id3Tags as any).performerInfo = tags.albumArtist || "";
             if (tags.year !== undefined) id3Tags.year = tags.year || "";
             if (tags.date !== undefined) id3Tags.date = tags.date || "";
             if (tags.genre !== undefined) id3Tags.genre = tags.genre || "";
-            if (tags.comment !== undefined) id3Tags.comment = tags.comment || "";
-            if (tags.lyrics !== undefined) id3Tags.lyrics = tags.lyrics || "";
+            if (tags.comment !== undefined) {
+                if (typeof tags.comment === "string") {
+                    id3Tags.comment = {
+                        language: "eng",
+                        text: tags.comment || "",
+                    };
+                } else {
+                    id3Tags.comment = tags.comment || "";
+                }
+            }
+            if (tags.lyrics !== undefined) {
+                id3Tags.unsynchronisedLyrics = {
+                    language: "eng",
+                    text: tags.lyrics || "",
+                };
+            }
 
             if (tags.artwork !== undefined && tags.artwork !== null && tags.artwork !== "") {
                 const imageBuffer = Buffer.from(tags.artwork.replace(/^data:[^;]+;base64,/, ""), "base64");
@@ -466,8 +480,8 @@ class MusicTagUtil {
             
             if (success === true) {
                 return { success: true, tags };
-            } else if (success instanceof Error) {
-                return { success: false, error: success.message || "Failed to write MP3 tags" };
+            } else if (typeof success === "object" && success !== null && (success as any).message) {
+                return { success: false, error: (success as any).message || "Failed to write MP3 tags" };
             } else if (typeof success === "boolean" && !success) {
                 return { success: false, error: "Failed to write MP3 tags - file may be read-only or locked" };
             } else {

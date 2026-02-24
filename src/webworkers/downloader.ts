@@ -9,7 +9,7 @@ import { rimraf } from "rimraf";
 
 async function cleanFile(filePath: string) {
     try {
-        if ((await fsPromises.stat(filePath)).isFile()) {
+        if ((await fsPromises.stat(filePath).catch(() => null))?.isFile()) {
             await rimraf(filePath);
         }
         return true;
@@ -64,14 +64,6 @@ async function downloadFile(
     let state = DownloadState.DOWNLOADING;
     try {
         const stat = fs.statSync(filePath);
-        // if (stat.isFile()) {
-        //   state = DownloadState.ERROR;
-        //   onStateChange?.({
-        //     state,
-        //     msg: "File Exist",
-        //   });
-        //   return;
-        // }
         if (stat.isDirectory()) {
             state = DownloadState.ERROR;
             onStateChange?.({
@@ -110,38 +102,53 @@ async function downloadFile(
             downloaded: 0,
             total: totalSize,
         });
-        const stm = responseToReadable(res, {
-            onRead(size) {
-                if (state !== DownloadState.DOWNLOADING) {
-                    return;
-                }
-                state = DownloadState.DOWNLOADING;
-                console.log(state, size, totalSize);
+
+        await new Promise<void>((resolve, reject) => {
+            const stm = responseToReadable(res, {
+                onRead(size) {
+                    if (state !== DownloadState.DOWNLOADING) {
+                        return;
+                    }
+                    state = DownloadState.DOWNLOADING;
+                    onStateChange({
+                        state,
+                        downloaded: size,
+                        total: totalSize,
+                    });
+                },
+                onError: (e) => {
+                    state = DownloadState.ERROR;
+                    onStateChange({
+                        state,
+                        msg: e?.message,
+                    });
+                    reject(e);
+                },
+            }).pipe(fs.createWriteStream(filePath));
+
+            let resolved = false;
+            const handleComplete = () => {
+                if (resolved) return;
+                resolved = true;
+                state = DownloadState.DONE;
                 onStateChange({
                     state,
-                    downloaded: size,
-                    total: totalSize,
                 });
-            },
-            onError: (e) => {
+                resolve();
+            };
+
+            stm.on("finish", handleComplete);
+            stm.on("close", handleComplete);
+
+            stm.on("error", (e) => {
                 state = DownloadState.ERROR;
                 onStateChange({
                     state,
                     msg: e?.message,
                 });
-            },
-        }).pipe(fs.createWriteStream(filePath));
-
-        stm.on("close", () => {
-            state = DownloadState.DONE;
-            onStateChange({
-                state,
+                cleanFile(filePath);
+                reject(e);
             });
-        });
-
-        stm.on("error", () => {
-            // 清理文件
-            cleanFile(filePath);
         });
     } catch (e) {
         state = DownloadState.ERROR;
@@ -166,6 +173,7 @@ async function downloadFileNew(
 ) {
     let hasError = false;
     const { onProgress: onProgressCallback, onEnded: onEndedCallback, onError: onErrorCallback } = options ?? {};
+    
     try {
         const stat = fs.statSync(filePath);
 
@@ -207,37 +215,49 @@ async function downloadFileNew(
             totalSize: totalSize,
         });
 
+        await new Promise<void>((resolve, reject) => {
+            const stm = responseToReadable(res, {
+                onRead(size) {
+                    if (hasError) {
+                        return;
+                    }
+                    onProgressCallback?.({
+                        currentSize: size,
+                        totalSize: totalSize,
+                    });
+                },
+                onError: (e) => {
+                    if (!hasError) {
+                        hasError = true;
+                        onErrorCallback?.(e);
+                        reject(e);
+                    }
+                },
+            }).pipe(fs.createWriteStream(filePath));
 
-        const stm = responseToReadable(res, {
-            onRead(size) {
-                if (hasError) {
-                    // todo abort
-                    return;
+            let resolved = false;
+            const handleComplete = async () => {
+                if (resolved) return;
+                resolved = true;
+                try {
+                    await onEndedCallback?.();
+                } catch (e) {
+                    // ignore
                 }
-                onProgressCallback?.({
-                    currentSize: size,
-                    totalSize: totalSize,
-                });
-            },
-            onError: (e) => {
+                resolve();
+            };
+
+            stm.on("finish", handleComplete);
+            stm.on("close", handleComplete);
+
+            stm.on("error", (e) => {
                 if (!hasError) {
                     hasError = true;
                     onErrorCallback?.(e);
+                    reject(e);
                 }
-            },
-        }).pipe(fs.createWriteStream(filePath));
-
-        stm.on("close", () => {
-            onEndedCallback?.();
-        });
-
-        stm.on("error", (e) => {
-            if (!hasError) {
-                hasError = true;
-                onErrorCallback?.(e);
-            }
-            // 清理文件
-            cleanFile(filePath);
+                cleanFile(filePath);
+            });
         });
     } catch (e) {
         if (!hasError) {
