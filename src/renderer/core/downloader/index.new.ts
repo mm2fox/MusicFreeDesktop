@@ -56,13 +56,6 @@ class Downloader extends EventEmitter<IDownloaderEvent> {
 
     constructor() {
         super();
-
-        this.on(DownloaderEvent.DOWNLOAD_STATE_CHANGED, (...args) => {
-            console.log("DOWNLOAD STATE CHANGE", ...args);
-            console.log(this.downloadTaskQueue);
-        });
-
-
     }
 
     public async setup() {
@@ -278,10 +271,8 @@ class Downloader extends EventEmitter<IDownloaderEvent> {
 
 
 async function writeMusicTags(musicItem: IMusic.IMusicItem, filePath: string) {
-    console.log("[Downloader] writeMusicTags called for:", musicItem.title, "path:", filePath);
     const ext = filePath.split(".").pop()?.toLowerCase();
     if (ext !== "mp3" && ext !== "flac") {
-        console.log("[Downloader] Skipping tag write for unsupported format:", ext);
         return;
     }
 
@@ -291,56 +282,41 @@ async function writeMusicTags(musicItem: IMusic.IMusicItem, filePath: string) {
         album: musicItem.album,
     };
 
-    console.log("[Downloader] Getting lyrics for:", musicItem.title);
     try {
         const lyricSource = await PluginManager.callPluginDelegateMethod(
             musicItem,
             "getLyric",
             musicItem,
         );
-        console.log("[Downloader] Lyric source result:", lyricSource ? "found" : "not found");
         if (lyricSource?.rawLrc) {
             tags.lyrics = lyricSource.rawLrc;
-            console.log("[Downloader] Lyrics added, length:", lyricSource.rawLrc.length);
         }
     } catch (e) {
-        console.warn("[Downloader] Failed to get lyrics:", e);
+        // ignore
     }
 
-    console.log("[Downloader] Getting artwork for:", musicItem.title, "artwork:", musicItem.artwork ? "exists" : "none");
     if (musicItem.artwork) {
         try {
             let artworkBase64: string;
             if (musicItem.artwork.startsWith("data:")) {
                 artworkBase64 = musicItem.artwork;
             } else {
-                console.log("[Downloader] Fetching artwork from URL:", musicItem.artwork);
                 const response = await fetch(musicItem.artwork);
                 const blob = await response.blob();
-                const arrayBuffer = await blob.arrayBuffer();
-                const uint8Array = new Uint8Array(arrayBuffer);
-                let binary = "";
-                for (let i = 0; i < uint8Array.length; i++) {
-                    binary += String.fromCharCode(uint8Array[i]);
-                }
-                const base64 = btoa(binary);
-                const mimeType = blob.type || "image/jpeg";
-                artworkBase64 = `data:${mimeType};base64,${base64}`;
+                artworkBase64 = await new Promise<string>((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result as string);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(blob);
+                });
             }
             tags.artwork = artworkBase64;
-            console.log("[Downloader] Artwork added, length:", artworkBase64.length);
         } catch (e) {
-            console.warn("[Downloader] Failed to get artwork:", e);
+            // ignore
         }
     }
 
-    console.log("[Downloader] Writing tags to file:", filePath);
-    const result = await MusicTag.writeTags(filePath, tags);
-    if (!result.success) {
-        console.warn("[Downloader] Failed to write tags:", result.error);
-    } else {
-        console.log("[Downloader] Tags written successfully for:", musicItem.title);
-    }
+    await MusicTag.writeTags(filePath, tags);
 }
 
 
