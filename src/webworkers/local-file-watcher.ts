@@ -126,7 +126,7 @@ async function restartWatcher() {
                 await watcher.close();
             } catch {}
         }
-        await createWatcher(currentWatchPaths, true);
+        await createWatcher(currentWatchPaths, false);
         console.log("[LocalFileWatcher] Reconnected successfully");
     } catch (e) {
         console.error("[LocalFileWatcher] Reconnect failed:", e);
