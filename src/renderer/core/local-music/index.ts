@@ -57,6 +57,8 @@ async function doFlush() {
             return;
         }
 
+        console.log("[LocalMusic] doFlush: pendingAdds:", pendingAdds.length, "pendingRemoves:", pendingRemoves.length);
+
         const currentList = localMusicListStore.getValue() || [];
         
         if (pendingRemoves.length > 0) {
@@ -66,6 +68,7 @@ async function doFlush() {
             );
             pendingRemoves.length = 0;
             if (filtered.length !== currentList.length) {
+                console.log("[LocalMusic] doFlush: removing items, new length:", filtered.length);
                 localMusicListStore.setValue(filtered);
             }
         }
@@ -86,6 +89,7 @@ async function doFlush() {
                 }
             );
             pendingAdds.length = 0;
+            console.log("[LocalMusic] doFlush: adding items:", newItems.length, "existing:", existingPaths.size);
             if (newItems.length > 0) {
                 localMusicListStore.setValue([...currentListNow, ...newItems]);
             }
