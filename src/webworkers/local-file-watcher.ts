@@ -25,6 +25,8 @@ let watcherClosed = false;
 const MAX_RECONNECT_ATTEMPTS = 3;
 const RECONNECT_DELAY = 10000;
 
+const processedFiles = new Set<string>();
+
 async function processFileQueue() {
     if (isProcessing || pendingFiles.length === 0) {
         return;
@@ -36,6 +38,10 @@ async function processFileQueue() {
         const batch = pendingFiles.splice(0, BATCH_SIZE);
         
         for (const fp of batch) {
+            if (processedFiles.has(fp)) {
+                continue;
+            }
+            
             try {
                 const musicItem = await parseLocalMusicItem(fp);
                 musicItem.$$localPath = fp;
@@ -48,6 +54,7 @@ async function processFileQueue() {
                     },
                 );
                 addedMusicItems.push(musicItem);
+                processedFiles.add(fp);
             } catch (e) {
                 console.error("[LocalFileWatcher] Failed to parse:", fp, e);
             }
@@ -68,6 +75,10 @@ async function processFileQueue() {
 }
 
 function queueFile(fp: string) {
+    if (processedFiles.has(fp)) {
+        return;
+    }
+    
     if (!pendingFiles.includes(fp)) {
         pendingFiles.push(fp);
     }
@@ -147,7 +158,6 @@ async function createWatcher(initPaths?: string[], skipInitialScan = false) {
             stats.isFile() &&
             supportLocalMediaType.some((postfix) => fp.endsWith(postfix))
         ) {
-            console.log("[LocalFileWatcher] Queuing file:", fp);
             queueFile(fp);
         }
     });
@@ -164,6 +174,7 @@ async function createWatcher(initPaths?: string[], skipInitialScan = false) {
     watcher.on("unlink", (fp) => {
         if (watcherClosed) return;
         if (supportLocalMediaType.some((postfix) => fp.endsWith(postfix))) {
+            processedFiles.delete(fp);
             const index = pendingFiles.indexOf(fp);
             if (index > -1) {
                 pendingFiles.splice(index, 1);
@@ -184,6 +195,7 @@ async function setupWatcher(initPaths?: string[]) {
     reconnectAttempts = 0;
     isReconnecting = false;
     watcherClosed = false;
+    processedFiles.clear();
     
     await createWatcher(initPaths, false);
 }
@@ -204,6 +216,7 @@ async function changeWatchPath(addPaths?: string[], rmPaths?: string[]) {
         currentWatchPaths = [...addPaths];
         reconnectAttempts = 0;
         isReconnecting = false;
+        processedFiles.clear();
         await createWatcher(addPaths, false);
         return;
     }
