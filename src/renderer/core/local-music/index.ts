@@ -4,7 +4,6 @@ import * as Comlink from "comlink";
 import musicSheetDB from "../db/music-sheet-db";
 import { getGlobalContext } from "@/shared/global-context/renderer";
 import AppConfig from "@shared/app-config/renderer";
-import debounce from "lodash.debounce";
 
 type ProxyMarkedFunction<T extends (...args: any) => void> = T &
     Comlink.ProxyMarked;
@@ -35,94 +34,68 @@ function isSubDir(parent: string, target: string) {
     );
 }
 
+let flushTimer: ReturnType<typeof setTimeout> | null = null;
 const pendingAdds: IMusicItemWithLocalPath[] = [];
 const pendingRemoves: string[] = [];
-let isFlushing = false;
-let flushScheduled = false;
 
 function scheduleFlush() {
-    if (flushScheduled) return;
-    flushScheduled = true;
-    
-    requestAnimationFrame(() => {
-        flushScheduled = false;
-        flushPendingChanges();
-    });
+    if (flushTimer) {
+        clearTimeout(flushTimer);
+    }
+    flushTimer = setTimeout(() => {
+        flushTimer = null;
+        doFlush();
+    }, 500);
 }
 
-const flushPendingChanges = debounce(
-    async () => {
-        console.log("[LocalMusic] flushPendingChanges called, isFlushing:", isFlushing);
-        if (isFlushing) {
-            console.log("[LocalMusic] flushPendingChanges: already flushing, skipping");
-            return;
-        }
-        isFlushing = true;
-        
-        try {
-            const autoRefresh = AppConfig.getConfig("localMusic.autoRefreshOnFileChange");
-            console.log("[LocalMusic] autoRefresh:", autoRefresh, "pendingAdds:", pendingAdds.length, "pendingRemoves:", pendingRemoves.length);
-            if (!autoRefresh) {
-                pendingAdds.length = 0;
-                pendingRemoves.length = 0;
-                return;
-            }
-
-            const currentList = localMusicListStore.getValue();
-            if (!Array.isArray(currentList)) {
-                console.warn("[LocalMusic] currentList is not an array");
-                return;
-            }
-            
-            if (pendingRemoves.length > 0) {
-                const removeSet = new Set(pendingRemoves);
-                const filtered = currentList.filter(
-                    (it) => it && it.$$localPath && !removeSet.has(it.$$localPath)
-                );
-                pendingRemoves.length = 0;
-                if (filtered.length !== currentList.length) {
-                    console.log("[LocalMusic] Removing items, new length:", filtered.length);
-                    localMusicListStore.setValue(filtered);
-                }
-            }
-
-            if (pendingAdds.length > 0) {
-                const currentListNow = localMusicListStore.getValue();
-                if (!Array.isArray(currentListNow)) {
-                    console.warn("[LocalMusic] currentListNow is not an array");
-                    pendingAdds.length = 0;
-                    return;
-                }
-                const existingPaths = new Set(
-                    currentListNow
-                        .map((it) => it?.$$localPath)
-                        .filter((p): p is string => typeof p === "string" && p.length > 0)
-                );
-                const newItems = pendingAdds.filter(
-                    (it) => {
-                        if (!it || typeof it !== "object") return false;
-                        const localPath = it.$$localPath;
-                        if (typeof localPath !== "string" || localPath.length === 0) return false;
-                        return !existingPaths.has(localPath);
-                    }
-                );
-                pendingAdds.length = 0;
-                console.log("[LocalMusic] Adding items:", newItems.length, "existing:", existingPaths.size);
-                if (newItems.length > 0) {
-                    localMusicListStore.setValue([...currentListNow, ...newItems]);
-                }
-            }
-        } catch (e) {
-            console.error("[LocalMusic] flushPendingChanges error:", e);
+async function doFlush() {
+    try {
+        const autoRefresh = AppConfig.getConfig("localMusic.autoRefreshOnFileChange");
+        if (!autoRefresh) {
             pendingAdds.length = 0;
             pendingRemoves.length = 0;
-        } finally {
-            isFlushing = false;
+            return;
         }
-    },
-    1000,
-    { leading: false, trailing: true }
-);
+
+        const currentList = localMusicListStore.getValue() || [];
+        
+        if (pendingRemoves.length > 0) {
+            const removeSet = new Set(pendingRemoves);
+            const filtered = currentList.filter(
+                (it) => it && it.$$localPath && !removeSet.has(it.$$localPath)
+            );
+            pendingRemoves.length = 0;
+            if (filtered.length !== currentList.length) {
+                localMusicListStore.setValue(filtered);
+            }
+        }
+
+        if (pendingAdds.length > 0) {
+            const currentListNow = localMusicListStore.getValue() || [];
+            const existingPaths = new Set(
+                currentListNow
+                    .map((it) => it?.$$localPath)
+                    .filter((p): p is string => typeof p === "string" && p.length > 0)
+            );
+            const newItems = pendingAdds.filter(
+                (it) => {
+                    if (!it || typeof it !== "object") return false;
+                    const localPath = it.$$localPath;
+                    if (typeof localPath !== "string" || localPath.length === 0) return false;
+                    return !existingPaths.has(localPath);
+                }
+            );
+            pendingAdds.length = 0;
+            if (newItems.length > 0) {
+                localMusicListStore.setValue([...currentListNow, ...newItems]);
+            }
+        }
+    } catch (e) {
+        console.error("[LocalMusic] doFlush error:", e);
+        pendingAdds.length = 0;
+        pendingRemoves.length = 0;
+    }
+}
 
 async function setupLocalMusic() {
     try {
@@ -146,18 +119,15 @@ async function setupLocalMusic() {
             localFileWatcherWorker.onAdd(
                 Comlink.proxy(async (musicItems: IMusicItemWithLocalPath[]) => {
                     try {
-                        console.log("[LocalMusic] onAdd called with:", musicItems?.length, "items");
                         if (!Array.isArray(musicItems) || musicItems.length === 0) return;
                         
                         const validItems = musicItems.filter(
                             (it) => it && typeof it === "object" && it.$$localPath
                         );
-                        console.log("[LocalMusic] validItems:", validItems.length);
                         if (validItems.length === 0) return;
                         
                         await musicSheetDB.localMusicStore.bulkPut(validItems);
                         pendingAdds.push(...validItems);
-                        console.log("[LocalMusic] pendingAdds after push:", pendingAdds.length);
                         scheduleFlush();
                     } catch (e) {
                         console.error("[LocalMusic] onAdd error:", e);
