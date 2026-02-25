@@ -331,23 +331,25 @@ function _LocalMusicList(props: ILocalMusicListProps) {
     }, []);
 
     const locateMusic = locateMusicStore.useValue();
+    const virtualControllerRef = useRef(virtualController);
+    
+    useEffect(() => {
+        virtualControllerRef.current = virtualController;
+    }, [virtualController]);
 
     useEffect(() => {
-        console.log("[LocalMusicList] locateMusic:", locateMusic, "localMusicList.length:", localMusicList.length);
         if (locateMusic && localMusicList.length > 0) {
             const index = localMusicList.findIndex(
                 (item) => item.id === locateMusic.musicId && item.platform === locateMusic.musicPlatform,
             );
-            console.log("[LocalMusicList] found index:", index);
             if (index !== -1) {
                 setTimeout(() => {
-                    console.log("[LocalMusicList] scrolling to index:", index);
-                    virtualController.scrollToIndex(index, "smooth");
+                    virtualControllerRef.current?.scrollToIndex(index, "smooth");
                 }, 100);
             }
             locateMusicStore.setValue(null);
         }
-    }, [locateMusic, localMusicList, virtualController]);
+    }, [locateMusic, localMusicList]);
 
     const activeItemsRef = useRef(activeItems);
     
