@@ -137,6 +137,40 @@ class WindowManager implements IWindowManager {
             });
         }
 
+        // 渲染进程崩溃处理
+        mainWindow.webContents.on("render-process-gone", (event, details) => {
+            console.error("[Main] Render process gone:", details);
+        });
+
+        mainWindow.webContents.on("crashed", (event, killed) => {
+            console.error("[Main] Render process crashed, killed:", killed);
+        });
+
+        // 转发渲染进程控制台日志到主进程
+        mainWindow.webContents.on("console-message", (event, level, message, line, sourceId) => {
+            const prefix = "[Renderer]";
+            switch (level) {
+                case 0: // verbose
+                case 1: // info
+                    console.log(`${prefix} ${message}`);
+                    break;
+                case 2: // warning
+                    console.warn(`${prefix} ${message}`);
+                    break;
+                case 3: // error
+                    console.error(`${prefix} ${message}`);
+                    break;
+            }
+        });
+
+        mainWindow.webContents.on("unresponsive", () => {
+            console.error("[Main] Web contents unresponsive");
+        });
+
+        mainWindow.webContents.on("responsive", () => {
+            console.log("[Main] Web contents responsive");
+        });
+
         // 4. 主窗口http hack逻辑
         mainWindow.webContents.session.webRequest.onBeforeSendHeaders(
             (details, callback) => {
