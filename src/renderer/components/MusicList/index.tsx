@@ -563,6 +563,11 @@ function _MusicList(props: IMusicListProps) {
     }, [musicList]);
 
     const locateMusic = locateMusicStore.useValue();
+    const virtualControllerRef = useRef(virtualController);
+    
+    useEffect(() => {
+        virtualControllerRef.current = virtualController;
+    }, [virtualController]);
 
     useEffect(() => {
         console.log("[MusicList] locateMusic:", locateMusic, "musicList.length:", musicList.length);
@@ -574,12 +579,12 @@ function _MusicList(props: IMusicListProps) {
             if (index !== -1) {
                 setTimeout(() => {
                     console.log("[MusicList] scrolling to index:", index);
-                    virtualController.scrollToIndex(index, "smooth");
+                    virtualControllerRef.current?.scrollToIndex(index, "smooth");
                 }, 100);
             }
             locateMusicStore.setValue(null);
         }
-    }, [locateMusic, musicList, virtualController]);
+    }, [locateMusic, musicList]);
 
     useEffect(() => {
         const ctrlAHandler = (evt: Event) => {
