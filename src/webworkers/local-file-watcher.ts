@@ -10,9 +10,21 @@ let watcher: chokidar.FSWatcher;
 
 const addedMusicItems: IMusic.IMusicItem[] = [];
 const removedFilePaths: string[] = [];
+const BATCH_SIZE = 50;
 
 let _onAdd: (musicItems: IMusic.IMusicItem[]) => void;
 let _onRemove: (filePaths: string[]) => void;
+
+async function flushBatch() {
+    if (addedMusicItems.length > 0) {
+        const batch = addedMusicItems.splice(0, BATCH_SIZE);
+        _onAdd?.(batch);
+    }
+    if (removedFilePaths.length > 0) {
+        const batch = removedFilePaths.splice(0, BATCH_SIZE);
+        _onRemove?.(batch);
+    }
+}
 
 async function setupWatcher(initPaths?: string[]) {
     watcher = chokidar.watch(initPaths ?? [], {
@@ -74,9 +86,10 @@ async function setupWatcher(initPaths?: string[]) {
 
 const syncAddedMusic = debounce(
     () => {
-        const copyOfAddedMusicItems = [...addedMusicItems];
-        addedMusicItems.length = 0;
-        _onAdd?.(copyOfAddedMusicItems);
+        while (addedMusicItems.length > 0) {
+            const batch = addedMusicItems.splice(0, BATCH_SIZE);
+            _onAdd?.(batch);
+        }
     },
     2000,
     {
@@ -87,9 +100,10 @@ const syncAddedMusic = debounce(
 
 const syncRemovedFilePaths = debounce(
     () => {
-        const copyOfRemovedFilePaths = [...removedFilePaths];
-        removedFilePaths.length = 0;
-        _onRemove?.(copyOfRemovedFilePaths);
+        while (removedFilePaths.length > 0) {
+            const batch = removedFilePaths.splice(0, BATCH_SIZE);
+            _onRemove?.(batch);
+        }
     },
     2000,
     {
