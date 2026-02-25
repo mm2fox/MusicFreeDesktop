@@ -129,7 +129,9 @@ async function createWatcher(initPaths?: string[], skipInitialScan = false) {
         depth: 10,
         persistent: true,
         ignorePermissionErrors: true,
-        usePolling: false,
+        usePolling: true,
+        interval: 5000,
+        binaryInterval: 10000,
         ignoreInitial: skipInitialScan,
         awaitWriteFinish: {
             stabilityThreshold: 3000,
