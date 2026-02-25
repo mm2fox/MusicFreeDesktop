@@ -99,7 +99,7 @@ async function restartWatcher() {
         if (watcher) {
             await watcher.close();
         }
-        await setupWatcher(currentWatchPaths);
+        await setupWatcher(currentWatchPaths, true);
         reconnectAttempts = 0;
         console.log("[LocalFileWatcher] Reconnected successfully");
     } catch (e) {
@@ -112,7 +112,7 @@ async function restartWatcher() {
     }
 }
 
-async function setupWatcher(initPaths?: string[]) {
+async function setupWatcher(initPaths?: string[], skipInitialScan = false) {
     pendingFiles = [];
     isProcessing = false;
     currentWatchPaths = initPaths || [];
@@ -122,14 +122,14 @@ async function setupWatcher(initPaths?: string[]) {
         persistent: true,
         ignorePermissionErrors: true,
         usePolling: false,
-        ignoreInitial: false,
+        ignoreInitial: skipInitialScan,
         awaitWriteFinish: {
             stabilityThreshold: 3000,
             pollInterval: 500,
         },
     });
 
-    console.log("[LocalFileWatcher] Setting up watcher for paths:", initPaths);
+    console.log("[LocalFileWatcher] Setting up watcher for paths:", initPaths, "skipInitialScan:", skipInitialScan);
 
     watcher.on("add", (fp, stats) => {
         if (
