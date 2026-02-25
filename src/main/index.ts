@@ -6,6 +6,11 @@ import v8 from "v8";
 
 v8.setFlagsFromString('--max-old-space-size=4096');
 
+// 禁用 GPU 加速以避免某些 Chromium 崩溃
+app.commandLine.appendSwitch('disable-gpu');
+app.commandLine.appendSwitch('disable-gpu-compositing');
+app.commandLine.appendSwitch('disable-software-rasterizer');
+
 import { setupGlobalContext } from "@/shared/global-context/main";
 import { setupI18n } from "@/shared/i18n/main";
 import { handleDeepLink } from "./deep-link";
