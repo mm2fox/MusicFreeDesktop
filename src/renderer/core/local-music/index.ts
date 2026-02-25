@@ -4,6 +4,7 @@ import * as Comlink from "comlink";
 import musicSheetDB from "../db/music-sheet-db";
 import { getGlobalContext } from "@/shared/global-context/renderer";
 import AppConfig from "@shared/app-config/renderer";
+import debounce from "lodash.debounce";
 
 type ProxyMarkedFunction<T extends (...args: any) => void> = T &
     Comlink.ProxyMarked;
@@ -34,6 +35,49 @@ function isSubDir(parent: string, target: string) {
     );
 }
 
+const pendingAdds: IMusicItemWithLocalPath[] = [];
+const pendingRemoves: string[] = [];
+
+const flushPendingChanges = debounce(
+    async () => {
+        try {
+            const autoRefresh = AppConfig.getConfig("localMusic.autoRefreshOnFileChange");
+            if (!autoRefresh) return;
+
+            const currentList = localMusicListStore.getValue();
+            let updated = false;
+
+            if (pendingRemoves.length > 0) {
+                const removeSet = new Set(pendingRemoves);
+                const filtered = currentList.filter(
+                    (it) => !removeSet.has(it.$$localPath)
+                );
+                if (filtered.length !== currentList.length) {
+                    localMusicListStore.setValue(filtered);
+                    updated = true;
+                }
+                pendingRemoves.length = 0;
+            }
+
+            if (pendingAdds.length > 0) {
+                const existingPaths = new Set(currentList.map((it) => it.$$localPath));
+                const newItems = pendingAdds.filter(
+                    (it) => !existingPaths.has(it.$$localPath)
+                );
+                if (newItems.length > 0) {
+                    localMusicListStore.setValue([...currentList, ...newItems]);
+                    updated = true;
+                }
+                pendingAdds.length = 0;
+            }
+        } catch (e) {
+            console.error("[LocalMusic] flushPendingChanges error:", e);
+        }
+    },
+    1000,
+    { leading: false, trailing: true }
+);
+
 async function setupLocalMusic() {
     try {
         const localWatchDir =
@@ -57,10 +101,8 @@ async function setupLocalMusic() {
                 Comlink.proxy(async (musicItems: IMusicItemWithLocalPath[]) => {
                     try {
                         await musicSheetDB.localMusicStore.bulkPut(musicItems);
-                        const autoRefresh = AppConfig.getConfig("localMusic.autoRefreshOnFileChange");
-                        if (autoRefresh) {
-                            localMusicListStore.setValue(await musicSheetDB.localMusicStore.toArray());
-                        }
+                        pendingAdds.push(...musicItems);
+                        flushPendingChanges();
                     } catch (e) {
                         console.error("[LocalMusic] onAdd error:", e);
                     }
@@ -81,10 +123,8 @@ async function setupLocalMusic() {
                         if (tobeDeletedPrimaryKeys.length > 0) {
                             await musicSheetDB.localMusicStore.bulkDelete(tobeDeletedPrimaryKeys);
                         }
-                        const autoRefresh = AppConfig.getConfig("localMusic.autoRefreshOnFileChange");
-                        if (autoRefresh) {
-                            localMusicListStore.setValue(await musicSheetDB.localMusicStore.toArray());
-                        }
+                        pendingRemoves.push(...filePaths);
+                        flushPendingChanges();
                     } catch (e) {
                         console.error("[LocalMusic] onRemove error:", e);
                     }
@@ -136,10 +176,6 @@ async function changeWatchPath(logs: Map<string, "add" | "delete">) {
     }
 }
 
-// async function syncLocalMusic() {
-//   ipcRendererSend("sync-local-music");
-// }
-
 async function clearLocalMusic() {
     await musicSheetDB.localMusicStore.clear();
     localMusicListStore.setValue([]);
@@ -147,7 +183,6 @@ async function clearLocalMusic() {
 
 export default {
     setupLocalMusic,
-    // syncLocalMusic,
     changeWatchPath,
     clearLocalMusic,
 };
