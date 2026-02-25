@@ -20,8 +20,10 @@ let pendingFiles: string[] = [];
 let scanTimer: ReturnType<typeof setTimeout> | null = null;
 let currentWatchPaths: string[] = [];
 let reconnectAttempts = 0;
-const MAX_RECONNECT_ATTEMPTS = 5;
-const RECONNECT_DELAY = 5000;
+let isReconnecting = false;
+let watcherClosed = false;
+const MAX_RECONNECT_ATTEMPTS = 3;
+const RECONNECT_DELAY = 10000;
 
 async function processFileQueue() {
     if (isProcessing || pendingFiles.length === 0) {
@@ -78,18 +80,30 @@ function queueFile(fp: string) {
     }, 500);
 }
 
-function handleWatcherError(error: Error) {
-    console.error("[LocalFileWatcher] Watcher error:", error);
+async function handleWatcherError(error: Error) {
+    console.error("[LocalFileWatcher] Watcher error:", error.message);
     
-    if (error.message?.includes("ECONNRESET") || error.message?.includes("ENOTCONN")) {
+    if (watcherClosed || isReconnecting) return;
+    
+    if (error.message?.includes("ECONNRESET") || error.message?.includes("ENOTCONN") || error.message?.includes("EPERM")) {
         if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+            isReconnecting = true;
             reconnectAttempts++;
             console.log(`[LocalFileWatcher] Attempting reconnect ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS} in ${RECONNECT_DELAY}ms...`);
-            setTimeout(() => {
-                restartWatcher();
+            
+            setTimeout(async () => {
+                try {
+                    await restartWatcher();
+                } finally {
+                    isReconnecting = false;
+                }
             }, RECONNECT_DELAY);
         } else {
-            console.error("[LocalFileWatcher] Max reconnect attempts reached, stopping watcher");
+            console.error("[LocalFileWatcher] Max reconnect attempts reached. Stopping watcher. Network may be unstable.");
+            watcherClosed = true;
+            try {
+                await watcher?.close();
+            } catch {}
         }
     }
 }
@@ -97,25 +111,19 @@ function handleWatcherError(error: Error) {
 async function restartWatcher() {
     try {
         if (watcher) {
-            await watcher.close();
+            try {
+                await watcher.close();
+            } catch {}
         }
-        await setupWatcher(currentWatchPaths, true);
-        reconnectAttempts = 0;
+        await createWatcher(currentWatchPaths, true);
         console.log("[LocalFileWatcher] Reconnected successfully");
     } catch (e) {
         console.error("[LocalFileWatcher] Reconnect failed:", e);
-        if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
-            setTimeout(() => {
-                restartWatcher();
-            }, RECONNECT_DELAY);
-        }
     }
 }
 
-async function setupWatcher(initPaths?: string[], skipInitialScan = false) {
-    pendingFiles = [];
-    isProcessing = false;
-    currentWatchPaths = initPaths || [];
+async function createWatcher(initPaths?: string[], skipInitialScan = false) {
+    watcherClosed = false;
     
     watcher = chokidar.watch(initPaths ?? [], {
         depth: 10,
@@ -132,6 +140,7 @@ async function setupWatcher(initPaths?: string[], skipInitialScan = false) {
     console.log("[LocalFileWatcher] Setting up watcher for paths:", initPaths, "skipInitialScan:", skipInitialScan);
 
     watcher.on("add", (fp, stats) => {
+        if (watcherClosed) return;
         if (
             stats.isFile() &&
             supportLocalMediaType.some((postfix) => fp.endsWith(postfix))
@@ -142,6 +151,7 @@ async function setupWatcher(initPaths?: string[], skipInitialScan = false) {
     });
 
     watcher.on("ready", () => {
+        if (watcherClosed) return;
         console.log("[LocalFileWatcher] Initial scan complete, processing queue...");
         reconnectAttempts = 0;
         processFileQueue();
@@ -150,6 +160,7 @@ async function setupWatcher(initPaths?: string[], skipInitialScan = false) {
     watcher.on("error", handleWatcherError);
 
     watcher.on("unlink", (fp) => {
+        if (watcherClosed) return;
         if (supportLocalMediaType.some((postfix) => fp.endsWith(postfix))) {
             const index = pendingFiles.indexOf(fp);
             if (index > -1) {
@@ -164,6 +175,17 @@ async function setupWatcher(initPaths?: string[], skipInitialScan = false) {
     });
 }
 
+async function setupWatcher(initPaths?: string[]) {
+    pendingFiles = [];
+    isProcessing = false;
+    currentWatchPaths = initPaths || [];
+    reconnectAttempts = 0;
+    isReconnecting = false;
+    watcherClosed = false;
+    
+    await createWatcher(initPaths, false);
+}
+
 async function flush() {
     if (scanTimer) {
         clearTimeout(scanTimer);
@@ -174,6 +196,10 @@ async function flush() {
 
 async function changeWatchPath(addPaths?: string[], rmPaths?: string[]) {
     console.log(addPaths, rmPaths);
+    if (watcherClosed) {
+        console.log("[LocalFileWatcher] Watcher is closed, skipping changeWatchPath");
+        return;
+    }
     try {
         if (addPaths?.length) {
             watcher.add(addPaths);
