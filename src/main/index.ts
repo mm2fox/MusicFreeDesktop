@@ -2,6 +2,10 @@ import { app, BrowserWindow, globalShortcut } from "electron";
 import fs from "fs";
 import path from "path";
 import { setAutoFreeze } from "immer";
+import v8 from "v8";
+
+v8.setFlagsFromString('--max-old-space-size=4096');
+
 import { setupGlobalContext } from "@/shared/global-context/main";
 import { setupI18n } from "@/shared/i18n/main";
 import { handleDeepLink } from "./deep-link";
