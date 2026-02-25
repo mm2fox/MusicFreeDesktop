@@ -78,7 +78,7 @@ const syncAddedMusic = debounce(
         addedMusicItems.length = 0;
         _onAdd?.(copyOfAddedMusicItems);
     },
-    500,
+    2000,
     {
         leading: false,
         trailing: true,
@@ -91,7 +91,7 @@ const syncRemovedFilePaths = debounce(
         removedFilePaths.length = 0;
         _onRemove?.(copyOfRemovedFilePaths);
     },
-    500,
+    2000,
     {
         leading: false,
         trailing: true,
