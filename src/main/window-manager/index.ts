@@ -139,7 +139,7 @@ class WindowManager implements IWindowManager {
 
         // 渲染进程崩溃处理
         mainWindow.webContents.on("render-process-gone", (event, details) => {
-            console.error("[Main] Render process gone:", details);
+            console.error("[Main] Render process gone:", JSON.stringify(details, null, 2));
         });
 
         mainWindow.webContents.on("crashed", (event, killed) => {
@@ -149,16 +149,17 @@ class WindowManager implements IWindowManager {
         // 转发渲染进程控制台日志到主进程
         mainWindow.webContents.on("console-message", (event, level, message, line, sourceId) => {
             const prefix = "[Renderer]";
+            const fullMessage = `${prefix} ${message}${sourceId ? ` (${sourceId}:${line})` : ""}`;
             switch (level) {
                 case 0: // verbose
                 case 1: // info
-                    console.log(`${prefix} ${message}`);
+                    console.log(fullMessage);
                     break;
                 case 2: // warning
-                    console.warn(`${prefix} ${message}`);
+                    console.warn(fullMessage);
                     break;
                 case 3: // error
-                    console.error(`${prefix} ${message}`);
+                    console.error(fullMessage);
                     break;
             }
         });
