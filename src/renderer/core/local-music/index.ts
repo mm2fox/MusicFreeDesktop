@@ -38,10 +38,24 @@ function isSubDir(parent: string, target: string) {
 const pendingAdds: IMusicItemWithLocalPath[] = [];
 const pendingRemoves: string[] = [];
 let isFlushing = false;
+let flushScheduled = false;
+
+function scheduleFlush() {
+    if (flushScheduled) return;
+    flushScheduled = true;
+    
+    requestAnimationFrame(() => {
+        flushScheduled = false;
+        flushPendingChanges();
+    });
+}
 
 const flushPendingChanges = debounce(
     async () => {
-        if (isFlushing) return;
+        if (isFlushing) {
+            console.log("[LocalMusic] flushPendingChanges: already flushing, skipping");
+            return;
+        }
         isFlushing = true;
         
         try {
@@ -52,7 +66,11 @@ const flushPendingChanges = debounce(
                 return;
             }
 
-            const currentList = localMusicListStore.getValue() || [];
+            const currentList = localMusicListStore.getValue();
+            if (!Array.isArray(currentList)) {
+                console.warn("[LocalMusic] currentList is not an array");
+                return;
+            }
             
             if (pendingRemoves.length > 0) {
                 const removeSet = new Set(pendingRemoves);
@@ -66,10 +84,24 @@ const flushPendingChanges = debounce(
             }
 
             if (pendingAdds.length > 0) {
-                const currentListNow = localMusicListStore.getValue() || [];
-                const existingPaths = new Set(currentListNow.map((it) => it?.$$localPath).filter(Boolean));
+                const currentListNow = localMusicListStore.getValue();
+                if (!Array.isArray(currentListNow)) {
+                    console.warn("[LocalMusic] currentListNow is not an array");
+                    pendingAdds.length = 0;
+                    return;
+                }
+                const existingPaths = new Set(
+                    currentListNow
+                        .map((it) => it?.$$localPath)
+                        .filter((p): p is string => typeof p === "string" && p.length > 0)
+                );
                 const newItems = pendingAdds.filter(
-                    (it) => it && it.$$localPath && !existingPaths.has(it.$$localPath)
+                    (it) => {
+                        if (!it || typeof it !== "object") return false;
+                        const localPath = it.$$localPath;
+                        if (typeof localPath !== "string" || localPath.length === 0) return false;
+                        return !existingPaths.has(localPath);
+                    }
                 );
                 pendingAdds.length = 0;
                 if (newItems.length > 0) {
@@ -104,16 +136,22 @@ async function setupLocalMusic() {
 
         const allMusic = await musicSheetDB.localMusicStore.toArray();
 
-        localMusicListStore.setValue(allMusic);
+        localMusicListStore.setValue(allMusic || []);
         
         if (localFileWatcherWorker) {
             localFileWatcherWorker.onAdd(
                 Comlink.proxy(async (musicItems: IMusicItemWithLocalPath[]) => {
                     try {
-                        if (!musicItems || musicItems.length === 0) return;
-                        await musicSheetDB.localMusicStore.bulkPut(musicItems);
-                        pendingAdds.push(...musicItems);
-                        flushPendingChanges();
+                        if (!Array.isArray(musicItems) || musicItems.length === 0) return;
+                        
+                        const validItems = musicItems.filter(
+                            (it) => it && typeof it === "object" && it.$$localPath
+                        );
+                        if (validItems.length === 0) return;
+                        
+                        await musicSheetDB.localMusicStore.bulkPut(validItems);
+                        pendingAdds.push(...validItems);
+                        scheduleFlush();
                     } catch (e) {
                         console.error("[LocalMusic] onAdd error:", e);
                     }
@@ -123,8 +161,14 @@ async function setupLocalMusic() {
             localFileWatcherWorker.onRemove(
                 Comlink.proxy(async (filePaths: string[]) => {
                     try {
-                        if (!filePaths || filePaths.length === 0) return;
-                        const tobeDeletedFilePaths = new Set(filePaths);
+                        if (!Array.isArray(filePaths) || filePaths.length === 0) return;
+                        
+                        const validPaths = filePaths.filter(
+                            (p) => typeof p === "string" && p.length > 0
+                        );
+                        if (validPaths.length === 0) return;
+                        
+                        const tobeDeletedFilePaths = new Set(validPaths);
                         const allMusic = await musicSheetDB.localMusicStore.toArray();
                         const tobeDeletedPrimaryKeys: any[] = [];
                         allMusic.forEach((it) => {
@@ -135,8 +179,8 @@ async function setupLocalMusic() {
                         if (tobeDeletedPrimaryKeys.length > 0) {
                             await musicSheetDB.localMusicStore.bulkDelete(tobeDeletedPrimaryKeys);
                         }
-                        pendingRemoves.push(...filePaths);
-                        flushPendingChanges();
+                        pendingRemoves.push(...validPaths);
+                        scheduleFlush();
                     } catch (e) {
                         console.error("[LocalMusic] onRemove error:", e);
                     }
@@ -182,7 +226,7 @@ async function changeWatchPath(logs: Map<string, "add" | "delete">) {
             await new Promise(resolve => setTimeout(resolve, 600));
         }
 
-        localMusicListStore.setValue(await musicSheetDB.localMusicStore.toArray());
+        localMusicListStore.setValue(await musicSheetDB.localMusicStore.toArray() || []);
     } catch (e) {
         console.error("[LocalMusic] changeWatchPath error:", e);
     }
