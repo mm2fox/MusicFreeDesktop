@@ -37,41 +37,51 @@ function isSubDir(parent: string, target: string) {
 
 const pendingAdds: IMusicItemWithLocalPath[] = [];
 const pendingRemoves: string[] = [];
+let isFlushing = false;
 
 const flushPendingChanges = debounce(
     async () => {
+        if (isFlushing) return;
+        isFlushing = true;
+        
         try {
             const autoRefresh = AppConfig.getConfig("localMusic.autoRefreshOnFileChange");
-            if (!autoRefresh) return;
+            if (!autoRefresh) {
+                pendingAdds.length = 0;
+                pendingRemoves.length = 0;
+                return;
+            }
 
-            const currentList = localMusicListStore.getValue();
-            let updated = false;
-
+            const currentList = localMusicListStore.getValue() || [];
+            
             if (pendingRemoves.length > 0) {
                 const removeSet = new Set(pendingRemoves);
                 const filtered = currentList.filter(
-                    (it) => !removeSet.has(it.$$localPath)
+                    (it) => it && it.$$localPath && !removeSet.has(it.$$localPath)
                 );
+                pendingRemoves.length = 0;
                 if (filtered.length !== currentList.length) {
                     localMusicListStore.setValue(filtered);
-                    updated = true;
                 }
-                pendingRemoves.length = 0;
             }
 
             if (pendingAdds.length > 0) {
-                const existingPaths = new Set(currentList.map((it) => it.$$localPath));
+                const currentListNow = localMusicListStore.getValue() || [];
+                const existingPaths = new Set(currentListNow.map((it) => it?.$$localPath).filter(Boolean));
                 const newItems = pendingAdds.filter(
-                    (it) => !existingPaths.has(it.$$localPath)
+                    (it) => it && it.$$localPath && !existingPaths.has(it.$$localPath)
                 );
-                if (newItems.length > 0) {
-                    localMusicListStore.setValue([...currentList, ...newItems]);
-                    updated = true;
-                }
                 pendingAdds.length = 0;
+                if (newItems.length > 0) {
+                    localMusicListStore.setValue([...currentListNow, ...newItems]);
+                }
             }
         } catch (e) {
             console.error("[LocalMusic] flushPendingChanges error:", e);
+            pendingAdds.length = 0;
+            pendingRemoves.length = 0;
+        } finally {
+            isFlushing = false;
         }
     },
     1000,
@@ -100,6 +110,7 @@ async function setupLocalMusic() {
             localFileWatcherWorker.onAdd(
                 Comlink.proxy(async (musicItems: IMusicItemWithLocalPath[]) => {
                     try {
+                        if (!musicItems || musicItems.length === 0) return;
                         await musicSheetDB.localMusicStore.bulkPut(musicItems);
                         pendingAdds.push(...musicItems);
                         flushPendingChanges();
@@ -112,11 +123,12 @@ async function setupLocalMusic() {
             localFileWatcherWorker.onRemove(
                 Comlink.proxy(async (filePaths: string[]) => {
                     try {
+                        if (!filePaths || filePaths.length === 0) return;
                         const tobeDeletedFilePaths = new Set(filePaths);
                         const allMusic = await musicSheetDB.localMusicStore.toArray();
                         const tobeDeletedPrimaryKeys: any[] = [];
                         allMusic.forEach((it) => {
-                            if (it.$$localPath && tobeDeletedFilePaths.has(it.$$localPath)) {
+                            if (it?.$$localPath && tobeDeletedFilePaths.has(it.$$localPath)) {
                                 tobeDeletedPrimaryKeys.push([it.platform, it.id]);
                             }
                         });
@@ -149,10 +161,10 @@ async function changeWatchPath(logs: Map<string, "add" | "delete">) {
         });
 
         if (tobeDeletedPaths.length) {
-            const localFiles = localMusicListStore.getValue();
+            const localFiles = localMusicListStore.getValue() || [];
             const tobeDeletedItems = localFiles
                 .filter((it) => {
-                    const localPath = it.$$localPath;
+                    const localPath = it?.$$localPath;
                     if (!localPath) return false;
                     return tobeDeletedPaths.some((deletePath) =>
                         isSubDir(deletePath, localPath),
