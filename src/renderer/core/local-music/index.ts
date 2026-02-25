@@ -51,13 +51,19 @@ function scheduleFlush() {
 async function doFlush() {
     try {
         const autoRefresh = AppConfig.getConfig("localMusic.autoRefreshOnFileChange");
+        console.log("[LocalMusic] doFlush: autoRefresh:", autoRefresh, "pendingAdds:", pendingAdds.length, "pendingRemoves:", pendingRemoves.length);
+        
+        // 暂时禁用自动刷新来测试
+        pendingAdds.length = 0;
+        pendingRemoves.length = 0;
+        return;
+        
+        /*
         if (!autoRefresh) {
             pendingAdds.length = 0;
             pendingRemoves.length = 0;
             return;
         }
-
-        console.log("[LocalMusic] doFlush: pendingAdds:", pendingAdds.length, "pendingRemoves:", pendingRemoves.length);
 
         const currentList = localMusicListStore.getValue() || [];
         
@@ -94,6 +100,7 @@ async function doFlush() {
                 localMusicListStore.setValue([...currentListNow, ...newItems]);
             }
         }
+        */
     } catch (e) {
         console.error("[LocalMusic] doFlush error:", e);
         pendingAdds.length = 0;
