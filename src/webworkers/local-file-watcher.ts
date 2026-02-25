@@ -195,11 +195,17 @@ async function flush() {
 }
 
 async function changeWatchPath(addPaths?: string[], rmPaths?: string[]) {
-    console.log(addPaths, rmPaths);
-    if (watcherClosed) {
-        console.log("[LocalFileWatcher] Watcher is closed, skipping changeWatchPath");
+    console.log("[LocalFileWatcher] changeWatchPath:", addPaths, rmPaths);
+    
+    if (watcherClosed && addPaths?.length) {
+        console.log("[LocalFileWatcher] Watcher was closed, restarting with new paths...");
+        currentWatchPaths = [...addPaths];
+        reconnectAttempts = 0;
+        isReconnecting = false;
+        await createWatcher(addPaths, false);
         return;
     }
+    
     try {
         if (addPaths?.length) {
             watcher.add(addPaths);
@@ -224,7 +230,7 @@ async function changeWatchPath(addPaths?: string[], rmPaths?: string[]) {
             });
         }
     } catch (e) {
-        console.log(e);
+        console.error("[LocalFileWatcher] changeWatchPath error:", e);
     }
 }
 
