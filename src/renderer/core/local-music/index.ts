@@ -48,7 +48,7 @@ async function setupLocalMusic() {
             await localFileWatcherWorker.setupWatcher(localWatchDir);
         }
 
-        const allMusic = await musicSheetDB.localMusicStore.toArray();
+        const allMusic = await musicSheetDB.localMusicStore.limit(1000).toArray();
 
         localMusicListStore.setValue(allMusic);
         
@@ -59,7 +59,7 @@ async function setupLocalMusic() {
                         await musicSheetDB.localMusicStore.bulkPut(musicItems);
                         const autoRefresh = AppConfig.getConfig("localMusic.autoRefreshOnFileChange");
                         if (autoRefresh) {
-                            localMusicListStore.setValue(await musicSheetDB.localMusicStore.toArray());
+                            localMusicListStore.setValue(await musicSheetDB.localMusicStore.limit(1000).toArray());
                         }
                     } catch (e) {
                         console.error("[LocalMusic] onAdd error:", e);
@@ -83,7 +83,7 @@ async function setupLocalMusic() {
                         }
                         const autoRefresh = AppConfig.getConfig("localMusic.autoRefreshOnFileChange");
                         if (autoRefresh) {
-                            localMusicListStore.setValue(await musicSheetDB.localMusicStore.toArray());
+                            localMusicListStore.setValue(await musicSheetDB.localMusicStore.limit(1000).toArray());
                         }
                     } catch (e) {
                         console.error("[LocalMusic] onRemove error:", e);
