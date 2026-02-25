@@ -52,6 +52,7 @@ function scheduleFlush() {
 
 const flushPendingChanges = debounce(
     async () => {
+        console.log("[LocalMusic] flushPendingChanges called, isFlushing:", isFlushing);
         if (isFlushing) {
             console.log("[LocalMusic] flushPendingChanges: already flushing, skipping");
             return;
@@ -60,6 +61,7 @@ const flushPendingChanges = debounce(
         
         try {
             const autoRefresh = AppConfig.getConfig("localMusic.autoRefreshOnFileChange");
+            console.log("[LocalMusic] autoRefresh:", autoRefresh, "pendingAdds:", pendingAdds.length, "pendingRemoves:", pendingRemoves.length);
             if (!autoRefresh) {
                 pendingAdds.length = 0;
                 pendingRemoves.length = 0;
@@ -79,6 +81,7 @@ const flushPendingChanges = debounce(
                 );
                 pendingRemoves.length = 0;
                 if (filtered.length !== currentList.length) {
+                    console.log("[LocalMusic] Removing items, new length:", filtered.length);
                     localMusicListStore.setValue(filtered);
                 }
             }
@@ -104,6 +107,7 @@ const flushPendingChanges = debounce(
                     }
                 );
                 pendingAdds.length = 0;
+                console.log("[LocalMusic] Adding items:", newItems.length, "existing:", existingPaths.size);
                 if (newItems.length > 0) {
                     localMusicListStore.setValue([...currentListNow, ...newItems]);
                 }
@@ -142,15 +146,18 @@ async function setupLocalMusic() {
             localFileWatcherWorker.onAdd(
                 Comlink.proxy(async (musicItems: IMusicItemWithLocalPath[]) => {
                     try {
+                        console.log("[LocalMusic] onAdd called with:", musicItems?.length, "items");
                         if (!Array.isArray(musicItems) || musicItems.length === 0) return;
                         
                         const validItems = musicItems.filter(
                             (it) => it && typeof it === "object" && it.$$localPath
                         );
+                        console.log("[LocalMusic] validItems:", validItems.length);
                         if (validItems.length === 0) return;
                         
                         await musicSheetDB.localMusicStore.bulkPut(validItems);
                         pendingAdds.push(...validItems);
+                        console.log("[LocalMusic] pendingAdds after push:", pendingAdds.length);
                         scheduleFlush();
                     } catch (e) {
                         console.error("[LocalMusic] onAdd error:", e);
