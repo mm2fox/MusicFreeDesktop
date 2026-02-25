@@ -22,7 +22,7 @@ async function setupWatcher(initPaths?: string[]) {
         usePolling: true,
         interval: 1000,
         binaryInterval: 3000,
-        ignoreInitial: true,
+        ignoreInitial: false,
         awaitWriteFinish: {
             stabilityThreshold: 2000,
             pollInterval: 100,
