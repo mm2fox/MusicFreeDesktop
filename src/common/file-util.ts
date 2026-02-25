@@ -5,6 +5,8 @@ import CryptoJS from "crypto-js";
 import fs from "fs/promises";
 import url from "url";
 import type { BigIntStats, PathLike, StatOptions, Stats } from "original-fs";
+import jschardet from "jschardet";
+import iconv from "iconv-lite";
 
 function getB64Picture(picture: IPicture) {
     return `data:${picture.format};base64,${picture.data.toString("base64")}`;
@@ -19,16 +21,6 @@ export async function parseLocalMusicItem(
     try {
         const { common = {} as ICommonTagsResult } = await parseFile(filePath);
 
-        console.log("[parseLocalMusicItem] Raw common for", filePath, ":", {
-            title: common.title,
-            artist: common.artist,
-            album: common.album,
-            artists: common.artists,
-        });
-
-        const jschardet = await import("jschardet");
-
-        // 检测编码
         let encoding: string | null = null;
         let conf = 0;
         const testItems = [common.title, common.artist, common.album];
@@ -51,8 +43,6 @@ export async function parseLocalMusicItem(
         }
 
         if (specialEncoding.includes(encoding)) {
-            const iconv = await import("iconv-lite");
-
             if (common.title) {
                 common.title = iconv.decode(
                     common.title as unknown as Buffer,
@@ -78,7 +68,6 @@ export async function parseLocalMusicItem(
             }
         }
 
-        // 处理 artist 可能是数组的情况
         let artistStr = "未知作者";
         if (common.artist) {
             if (Array.isArray(common.artist)) {
@@ -90,7 +79,7 @@ export async function parseLocalMusicItem(
             artistStr = common.artists.filter(Boolean).join(", ") || "未知作者";
         }
 
-        const result = {
+        return {
             title: common.title ?? path.parse(filePath).name,
             artist: artistStr,
             artwork: common.picture?.[0]
@@ -106,12 +95,7 @@ export async function parseLocalMusicItem(
             id: hash,
             rawLrc: common.lyrics?.join(""),
         };
-
-        console.log("[parseLocalMusicItem] Result:", result.title, result.artist);
-
-        return result;
     } catch (e) {
-        console.error("[parseLocalMusicItem] Error:", e);
         return {
             title: path.parse(filePath).name || filePath,
             id: hash,
