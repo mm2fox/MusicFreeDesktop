@@ -143,8 +143,22 @@ async function setupLocalMusic() {
                         if (validItems.length === 0) return;
                         
                         console.log("[LocalMusic] onAdd: writing to DB, count:", validItems.length);
-                        await musicSheetDB.localMusicStore.bulkPut(validItems);
-                        console.log("[LocalMusic] onAdd: DB write complete");
+                        
+                        // 使用 setTimeout 延迟执行，避免阻塞主线程
+                        setTimeout(async () => {
+                            try {
+                                // 分批写入，每次最多 10 个
+                                const batchSize = 10;
+                                for (let i = 0; i < validItems.length; i += batchSize) {
+                                    const batch = validItems.slice(i, i + batchSize);
+                                    await musicSheetDB.localMusicStore.bulkPut(batch);
+                                    console.log("[LocalMusic] onAdd: batch written:", batch.length);
+                                }
+                                console.log("[LocalMusic] onAdd: DB write complete");
+                            } catch (e) {
+                                console.error("[LocalMusic] onAdd delayed error:", e);
+                            }
+                        }, 0);
                         
                         // 暂时不刷新 UI
                         // pendingAdds.push(...validItems);
