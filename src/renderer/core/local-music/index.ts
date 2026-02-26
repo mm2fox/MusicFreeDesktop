@@ -113,7 +113,9 @@ async function setupLocalMusic() {
         const localWatchDir =
             (await getUserPreferenceIDB("localWatchDirChecked")) ?? [];
 
-
+        // 暂时禁用 Worker 来测试
+        console.log("[LocalMusic] setupLocalMusic: Worker disabled for testing");
+        /*
         const localFileWatcherWorkerPath =
             getGlobalContext().workersPath.localFileWatcher;
         if (localFileWatcherWorkerPath) {
@@ -121,18 +123,20 @@ async function setupLocalMusic() {
             localFileWatcherWorker = Comlink.wrap(worker);
             await localFileWatcherWorker.setupWatcher(localWatchDir);
         }
+        */
 
         const allMusic = await musicSheetDB.localMusicStore.toArray();
 
         localMusicListStore.setValue(allMusic || []);
         
+        /*
         if (localFileWatcherWorker) {
             localFileWatcherWorker.onAdd(
                 Comlink.proxy(async (musicItems: IMusicItemWithLocalPath[]) => {
                     // 暂时禁用回调来测试
                     console.log("[LocalMusic] onAdd called with:", musicItems?.length, "items (disabled)");
                     return;
-                    /*
+                    
                     try {
                         if (!Array.isArray(musicItems) || musicItems.length === 0) return;
                         
@@ -147,7 +151,7 @@ async function setupLocalMusic() {
                     } catch (e) {
                         console.error("[LocalMusic] onAdd error:", e);
                     }
-                    */
+                    
                 }),
             );
 
@@ -156,7 +160,7 @@ async function setupLocalMusic() {
                     // 暂时禁用回调来测试
                     console.log("[LocalMusic] onRemove called with:", filePaths?.length, "items (disabled)");
                     return;
-                    /*
+                    
                     try {
                         if (!Array.isArray(filePaths) || filePaths.length === 0) return;
                         
@@ -181,10 +185,11 @@ async function setupLocalMusic() {
                     } catch (e) {
                         console.error("[LocalMusic] onRemove error:", e);
                     }
-                    */
+                    
                 }),
             );
         }
+        */
     } catch (e) {
         console.error("[LocalMusic] setupLocalMusic error:", e);
     }
