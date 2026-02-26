@@ -113,27 +113,27 @@ async function setupLocalMusic() {
         const localWatchDir =
             (await getUserPreferenceIDB("localWatchDirChecked")) ?? [];
 
-        // 暂时禁用 Worker 来测试
-        console.log("[LocalMusic] setupLocalMusic: Worker disabled for testing");
-        /*
+        // 恢复 Worker 创建，但禁用回调
+        console.log("[LocalMusic] setupLocalMusic: Creating worker...");
         const localFileWatcherWorkerPath =
             getGlobalContext().workersPath.localFileWatcher;
         if (localFileWatcherWorkerPath) {
             const worker = new Worker(localFileWatcherWorkerPath);
             localFileWatcherWorker = Comlink.wrap(worker);
+            console.log("[LocalMusic] setupLocalMusic: Setting up watcher...");
             await localFileWatcherWorker.setupWatcher(localWatchDir);
+            console.log("[LocalMusic] setupLocalMusic: Watcher setup complete");
         }
-        */
 
         const allMusic = await musicSheetDB.localMusicStore.toArray();
 
         localMusicListStore.setValue(allMusic || []);
         
+        // 暂时禁用回调来测试
         /*
         if (localFileWatcherWorker) {
             localFileWatcherWorker.onAdd(
                 Comlink.proxy(async (musicItems: IMusicItemWithLocalPath[]) => {
-                    // 暂时禁用回调来测试
                     console.log("[LocalMusic] onAdd called with:", musicItems?.length, "items (disabled)");
                     return;
                     
@@ -157,7 +157,6 @@ async function setupLocalMusic() {
 
             localFileWatcherWorker.onRemove(
                 Comlink.proxy(async (filePaths: string[]) => {
-                    // 暂时禁用回调来测试
                     console.log("[LocalMusic] onRemove called with:", filePaths?.length, "items (disabled)");
                     return;
                     
