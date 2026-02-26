@@ -129,14 +129,11 @@ async function setupLocalMusic() {
 
         localMusicListStore.setValue(allMusic || []);
         
-        // 暂时禁用回调来测试
-        /*
+        // 恢复回调，但简化逻辑
         if (localFileWatcherWorker) {
             localFileWatcherWorker.onAdd(
                 Comlink.proxy(async (musicItems: IMusicItemWithLocalPath[]) => {
-                    console.log("[LocalMusic] onAdd called with:", musicItems?.length, "items (disabled)");
-                    return;
-                    
+                    console.log("[LocalMusic] onAdd called with:", musicItems?.length, "items");
                     try {
                         if (!Array.isArray(musicItems) || musicItems.length === 0) return;
                         
@@ -145,21 +142,22 @@ async function setupLocalMusic() {
                         );
                         if (validItems.length === 0) return;
                         
+                        console.log("[LocalMusic] onAdd: writing to DB, count:", validItems.length);
                         await musicSheetDB.localMusicStore.bulkPut(validItems);
-                        pendingAdds.push(...validItems);
-                        scheduleFlush();
+                        console.log("[LocalMusic] onAdd: DB write complete");
+                        
+                        // 暂时不刷新 UI
+                        // pendingAdds.push(...validItems);
+                        // scheduleFlush();
                     } catch (e) {
                         console.error("[LocalMusic] onAdd error:", e);
                     }
-                    
                 }),
             );
 
             localFileWatcherWorker.onRemove(
                 Comlink.proxy(async (filePaths: string[]) => {
-                    console.log("[LocalMusic] onRemove called with:", filePaths?.length, "items (disabled)");
-                    return;
-                    
+                    console.log("[LocalMusic] onRemove called with:", filePaths?.length, "items");
                     try {
                         if (!Array.isArray(filePaths) || filePaths.length === 0) return;
                         
@@ -168,27 +166,36 @@ async function setupLocalMusic() {
                         );
                         if (validPaths.length === 0) return;
                         
+                        console.log("[LocalMusic] onRemove: validPaths:", validPaths.length);
+                        
+                        // 简化删除逻辑
                         const tobeDeletedFilePaths = new Set(validPaths);
+                        console.log("[LocalMusic] onRemove: getting all music from DB");
                         const allMusic = await musicSheetDB.localMusicStore.toArray();
+                        console.log("[LocalMusic] onRemove: allMusic count:", allMusic?.length);
+                        
                         const tobeDeletedPrimaryKeys: any[] = [];
-                        allMusic.forEach((it) => {
+                        for (const it of allMusic) {
                             if (it?.$$localPath && tobeDeletedFilePaths.has(it.$$localPath)) {
                                 tobeDeletedPrimaryKeys.push([it.platform, it.id]);
                             }
-                        });
-                        if (tobeDeletedPrimaryKeys.length > 0) {
-                            await musicSheetDB.localMusicStore.bulkDelete(tobeDeletedPrimaryKeys);
                         }
-                        pendingRemoves.push(...validPaths);
-                        scheduleFlush();
+                        console.log("[LocalMusic] onRemove: tobeDeletedPrimaryKeys:", tobeDeletedPrimaryKeys.length);
+                        
+                        if (tobeDeletedPrimaryKeys.length > 0) {
+                            console.log("[LocalMusic] onRemove: deleting from DB");
+                            await musicSheetDB.localMusicStore.bulkDelete(tobeDeletedPrimaryKeys);
+                            console.log("[LocalMusic] onRemove: delete complete");
+                        }
+                        // 暂时不刷新 UI
+                        // pendingRemoves.push(...validPaths);
+                        // scheduleFlush();
                     } catch (e) {
                         console.error("[LocalMusic] onRemove error:", e);
                     }
-                    
                 }),
             );
         }
-        */
     } catch (e) {
         console.error("[LocalMusic] setupLocalMusic error:", e);
     }
