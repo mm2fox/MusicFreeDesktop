@@ -7,16 +7,15 @@ import { setInternalData } from "@/common/media-util";
 
 let watcher: chokidar.FSWatcher;
 
-const addedMusicItems: IMusic.IMusicItem[] = [];
-const removedFilePaths: string[] = [];
 const BATCH_SIZE = 20;
-const SCAN_DELAY = 100;
+const SCAN_DELAY = 200;
 
 let _onAdd: (musicItems: IMusic.IMusicItem[]) => void;
 let _onRemove: (filePaths: string[]) => void;
 
 let isProcessing = false;
 let pendingFiles: string[] = [];
+let pendingRemoves: string[] = [];
 let scanTimer: ReturnType<typeof setTimeout> | null = null;
 let currentWatchPaths: string[] = [];
 let reconnectAttempts = 0;
@@ -26,52 +25,68 @@ const MAX_RECONNECT_ATTEMPTS = 3;
 const RECONNECT_DELAY = 10000;
 
 const processedFiles = new Set<string>();
+let lastProcessTime = 0;
+const MIN_PROCESS_INTERVAL = 2000;
 
 async function processFileQueue() {
-    if (isProcessing || pendingFiles.length === 0) {
+    if (isProcessing) {
+        return;
+    }
+    
+    const now = Date.now();
+    if (now - lastProcessTime < MIN_PROCESS_INTERVAL) {
+        return;
+    }
+    
+    if (pendingFiles.length === 0 && pendingRemoves.length === 0) {
         return;
     }
     
     isProcessing = true;
+    lastProcessTime = now;
     
-    while (pendingFiles.length > 0) {
-        const batch = pendingFiles.splice(0, BATCH_SIZE);
+    try {
+        // 处理删除
+        if (pendingRemoves.length > 0) {
+            const batch = pendingRemoves.splice(0, BATCH_SIZE);
+            _onRemove?.(batch);
+        }
         
-        for (const fp of batch) {
-            if (processedFiles.has(fp)) {
-                continue;
+        // 处理添加
+        if (pendingFiles.length > 0) {
+            const addedMusicItems: IMusic.IMusicItem[] = [];
+            const batch = pendingFiles.splice(0, BATCH_SIZE);
+            
+            for (const fp of batch) {
+                if (processedFiles.has(fp)) {
+                    continue;
+                }
+                
+                try {
+                    const musicItem = await parseLocalMusicItem(fp);
+                    musicItem.$$localPath = fp;
+                    setInternalData<IMusic.IMusicItemInternalData>(
+                        musicItem,
+                        "downloadData",
+                        {
+                            path: fp,
+                            quality: "standard",
+                        },
+                    );
+                    addedMusicItems.push(musicItem);
+                    processedFiles.add(fp);
+                } catch (e) {
+                    console.error("[LocalFileWatcher] Failed to parse:", fp, e);
+                }
             }
             
-            try {
-                const musicItem = await parseLocalMusicItem(fp);
-                musicItem.$$localPath = fp;
-                setInternalData<IMusic.IMusicItemInternalData>(
-                    musicItem,
-                    "downloadData",
-                    {
-                        path: fp,
-                        quality: "standard",
-                    },
-                );
-                addedMusicItems.push(musicItem);
-                processedFiles.add(fp);
-            } catch (e) {
-                console.error("[LocalFileWatcher] Failed to parse:", fp, e);
+            if (addedMusicItems.length > 0) {
+                _onAdd?.(addedMusicItems);
             }
         }
-        
-        if (addedMusicItems.length > 0) {
-            const copyOfAddedMusicItems = [...addedMusicItems];
-            addedMusicItems.length = 0;
-            _onAdd?.(copyOfAddedMusicItems);
-        }
-        
-        if (pendingFiles.length > 0) {
-            await new Promise(resolve => setTimeout(resolve, SCAN_DELAY));
-        }
+    } finally {
+        isProcessing = false;
     }
-    
-    isProcessing = false;
 }
 
 function queueFile(fp: string) {
@@ -83,12 +98,33 @@ function queueFile(fp: string) {
         pendingFiles.push(fp);
     }
     
-    if (scanTimer) {
-        clearTimeout(scanTimer);
+    scheduleProcess();
+}
+
+function queueRemove(fp: string) {
+    processedFiles.delete(fp);
+    
+    const index = pendingFiles.indexOf(fp);
+    if (index > -1) {
+        pendingFiles.splice(index, 1);
     }
+    
+    if (!pendingRemoves.includes(fp)) {
+        pendingRemoves.push(fp);
+    }
+    
+    scheduleProcess();
+}
+
+function scheduleProcess() {
+    if (scanTimer) {
+        return;
+    }
+    
     scanTimer = setTimeout(() => {
+        scanTimer = null;
         processFileQueue();
-    }, 500);
+    }, SCAN_DELAY);
 }
 
 async function handleWatcherError(error: Error) {
@@ -126,7 +162,7 @@ async function restartWatcher() {
                 await watcher.close();
             } catch {}
         }
-        await createWatcher(currentWatchPaths, false);
+        await createWatcher(currentWatchPaths, true);
         console.log("[LocalFileWatcher] Reconnected successfully");
     } catch (e) {
         console.error("[LocalFileWatcher] Reconnect failed:", e);
@@ -141,12 +177,12 @@ async function createWatcher(initPaths?: string[], skipInitialScan = false) {
         persistent: true,
         ignorePermissionErrors: true,
         usePolling: true,
-        interval: 5000,
-        binaryInterval: 10000,
+        interval: 10000,
+        binaryInterval: 20000,
         ignoreInitial: skipInitialScan,
         awaitWriteFinish: {
-            stabilityThreshold: 3000,
-            pollInterval: 500,
+            stabilityThreshold: 5000,
+            pollInterval: 1000,
         },
     });
 
@@ -164,9 +200,8 @@ async function createWatcher(initPaths?: string[], skipInitialScan = false) {
 
     watcher.on("ready", () => {
         if (watcherClosed) return;
-        console.log("[LocalFileWatcher] Initial scan complete, processing queue...");
+        console.log("[LocalFileWatcher] Initial scan complete");
         reconnectAttempts = 0;
-        processFileQueue();
     });
 
     watcher.on("error", handleWatcherError);
@@ -174,28 +209,26 @@ async function createWatcher(initPaths?: string[], skipInitialScan = false) {
     watcher.on("unlink", (fp) => {
         if (watcherClosed) return;
         if (supportLocalMediaType.some((postfix) => fp.endsWith(postfix))) {
-            processedFiles.delete(fp);
-            const index = pendingFiles.indexOf(fp);
-            if (index > -1) {
-                pendingFiles.splice(index, 1);
-            }
-            removedFilePaths.push(fp);
-            if (removedFilePaths.length > 0) {
-                const batch = removedFilePaths.splice(0, BATCH_SIZE);
-                _onRemove?.(batch);
-            }
+            queueRemove(fp);
         }
     });
 }
 
 async function setupWatcher(initPaths?: string[]) {
     pendingFiles = [];
+    pendingRemoves = [];
     isProcessing = false;
     currentWatchPaths = initPaths || [];
     reconnectAttempts = 0;
     isReconnecting = false;
     watcherClosed = false;
     processedFiles.clear();
+    lastProcessTime = 0;
+    
+    if (scanTimer) {
+        clearTimeout(scanTimer);
+        scanTimer = null;
+    }
     
     await createWatcher(initPaths, false);
 }
