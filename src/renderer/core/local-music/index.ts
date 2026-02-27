@@ -22,6 +22,8 @@ interface ILocalFileWatcherWorker {
         cb: ProxyMarkedFunction<(filePaths: string[]) => Promise<void>>
     ) => void;
     flush: () => Promise<void>;
+    resetProcessedFiles: () => Promise<void>;
+    rescan: () => Promise<void>;
 }
 
 let localFileWatcherWorker: ILocalFileWatcherWorker;
@@ -51,14 +53,7 @@ function scheduleFlush() {
 async function doFlush() {
     try {
         const autoRefresh = AppConfig.getConfig("localMusic.autoRefreshOnFileChange");
-        console.log("[LocalMusic] doFlush: autoRefresh:", autoRefresh, "pendingAdds:", pendingAdds.length, "pendingRemoves:", pendingRemoves.length);
-        
-        // 暂时禁用自动刷新来测试
-        pendingAdds.length = 0;
-        pendingRemoves.length = 0;
-        return;
-        
-        /*
+
         if (!autoRefresh) {
             pendingAdds.length = 0;
             pendingRemoves.length = 0;
@@ -66,25 +61,26 @@ async function doFlush() {
         }
 
         const currentList = localMusicListStore.getValue() || [];
-        
+
+        // 处理删除
         if (pendingRemoves.length > 0) {
             const removeSet = new Set(pendingRemoves);
             const filtered = currentList.filter(
-                (it) => it && it.$$localPath && !removeSet.has(it.$$localPath)
+                (it) => it && it.$$localPath && !removeSet.has(it.$$localPath),
             );
             pendingRemoves.length = 0;
             if (filtered.length !== currentList.length) {
-                console.log("[LocalMusic] doFlush: removing items, new length:", filtered.length);
                 localMusicListStore.setValue(filtered);
             }
         }
 
+        // 处理添加
         if (pendingAdds.length > 0) {
             const currentListNow = localMusicListStore.getValue() || [];
             const existingPaths = new Set(
                 currentListNow
                     .map((it) => it?.$$localPath)
-                    .filter((p): p is string => typeof p === "string" && p.length > 0)
+                    .filter((p): p is string => typeof p === "string" && p.length > 0),
             );
             const newItems = pendingAdds.filter(
                 (it) => {
@@ -92,15 +88,13 @@ async function doFlush() {
                     const localPath = it.$$localPath;
                     if (typeof localPath !== "string" || localPath.length === 0) return false;
                     return !existingPaths.has(localPath);
-                }
+                },
             );
             pendingAdds.length = 0;
-            console.log("[LocalMusic] doFlush: adding items:", newItems.length, "existing:", existingPaths.size);
             if (newItems.length > 0) {
                 localMusicListStore.setValue([...currentListNow, ...newItems]);
             }
         }
-        */
     } catch (e) {
         console.error("[LocalMusic] doFlush error:", e);
         pendingAdds.length = 0;
@@ -113,97 +107,75 @@ async function setupLocalMusic() {
         const localWatchDir =
             (await getUserPreferenceIDB("localWatchDirChecked")) ?? [];
 
-        // 恢复 Worker 创建，但禁用回调
-        console.log("[LocalMusic] setupLocalMusic: Creating worker...");
         const localFileWatcherWorkerPath =
             getGlobalContext().workersPath.localFileWatcher;
         if (localFileWatcherWorkerPath) {
             const worker = new Worker(localFileWatcherWorkerPath);
             localFileWatcherWorker = Comlink.wrap(worker);
-            console.log("[LocalMusic] setupLocalMusic: Setting up watcher...");
             await localFileWatcherWorker.setupWatcher(localWatchDir);
-            console.log("[LocalMusic] setupLocalMusic: Watcher setup complete");
         }
 
+        // 加载已有本地音乐
         const allMusic = await musicSheetDB.localMusicStore.toArray();
-
         localMusicListStore.setValue(allMusic || []);
-        
-        // 恢复回调，但简化逻辑
+
+        // 设置文件添加回调
         if (localFileWatcherWorker) {
             localFileWatcherWorker.onAdd(
                 Comlink.proxy(async (musicItems: IMusicItemWithLocalPath[]) => {
-                    console.log("[LocalMusic] onAdd called with:", musicItems?.length, "items");
                     try {
                         if (!Array.isArray(musicItems) || musicItems.length === 0) return;
-                        
+
                         const validItems = musicItems.filter(
-                            (it) => it && typeof it === "object" && it.$$localPath
+                            (it) => it && typeof it === "object" && it.$$localPath,
                         );
                         if (validItems.length === 0) return;
-                        
-                        console.log("[LocalMusic] onAdd: writing to DB, count:", validItems.length);
-                        
-                        // 使用 setTimeout 延迟执行，避免阻塞主线程
-                        setTimeout(async () => {
-                            try {
-                                // 分批写入，每次最多 10 个
-                                const batchSize = 10;
-                                for (let i = 0; i < validItems.length; i += batchSize) {
-                                    const batch = validItems.slice(i, i + batchSize);
-                                    await musicSheetDB.localMusicStore.bulkPut(batch);
-                                    console.log("[LocalMusic] onAdd: batch written:", batch.length);
-                                }
-                                console.log("[LocalMusic] onAdd: DB write complete");
-                            } catch (e) {
-                                console.error("[LocalMusic] onAdd delayed error:", e);
-                            }
-                        }, 0);
-                        
-                        // 暂时不刷新 UI
-                        // pendingAdds.push(...validItems);
-                        // scheduleFlush();
+
+                        // 分批写入数据库，每次最多 10 个
+                        const batchSize = 10;
+                        for (let i = 0; i < validItems.length; i += batchSize) {
+                            const batch = validItems.slice(i, i + batchSize);
+                            await musicSheetDB.localMusicStore.bulkPut(batch);
+                        }
+
+                        // 添加到待刷新列表
+                        pendingAdds.push(...validItems);
+                        scheduleFlush();
                     } catch (e) {
                         console.error("[LocalMusic] onAdd error:", e);
                     }
                 }),
             );
 
+            // 设置文件删除回调
             localFileWatcherWorker.onRemove(
                 Comlink.proxy(async (filePaths: string[]) => {
-                    console.log("[LocalMusic] onRemove called with:", filePaths?.length, "items");
                     try {
                         if (!Array.isArray(filePaths) || filePaths.length === 0) return;
-                        
+
                         const validPaths = filePaths.filter(
-                            (p) => typeof p === "string" && p.length > 0
+                            (p) => typeof p === "string" && p.length > 0,
                         );
                         if (validPaths.length === 0) return;
-                        
-                        console.log("[LocalMusic] onRemove: validPaths:", validPaths.length);
-                        
-                        // 简化删除逻辑
+
+                        // 从数据库中删除
                         const tobeDeletedFilePaths = new Set(validPaths);
-                        console.log("[LocalMusic] onRemove: getting all music from DB");
                         const allMusic = await musicSheetDB.localMusicStore.toArray();
-                        console.log("[LocalMusic] onRemove: allMusic count:", allMusic?.length);
-                        
+
                         const tobeDeletedPrimaryKeys: any[] = [];
                         for (const it of allMusic) {
                             if (it?.$$localPath && tobeDeletedFilePaths.has(it.$$localPath)) {
                                 tobeDeletedPrimaryKeys.push([it.platform, it.id]);
                             }
                         }
-                        console.log("[LocalMusic] onRemove: tobeDeletedPrimaryKeys:", tobeDeletedPrimaryKeys.length);
-                        
+
                         if (tobeDeletedPrimaryKeys.length > 0) {
-                            console.log("[LocalMusic] onRemove: deleting from DB");
                             await musicSheetDB.localMusicStore.bulkDelete(tobeDeletedPrimaryKeys);
-                            console.log("[LocalMusic] onRemove: delete complete");
                         }
-                        // 暂时不刷新 UI
-                        // pendingRemoves.push(...validPaths);
-                        // scheduleFlush();
+
+                        // 添加到待刷新列表
+                        pendingRemoves.push(...validPaths);
+                        scheduleFlush();
                     } catch (e) {
                         console.error("[LocalMusic] onRemove error:", e);
                     }
@@ -227,6 +199,7 @@ async function changeWatchPath(logs: Map<string, "add" | "delete">) {
             }
         });
 
+        // 删除文件夹时，同时删除该文件夹下的所有音乐
         if (tobeDeletedPaths.length) {
             const localFiles = localMusicListStore.getValue() || [];
             const tobeDeletedItems = localFiles
@@ -243,12 +216,14 @@ async function changeWatchPath(logs: Map<string, "add" | "delete">) {
             }
         }
 
+        // 更新监听器
         if (localFileWatcherWorker) {
             await localFileWatcherWorker.changeWatchPath(tobeAddedPaths, tobeDeletedPaths);
             await localFileWatcherWorker.flush();
             await new Promise(resolve => setTimeout(resolve, 600));
         }
 
+        // 刷新列表
         localMusicListStore.setValue(await musicSheetDB.localMusicStore.toArray() || []);
     } catch (e) {
         console.error("[LocalMusic] changeWatchPath error:", e);
@@ -256,8 +231,19 @@ async function changeWatchPath(logs: Map<string, "add" | "delete">) {
 }
 
 async function clearLocalMusic() {
+    // 清空待处理队列
+    pendingAdds.length = 0;
+    pendingRemoves.length = 0;
+    if (flushTimer) {
+        clearTimeout(flushTimer);
+        flushTimer = null;
+    }
     await musicSheetDB.localMusicStore.clear();
     localMusicListStore.setValue([]);
+    // 重新扫描所有文件
+    if (localFileWatcherWorker) {
+        await localFileWatcherWorker.rescan();
+    }
 }
 
 export default {

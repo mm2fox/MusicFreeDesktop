@@ -1,13 +1,13 @@
 import * as Comlink from "comlink";
 import * as chokidar from "chokidar";
 import path from "path";
+import fs from "fs";
 import { supportLocalMediaType } from "@/common/constant";
-import { parseLocalMusicItem } from "@/common/file-util";
+import { parseLocalMusicItemWithoutTags } from "@/common/file-util";
 import { setInternalData } from "@/common/media-util";
 
 let watcher: chokidar.FSWatcher;
 
-const BATCH_SIZE = 20;
 const SCAN_DELAY = 200;
 
 let _onAdd: (musicItems: IMusic.IMusicItem[]) => void;
@@ -25,16 +25,10 @@ const MAX_RECONNECT_ATTEMPTS = 3;
 const RECONNECT_DELAY = 10000;
 
 const processedFiles = new Set<string>();
-let lastProcessTime = 0;
-const MIN_PROCESS_INTERVAL = 2000;
+let ignoreRemoveEvents = false;
 
 async function processFileQueue() {
     if (isProcessing) {
-        return;
-    }
-    
-    const now = Date.now();
-    if (now - lastProcessTime < MIN_PROCESS_INTERVAL) {
         return;
     }
     
@@ -43,27 +37,28 @@ async function processFileQueue() {
     }
     
     isProcessing = true;
-    lastProcessTime = now;
     
     try {
-        // 处理删除
+        // 处理删除 - 一次性处理所有
         if (pendingRemoves.length > 0) {
-            const batch = pendingRemoves.splice(0, BATCH_SIZE);
-            _onRemove?.(batch);
+            const allRemoves = [...pendingRemoves];
+            pendingRemoves = [];
+            _onRemove?.(allRemoves);
         }
         
-        // 处理添加
+        // 处理添加 - 一次性处理所有
         if (pendingFiles.length > 0) {
             const addedMusicItems: IMusic.IMusicItem[] = [];
-            const batch = pendingFiles.splice(0, BATCH_SIZE);
+            const allFiles = [...pendingFiles];
+            pendingFiles = [];
             
-            for (const fp of batch) {
+            for (const fp of allFiles) {
                 if (processedFiles.has(fp)) {
                     continue;
                 }
-                
+
                 try {
-                    const musicItem = await parseLocalMusicItem(fp);
+                    const musicItem = await parseLocalMusicItemWithoutTags(fp);
                     musicItem.$$localPath = fp;
                     setInternalData<IMusic.IMusicItemInternalData>(
                         musicItem,
@@ -102,17 +97,31 @@ function queueFile(fp: string) {
 }
 
 function queueRemove(fp: string) {
+    if (ignoreRemoveEvents) {
+        return;
+    }
+
+    // 检查文件是否真的被删除了（解决根目录监听时的误报问题）
+    try {
+        const exists = fs.existsSync(fp);
+        if (exists) {
+            return;
+        }
+    } catch (e) {
+        // 忽略错误
+    }
+
     processedFiles.delete(fp);
-    
+
     const index = pendingFiles.indexOf(fp);
     if (index > -1) {
         pendingFiles.splice(index, 1);
     }
-    
+
     if (!pendingRemoves.includes(fp)) {
         pendingRemoves.push(fp);
     }
-    
+
     scheduleProcess();
 }
 
@@ -136,7 +145,6 @@ async function handleWatcherError(error: Error) {
         if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
             isReconnecting = true;
             reconnectAttempts++;
-            console.log(`[LocalFileWatcher] Attempting reconnect ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS} in ${RECONNECT_DELAY}ms...`);
             
             setTimeout(async () => {
                 try {
@@ -146,7 +154,7 @@ async function handleWatcherError(error: Error) {
                 }
             }, RECONNECT_DELAY);
         } else {
-            console.error("[LocalFileWatcher] Max reconnect attempts reached. Stopping watcher. Network may be unstable.");
+            console.error("[LocalFileWatcher] Max reconnect attempts reached. Stopping watcher.");
             watcherClosed = true;
             try {
                 await watcher?.close();
@@ -163,7 +171,6 @@ async function restartWatcher() {
             } catch {}
         }
         await createWatcher(currentWatchPaths, true);
-        console.log("[LocalFileWatcher] Reconnected successfully");
     } catch (e) {
         console.error("[LocalFileWatcher] Reconnect failed:", e);
     }
@@ -186,8 +193,6 @@ async function createWatcher(initPaths?: string[], skipInitialScan = false) {
         },
     });
 
-    console.log("[LocalFileWatcher] Setting up watcher for paths:", initPaths, "skipInitialScan:", skipInitialScan);
-
     watcher.on("add", (fp, stats) => {
         if (watcherClosed) return;
         if (
@@ -200,7 +205,6 @@ async function createWatcher(initPaths?: string[], skipInitialScan = false) {
 
     watcher.on("ready", () => {
         if (watcherClosed) return;
-        console.log("[LocalFileWatcher] Initial scan complete");
         reconnectAttempts = 0;
     });
 
@@ -223,7 +227,7 @@ async function setupWatcher(initPaths?: string[]) {
     isReconnecting = false;
     watcherClosed = false;
     processedFiles.clear();
-    lastProcessTime = 0;
+    ignoreRemoveEvents = false;
     
     if (scanTimer) {
         clearTimeout(scanTimer);
@@ -242,10 +246,7 @@ async function flush() {
 }
 
 async function changeWatchPath(addPaths?: string[], rmPaths?: string[]) {
-    console.log("[LocalFileWatcher] changeWatchPath:", addPaths, rmPaths);
-    
     if (watcherClosed && addPaths?.length) {
-        console.log("[LocalFileWatcher] Watcher was closed, restarting with new paths...");
         currentWatchPaths = [...addPaths];
         reconnectAttempts = 0;
         isReconnecting = false;
@@ -253,13 +254,17 @@ async function changeWatchPath(addPaths?: string[], rmPaths?: string[]) {
         await createWatcher(addPaths, false);
         return;
     }
-    
+
     try {
         if (addPaths?.length) {
             watcher.add(addPaths);
             currentWatchPaths.push(...addPaths);
         }
         if (rmPaths?.length) {
+            // 暂时忽略删除事件，避免取消监听时触发大量删除
+            ignoreRemoveEvents = true;
+            // 清空待删除队列，避免处理之前积累的删除事件
+            pendingRemoves = [];
             watcher.unwatch(rmPaths);
             rmPaths.forEach((it) => {
                 // @ts-ignore
@@ -276,6 +281,10 @@ async function changeWatchPath(addPaths?: string[], rmPaths?: string[]) {
                     currentWatchPaths.splice(index, 1);
                 }
             });
+            // 延迟恢复删除事件监听，等待 unwatch 完成
+            setTimeout(() => {
+                ignoreRemoveEvents = false;
+            }, 2000);
         }
     } catch (e) {
         console.error("[LocalFileWatcher] changeWatchPath error:", e);
@@ -290,10 +299,38 @@ async function onRemove(fn: (filePaths: string[]) => void) {
     _onRemove = fn;
 }
 
+async function resetProcessedFiles() {
+    processedFiles.clear();
+}
+
+async function rescan() {
+    if (!watcher || watcherClosed) {
+        return;
+    }
+
+    // 暂时忽略删除事件，避免重新扫描时触发大量删除
+    ignoreRemoveEvents = true;
+
+    // 清空 processedFiles，让文件可以重新被添加
+    processedFiles.clear();
+
+    // 触发重新扫描
+    for (const watchPath of currentWatchPaths) {
+        await watcher.add(watchPath);
+    }
+
+    // 延迟恢复删除事件监听
+    setTimeout(() => {
+        ignoreRemoveEvents = false;
+    }, 1000);
+}
+
 Comlink.expose({
     setupWatcher,
     changeWatchPath,
     onAdd,
     onRemove,
     flush,
+    resetProcessedFiles,
+    rescan,
 });

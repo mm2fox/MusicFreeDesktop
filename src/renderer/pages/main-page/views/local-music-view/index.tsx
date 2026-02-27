@@ -13,6 +13,7 @@ import FolderView from "./views/folder";
 import AppConfig from "@shared/app-config/renderer";
 import { toast } from "react-toastify";
 import musicSheetDB from "@/renderer/core/db/music-sheet-db";
+import localMusic from "@/renderer/core/local-music";
 
 enum DisplayView {
     LIST,
@@ -102,6 +103,7 @@ export default function LocalMusicView() {
                         artist: tagResult.tags.artist || musicItem.artist,
                         album: tagResult.tags.album || musicItem.album,
                         artwork: tagResult.tags.artwork || musicItem.artwork,
+                        rawLrc: tagResult.tags.lyrics || undefined,
                     };
                     await musicSheetDB.localMusicStore.update(
                         [musicItem.platform, musicItem.id],
@@ -110,6 +112,7 @@ export default function LocalMusicView() {
                             artist: updatedItem.artist,
                             album: updatedItem.album,
                             artwork: updatedItem.artwork,
+                            rawLrc: updatedItem.rawLrc,
                         },
                     );
                     updatedList[i] = updatedItem;
@@ -148,6 +151,16 @@ export default function LocalMusicView() {
                     }}
                 >
                     {t("local_music_page.auto_scan")}
+                </div>
+                <div
+                    data-type="normalButton"
+                    role="button"
+                    onClick={async () => {
+                        await localMusic.clearLocalMusic();
+                        toast.success(t("local_music_page.clear_local_music_success"));
+                    }}
+                >
+                    {t("local_music_page.clear_local_music")}
                 </div>
                 <div
                     data-type="normalButton"

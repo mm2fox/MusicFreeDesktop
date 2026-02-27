@@ -112,6 +112,8 @@
   "local_music_page": {
     "local_music": "本地音乐",
     "auto_scan": "自动扫描",
+    "clear_local_music": "清空本地音乐",
+    "clear_local_music_success": "已清空本地音乐",
     "refresh_tags": "刷新标签",
     "refreshing": "刷新中...",
     "refreshing_tags": "正在刷新标签...",

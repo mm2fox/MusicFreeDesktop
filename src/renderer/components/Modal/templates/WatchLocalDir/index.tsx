@@ -151,15 +151,6 @@ export default function WatchLocalDir() {
                 <div className="footer-options">
                     <div
                         role="button"
-                        data-type="normalButton"
-                        onClick={async () => {
-                            await localMusic.clearLocalMusic();
-                        }}
-                    >
-                        {t("modal.clear_local_music")}
-                    </div>
-                    <div
-                        role="button"
                         data-type="primaryButton"
                         onClick={async () => {
                             setUserPreferenceIDB("localWatchDir", localDirs);

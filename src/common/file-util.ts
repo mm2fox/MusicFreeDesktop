@@ -108,6 +108,21 @@ export async function parseLocalMusicItem(
     }
 }
 
+export async function parseLocalMusicItemWithoutTags(
+    filePath: string,
+): Promise<IMusic.IMusicItem> {
+    const hash = CryptoJS.MD5(filePath).toString();
+    return {
+        title: path.parse(filePath).name || filePath,
+        id: hash,
+        platform: localPluginName,
+        localPath: filePath,
+        url: addFileScheme(filePath),
+        artist: "未知作者",
+        album: "未知专辑",
+    };
+}
+
 export async function parseLocalMusicItemFolder(
     folderPath: string,
 ): Promise<IMusic.IMusicItem[]> {

@@ -105,7 +105,7 @@ class WindowManager implements IWindowManager {
                 webSecurity: false,
                 sandbox: false,
                 webviewTag: true,
-                additionalArguments: ['--max-old-space-size=4096'],
+                additionalArguments: ["--max-old-space-size=4096"],
             },
             frame: false,
             icon: nativeImage.createFromPath(getResourcePath(ResourceName.LOGO_IMAGE)),

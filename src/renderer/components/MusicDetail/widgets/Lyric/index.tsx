@@ -132,27 +132,27 @@ export default function Lyric() {
                             }
                         >
                             {lyricParser?.getLyricItems?.()?.map((lyricItem, index) => (
-                            <div key={index}>
-                                <div
-                                    className="lyric-item"
-                                    id={`lyric-item-id-${index}`}
-                                    data-highlight={currentLrc?.index === index}
-                                >
-                                    {lyricItem.lrc}
-                                </div>
-                                <IfTruthy
-                                    condition={lyricParser?.hasTranslation && showTranslation}
-                                >
+                                <div key={index}>
                                     <div
-                                        className="lyric-item lyric-item-translation"
-                                        id={`tr-lyric-item-id-${index}`}
+                                        className="lyric-item"
+                                        id={`lyric-item-id-${index}`}
                                         data-highlight={currentLrc?.index === index}
                                     >
-                                        {lyricItem.translation}
+                                        {lyricItem.lrc}
                                     </div>
-                                </IfTruthy>
-                            </div>
-                        ))}
+                                    <IfTruthy
+                                        condition={lyricParser?.hasTranslation && showTranslation}
+                                    >
+                                        <div
+                                            className="lyric-item lyric-item-translation"
+                                            id={`tr-lyric-item-id-${index}`}
+                                            data-highlight={currentLrc?.index === index}
+                                        >
+                                            {lyricItem.translation}
+                                        </div>
+                                    </IfTruthy>
+                                </div>
+                            ))}
                         </Condition>
                     </Condition>
                 }
