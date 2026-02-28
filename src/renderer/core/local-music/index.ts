@@ -74,15 +74,18 @@ async function doFlush() {
             }
         }
 
-        // 处理添加
+        // 处理添加 - 限制每次最多添加 50 个
         if (pendingAdds.length > 0) {
+            const MAX_ADD_PER_FLUSH = 50;
+            const batchToAdd = pendingAdds.splice(0, MAX_ADD_PER_FLUSH);
+
             const currentListNow = localMusicListStore.getValue() || [];
             const existingPaths = new Set(
                 currentListNow
                     .map((it) => it?.$$localPath)
                     .filter((p): p is string => typeof p === "string" && p.length > 0),
             );
-            const newItems = pendingAdds.filter(
+            const newItems = batchToAdd.filter(
                 (it) => {
                     if (!it || typeof it !== "object") return false;
                     const localPath = it.$$localPath;
@@ -90,9 +93,13 @@ async function doFlush() {
                     return !existingPaths.has(localPath);
                 },
             );
-            pendingAdds.length = 0;
             if (newItems.length > 0) {
                 localMusicListStore.setValue([...currentListNow, ...newItems]);
+            }
+
+            // 如果还有剩余项目，继续调度刷新
+            if (pendingAdds.length > 0) {
+                scheduleFlush();
             }
         }
     } catch (e) {
@@ -231,7 +238,6 @@ async function changeWatchPath(logs: Map<string, "add" | "delete">) {
 }
 
 async function clearLocalMusic() {
-    // 清空待处理队列
     pendingAdds.length = 0;
     pendingRemoves.length = 0;
     if (flushTimer) {
@@ -240,9 +246,22 @@ async function clearLocalMusic() {
     }
     await musicSheetDB.localMusicStore.clear();
     localMusicListStore.setValue([]);
-    // 重新扫描所有文件
     if (localFileWatcherWorker) {
         await localFileWatcherWorker.rescan();
+    }
+}
+
+async function rescanLocalMusic() {
+    pendingAdds.length = 0;
+    pendingRemoves.length = 0;
+    if (flushTimer) {
+        clearTimeout(flushTimer);
+        flushTimer = null;
+    }
+    if (localFileWatcherWorker) {
+        await localFileWatcherWorker.resetProcessedFiles();
+        await localFileWatcherWorker.rescan();
+        await localFileWatcherWorker.flush();
     }
 }
 
@@ -250,4 +269,5 @@ export default {
     setupLocalMusic,
     changeWatchPath,
     clearLocalMusic,
+    rescanLocalMusic,
 };

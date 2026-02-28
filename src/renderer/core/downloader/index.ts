@@ -92,6 +92,10 @@ async function startDownload(
         (it) => !isDownloaded(it) && it.platform !== localPluginName,
     );
 
+    if (_validMusicItems.length === 0) {
+        return;
+    }
+
     const downloadCallbacks = _validMusicItems.map((it) => {
         const pk = getMediaPrimaryKey(it);
         downloadingProgress.set(pk, {
@@ -165,16 +169,40 @@ async function downloadMusicImpl(
             const downloadBasePath =
                 AppConfig.getConfig("download.path") ??
                 getGlobalContext().appPath.downloads;
+            
             const downloadPath = window.path.resolve(
                 downloadBasePath,
                 `./${fileName}.${ext}`,
             );
+            
+            const { toast } = await import("react-toastify");
+            const { fsUtil } = await import("@shared/utils/renderer");
+            
+            try {
+                const dirExists = await fsUtil.isFolder(downloadBasePath);
+                if (!dirExists) {
+                    const errorMsg = `下载目录不存在: ${downloadBasePath}`;
+                    console.error("[Downloader]", errorMsg);
+                    toast.error(errorMsg);
+                    onStateChange({
+                        state: DownloadState.ERROR,
+                        msg: errorMsg,
+                    });
+                    return;
+                }
+            } catch (e) {
+                console.error("[Downloader] Failed to check download path:", e);
+            }
+            
+            let downloadCompleted = false;
+            
             downloaderWorker.downloadFile(
                 mediaSource,
                 downloadPath,
                 Comlink.proxy(async (dataState) => {
                     onStateChange(dataState);
-                    if (dataState.state === DownloadState.DONE) {
+                    if (dataState.state === DownloadState.DONE && !downloadCompleted) {
+                        downloadCompleted = true;
                         try {
                             await writeMusicTags(musicItem, downloadPath);
                         } catch (e) {
@@ -191,6 +219,8 @@ async function downloadMusicImpl(
                                 true,
                             ) as IMusic.IMusicItem,
                         );
+                    } else if (dataState.state === DownloadState.ERROR) {
+                        downloadCompleted = true;
                     }
                 }),
             );
@@ -198,7 +228,7 @@ async function downloadMusicImpl(
             throw new Error("Invalid Source");
         }
     } catch (e) {
-        console.log(e, "ERROR");
+        console.error("[Downloader] Exception:", e);
         onStateChange({
             state: DownloadState.ERROR,
             msg: e?.message,

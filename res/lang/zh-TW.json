@@ -136,7 +136,9 @@
     "artist_view": "藝術家視圖",
     "album_view": "專輯視圖",
     "folder_view": "文件夾視圖",
-    "total_music_num": "共 {{number}} 首歌曲"
+    "total_music_num": "共 {{number}} 首歌曲",
+    "manual_scan": "手動掃描",
+    "manual_scanning": "掃描中..."
   },
 
   "music_list_context_menu": {
@@ -153,7 +155,11 @@
     "edit_tags": "編輯標籤",
     "refresh_tag": "刷新標籤",
     "refresh_tag_success": "標籤刷新成功",
-    "refresh_tag_failed": "標籤刷新失敗"
+    "refresh_tag_failed": "標籤刷新失敗",
+    "delete_local_file": "刪除本地檔案",
+    "delete_local_file_confirm": "確定要刪除本地檔案嗎？",
+    "delete_local_file_success": "已刪除本地檔案 [{{songName}}]",
+    "delete_local_file_failed": "刪除本地檔案失敗"
   },
 
   "search_result_page": {

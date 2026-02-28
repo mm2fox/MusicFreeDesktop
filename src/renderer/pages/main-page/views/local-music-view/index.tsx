@@ -72,6 +72,20 @@ export default function LocalMusicView() {
 
     const finalMusicList = filterMusicList ?? localMusicList;
     const [refreshing, setRefreshing] = useState(false);
+    const [rescanning, setRescanning] = useState(false);
+
+    const handleRescan = async () => {
+        if (rescanning) return;
+        setRescanning(true);
+        try {
+            await localMusic.rescanLocalMusic();
+            toast.success(t("local_music_page.rescan"));
+        } catch (e) {
+            console.error("[Rescan] Error:", e);
+        } finally {
+            setRescanning(false);
+        }
+    };
 
     const handleRefreshTags = async () => {
         if (refreshing) return;
@@ -87,46 +101,61 @@ export default function LocalMusicView() {
 
         let successCount = 0;
         let failCount = 0;
-        const updatedList = [...musicList];
+        const batchSize = 10;
+        const totalItems = musicList.length;
 
-        for (let i = 0; i < musicList.length; i++) {
-            const musicItem = musicList[i];
-            const filePath = (musicItem as any).$$localPath || (musicItem as any).localPath;
-            if (!filePath) continue;
+        const processBatch = async (startIndex: number): Promise<void> => {
+            const endIndex = Math.min(startIndex + batchSize, totalItems);
+            
+            for (let i = startIndex; i < endIndex; i++) {
+                const musicItem = musicList[i];
+                const filePath = (musicItem as any).$$localPath || (musicItem as any).localPath;
+                if (!filePath) {
+                    failCount++;
+                    continue;
+                }
 
-            try {
-                const tagResult = await (window as any)["@shared/music-tag"].readTags(filePath);
-                if (tagResult.success && tagResult.tags) {
-                    const updatedItem = {
-                        ...musicItem,
-                        title: tagResult.tags.title || musicItem.title,
-                        artist: tagResult.tags.artist || musicItem.artist,
-                        album: tagResult.tags.album || musicItem.album,
-                        artwork: tagResult.tags.artwork || musicItem.artwork,
-                        rawLrc: tagResult.tags.lyrics || undefined,
-                    };
-                    await musicSheetDB.localMusicStore.update(
-                        [musicItem.platform, musicItem.id],
-                        {
-                            title: updatedItem.title,
-                            artist: updatedItem.artist,
-                            album: updatedItem.album,
-                            artwork: updatedItem.artwork,
-                            rawLrc: updatedItem.rawLrc,
-                        },
-                    );
-                    updatedList[i] = updatedItem;
-                    successCount++;
-                } else {
+                try {
+                    const tagResult = await (window as any)["@shared/music-tag"].readTags(filePath);
+                    if (tagResult.success && tagResult.tags) {
+                        const updatedItem = {
+                            ...musicItem,
+                            title: tagResult.tags.title || musicItem.title,
+                            artist: tagResult.tags.artist || musicItem.artist,
+                            album: tagResult.tags.album || musicItem.album,
+                            artwork: tagResult.tags.artwork || musicItem.artwork,
+                            rawLrc: tagResult.tags.lyrics || undefined,
+                        };
+                        await musicSheetDB.localMusicStore.update(
+                            [musicItem.platform, musicItem.id],
+                            {
+                                title: updatedItem.title,
+                                artist: updatedItem.artist,
+                                album: updatedItem.album,
+                                artwork: updatedItem.artwork,
+                                rawLrc: updatedItem.rawLrc,
+                            },
+                        );
+                        musicList[i] = updatedItem;
+                        successCount++;
+                    } else {
+                        failCount++;
+                    }
+                } catch (e) {
+                    console.error("[RefreshTags] Failed:", e);
                     failCount++;
                 }
-            } catch (e) {
-                console.error("[RefreshTags] Failed:", e);
-                failCount++;
             }
-        }
 
-        localMusicListStore.setValue(updatedList);
+            localMusicListStore.setValue([...musicList]);
+
+            if (endIndex < totalItems) {
+                await new Promise(resolve => setTimeout(resolve, 0));
+                await processBatch(endIndex);
+            }
+        };
+
+        await processBatch(0);
 
         setRefreshing(false);
         toast.success(t("local_music_page.refresh_tags_complete", { 
@@ -151,6 +180,14 @@ export default function LocalMusicView() {
                     }}
                 >
                     {t("local_music_page.auto_scan")}
+                </div>
+                <div
+                    data-type="normalButton"
+                    role="button"
+                    onClick={handleRescan}
+                    data-disabled={rescanning}
+                >
+                    {rescanning ? t("local_music_page.manual_scanning") : t("local_music_page.manual_scan")}
                 </div>
                 <div
                     data-type="normalButton"

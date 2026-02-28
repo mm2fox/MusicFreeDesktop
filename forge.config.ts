@@ -28,7 +28,7 @@ const config: ForgeConfig = {
     //   setupIcon: path.resolve(__dirname, "resources/logo.ico"),
     //   setupMsi: "MusicFreeInstaller",
     // }),
-    new MakerZIP({}, ["darwin"]),
+    new MakerZIP({}, ["darwin", "win32"]),
     new MakerDMG(
       {
         // background

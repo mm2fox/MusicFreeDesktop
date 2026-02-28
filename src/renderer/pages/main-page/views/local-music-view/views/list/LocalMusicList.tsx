@@ -5,7 +5,7 @@ import { secondsToDuration } from "@/common/time-util";
 import { localPluginName, RequestStateCode } from "@/common/constant";
 import { IContextMenuItem, showContextMenu } from "@/renderer/components/ContextMenu";
 import { getInternalData, getMediaPrimaryKey, isSameMedia } from "@/common/media-util";
-import { showModal } from "@/renderer/components/Modal";
+import { showModal, hideModal } from "@/renderer/components/Modal";
 import { toast } from "react-toastify";
 import hotkeys from "hotkeys-js";
 import trackPlayer from "@renderer/core/track-player";
@@ -25,7 +25,7 @@ import Tag from "@/renderer/components/Tag";
 import useVirtualList from "@/hooks/useVirtualList";
 import AppConfig from "@shared/app-config/renderer";
 import currentListSourceStore from "@/renderer/core/current-list-source/store";
-import { shellUtil } from "@shared/utils/renderer";
+import { shellUtil, fsUtil } from "@shared/utils/renderer";
 import { locateMusicStore } from "@/renderer/components/MusicSheetlikeView/store";
 
 interface ILocalMusicListProps {
@@ -158,6 +158,46 @@ function showLocalMusicContextMenu(
                         `${i18n.t("music_list_context_menu.reveal_local_music_in_file_explorer_fail")} ${e?.message ?? ""}`,
                     );
                 }
+            },
+        },
+        {
+            title: i18n.t("music_list_context_menu.delete_local_file"),
+            icon: "trash",
+            show: !isArray,
+            onClick() {
+                const musicItem = musicItems as IMusic.IMusicItem;
+                const filePath = (musicItem as any).$$localPath || (musicItem as any).localPath;
+                if (!filePath) {
+                    toast.error(i18n.t("music_list_context_menu.delete_local_file_failed"));
+                    return;
+                }
+
+                showModal("Reconfirm", {
+                    title: i18n.t("music_list_context_menu.delete_local_file"),
+                    content: i18n.t("music_list_context_menu.delete_local_file_confirm"),
+                    async onConfirm() {
+                        hideModal();
+                        try {
+                            await fsUtil.rimraf(filePath);
+                            await musicSheetDB.localMusicStore.delete([musicItem.platform, musicItem.id]);
+                            
+                            const currentList = localMusicListStore.getValue();
+                            const updatedList = currentList.filter(
+                                item => !(item.id === musicItem.id && item.platform === musicItem.platform)
+                            );
+                            localMusicListStore.setValue(updatedList);
+
+                            toast.success(
+                                i18n.t("music_list_context_menu.delete_local_file_success", {
+                                    songName: musicItem.title,
+                                }),
+                            );
+                        } catch (e) {
+                            console.error("[DeleteLocalFile] Error:", e);
+                            toast.error(i18n.t("music_list_context_menu.delete_local_file_failed"));
+                        }
+                    },
+                });
             },
         },
     );
@@ -540,7 +580,7 @@ function _LocalMusicList(props: ILocalMusicListProps) {
                                         AppConfig.getConfig("playMusic.clickMusicList");
                                     if (config === "replace") {
                                         trackPlayer.playMusicWithReplaceQueue(
-                                            table.getRowModel().rows.map((it) => it.original),
+                                            musicListRef.current,
                                             row.original,
                                         );
                                     } else {

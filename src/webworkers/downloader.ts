@@ -62,10 +62,12 @@ async function downloadFile(
     onStateChange: IOnStateChangeFunc,
 ) {
     let state = DownloadState.DOWNLOADING;
+    let hasError = false;
     try {
         const stat = fs.statSync(filePath);
         if (stat.isDirectory()) {
             state = DownloadState.ERROR;
+            hasError = true;
             onStateChange?.({
                 state,
                 msg: "Filepath is a directory",
@@ -106,7 +108,7 @@ async function downloadFile(
         await new Promise<void>((resolve, reject) => {
             const stm = responseToReadable(res, {
                 onRead(size) {
-                    if (state !== DownloadState.DOWNLOADING) {
+                    if (state !== DownloadState.DOWNLOADING || hasError) {
                         return;
                     }
                     state = DownloadState.DOWNLOADING;
@@ -117,6 +119,8 @@ async function downloadFile(
                     });
                 },
                 onError: (e) => {
+                    if (hasError) return;
+                    hasError = true;
                     state = DownloadState.ERROR;
                     onStateChange({
                         state,
@@ -128,7 +132,7 @@ async function downloadFile(
 
             let resolved = false;
             const handleComplete = () => {
-                if (resolved) return;
+                if (resolved || hasError) return;
                 resolved = true;
                 state = DownloadState.DONE;
                 onStateChange({
@@ -138,9 +142,10 @@ async function downloadFile(
             };
 
             stm.on("finish", handleComplete);
-            stm.on("close", handleComplete);
 
             stm.on("error", (e) => {
+                if (hasError) return;
+                hasError = true;
                 state = DownloadState.ERROR;
                 onStateChange({
                     state,
@@ -151,11 +156,14 @@ async function downloadFile(
             });
         });
     } catch (e) {
-        state = DownloadState.ERROR;
-        onStateChange({
-            state,
-            msg: e?.message,
-        });
+        if (!hasError) {
+            hasError = true;
+            state = DownloadState.ERROR;
+            onStateChange({
+                state,
+                msg: e?.message,
+            });
+        }
         cleanFile(filePath);
     }
 }

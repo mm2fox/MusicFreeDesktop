@@ -128,7 +128,9 @@
     "lyrics": "歌词",
     "has_lyrics": "有歌词",
     "no_lyrics": "无歌词",
-    "selected_count": "已选中 {{count}} 首"
+    "selected_count": "已选中 {{count}} 首",
+    "manual_scan": "手动扫描",
+    "manual_scanning": "扫描中..."
   },
   "music_list_context_menu": {
     "next_play": "下一首播放",
@@ -145,7 +147,11 @@
     "refresh_tag": "刷新标签",
     "refreshing": "正在刷新标签...",
     "refresh_tag_success": "标签刷新成功",
-    "refresh_tag_failed": "标签刷新失败"
+    "refresh_tag_failed": "标签刷新失败",
+    "delete_local_file": "删除本地文件",
+    "delete_local_file_confirm": "确定要删除本地文件吗？",
+    "delete_local_file_success": "已删除本地文件 [{{songName}}]",
+    "delete_local_file_failed": "删除本地文件失败"
   },
   "search_result_page": {
     "search_result_title": "的搜索结果"

@@ -31,13 +31,13 @@ async function processFileQueue() {
     if (isProcessing) {
         return;
     }
-    
+
     if (pendingFiles.length === 0 && pendingRemoves.length === 0) {
         return;
     }
-    
+
     isProcessing = true;
-    
+
     try {
         // 处理删除 - 一次性处理所有
         if (pendingRemoves.length > 0) {
@@ -45,38 +45,49 @@ async function processFileQueue() {
             pendingRemoves = [];
             _onRemove?.(allRemoves);
         }
-        
-        // 处理添加 - 一次性处理所有
+
+        // 处理添加 - 分批处理
         if (pendingFiles.length > 0) {
-            const addedMusicItems: IMusic.IMusicItem[] = [];
-            const allFiles = [...pendingFiles];
-            pendingFiles = [];
-            
-            for (const fp of allFiles) {
-                if (processedFiles.has(fp)) {
-                    continue;
+            const BATCH_SIZE = 20;
+            let processedCount = 0;
+
+            while (pendingFiles.length > 0) {
+                const batch = pendingFiles.splice(0, BATCH_SIZE);
+                const addedMusicItems: IMusic.IMusicItem[] = [];
+
+                for (const fp of batch) {
+                    if (processedFiles.has(fp)) {
+                        continue;
+                    }
+
+                    try {
+                        const musicItem = await parseLocalMusicItemWithoutTags(fp);
+                        musicItem.$$localPath = fp;
+                        setInternalData<IMusic.IMusicItemInternalData>(
+                            musicItem,
+                            "downloadData",
+                            {
+                                path: fp,
+                                quality: "standard",
+                            },
+                        );
+                        addedMusicItems.push(musicItem);
+                        processedFiles.add(fp);
+                    } catch (e) {
+                        console.error("[LocalFileWatcher] Failed to parse:", fp, e);
+                    }
                 }
 
-                try {
-                    const musicItem = await parseLocalMusicItemWithoutTags(fp);
-                    musicItem.$$localPath = fp;
-                    setInternalData<IMusic.IMusicItemInternalData>(
-                        musicItem,
-                        "downloadData",
-                        {
-                            path: fp,
-                            quality: "standard",
-                        },
-                    );
-                    addedMusicItems.push(musicItem);
-                    processedFiles.add(fp);
-                } catch (e) {
-                    console.error("[LocalFileWatcher] Failed to parse:", fp, e);
+                if (addedMusicItems.length > 0) {
+                    _onAdd?.(addedMusicItems);
                 }
-            }
-            
-            if (addedMusicItems.length > 0) {
-                _onAdd?.(addedMusicItems);
+
+                processedCount += batch.length;
+
+                // 让出事件循环
+                if (pendingFiles.length > 0) {
+                    await new Promise(resolve => setTimeout(resolve, 0));
+                }
             }
         }
     } finally {
@@ -88,11 +99,11 @@ function queueFile(fp: string) {
     if (processedFiles.has(fp)) {
         return;
     }
-    
+
     if (!pendingFiles.includes(fp)) {
         pendingFiles.push(fp);
     }
-    
+
     scheduleProcess();
 }
 
@@ -129,7 +140,7 @@ function scheduleProcess() {
     if (scanTimer) {
         return;
     }
-    
+
     scanTimer = setTimeout(() => {
         scanTimer = null;
         processFileQueue();
@@ -138,14 +149,14 @@ function scheduleProcess() {
 
 async function handleWatcherError(error: Error) {
     console.error("[LocalFileWatcher] Watcher error:", error.message);
-    
+
     if (watcherClosed || isReconnecting) return;
-    
+
     if (error.message?.includes("ECONNRESET") || error.message?.includes("ENOTCONN") || error.message?.includes("EPERM")) {
         if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
             isReconnecting = true;
             reconnectAttempts++;
-            
+
             setTimeout(async () => {
                 try {
                     await restartWatcher();
@@ -158,7 +169,7 @@ async function handleWatcherError(error: Error) {
             watcherClosed = true;
             try {
                 await watcher?.close();
-            } catch {}
+            } catch { }
         }
     }
 }
@@ -168,7 +179,7 @@ async function restartWatcher() {
         if (watcher) {
             try {
                 await watcher.close();
-            } catch {}
+            } catch { }
         }
         await createWatcher(currentWatchPaths, true);
     } catch (e) {
@@ -178,7 +189,7 @@ async function restartWatcher() {
 
 async function createWatcher(initPaths?: string[], skipInitialScan = false) {
     watcherClosed = false;
-    
+
     watcher = chokidar.watch(initPaths ?? [], {
         depth: 10,
         persistent: true,
@@ -228,12 +239,12 @@ async function setupWatcher(initPaths?: string[]) {
     watcherClosed = false;
     processedFiles.clear();
     ignoreRemoveEvents = false;
-    
+
     if (scanTimer) {
         clearTimeout(scanTimer);
         scanTimer = null;
     }
-    
+
     await createWatcher(initPaths, false);
 }
 
@@ -304,25 +315,44 @@ async function resetProcessedFiles() {
 }
 
 async function rescan() {
-    if (!watcher || watcherClosed) {
+    if (!currentWatchPaths || currentWatchPaths.length === 0) {
         return;
     }
 
-    // 暂时忽略删除事件，避免重新扫描时触发大量删除
     ignoreRemoveEvents = true;
-
-    // 清空 processedFiles，让文件可以重新被添加
     processedFiles.clear();
+    pendingFiles = [];
+    pendingRemoves = [];
 
-    // 触发重新扫描
     for (const watchPath of currentWatchPaths) {
-        await watcher.add(watchPath);
+        try {
+            await scanDirectory(watchPath);
+        } catch (e) {
+            console.error("[LocalFileWatcher] Failed to scan:", watchPath, e);
+        }
     }
 
-    // 延迟恢复删除事件监听
+    await processFileQueue();
+
     setTimeout(() => {
         ignoreRemoveEvents = false;
     }, 1000);
+}
+
+async function scanDirectory(dirPath: string) {
+    const files = fs.readdirSync(dirPath, { withFileTypes: true });
+
+    for (const file of files) {
+        const fullPath = path.join(dirPath, file.name);
+
+        if (file.isDirectory()) {
+            await scanDirectory(fullPath);
+        } else if (file.isFile() && supportLocalMediaType.some((postfix) => fullPath.endsWith(postfix))) {
+            if (!processedFiles.has(fullPath)) {
+                queueFile(fullPath);
+            }
+        }
+    }
 }
 
 Comlink.expose({

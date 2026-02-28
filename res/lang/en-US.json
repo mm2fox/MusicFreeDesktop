@@ -140,7 +140,9 @@
     "lyrics": "Lyrics",
     "has_lyrics": "Has Lyrics",
     "no_lyrics": "No Lyrics",
-    "selected_count": "{{count}} selected"
+    "selected_count": "{{count}} selected",
+    "manual_scan": "Manual Scan",
+    "manual_scanning": "Scanning..."
   },
 
   "music_list_context_menu": {
@@ -158,7 +160,11 @@
     "refresh_tag": "Refresh Tag",
     "refreshing": "Refreshing tag...",
     "refresh_tag_success": "Tag refreshed successfully",
-    "refresh_tag_failed": "Failed to refresh tag"
+    "refresh_tag_failed": "Failed to refresh tag",
+    "delete_local_file": "Delete Local File",
+    "delete_local_file_confirm": "Are you sure you want to delete the local file?",
+    "delete_local_file_success": "Deleted local file [{{songName}}]",
+    "delete_local_file_failed": "Failed to delete local file"
   },
 
   "search_result_page": {
