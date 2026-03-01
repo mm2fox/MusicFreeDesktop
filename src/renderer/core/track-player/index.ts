@@ -7,7 +7,7 @@ import {
     isSameMedia,
     sortByTimestampAndIndex,
 } from "@/common/media-util";
-import { PlayerState, RepeatMode, sortIndexSymbol, timeStampSymbol } from "@/common/constant";
+import { localPluginHash, PlayerState, RepeatMode, sortIndexSymbol, timeStampSymbol } from "@/common/constant";
 import LyricParser, { IParsedLrcItem } from "@/renderer/utils/lyric-parser";
 import {
     getUserPreference,
@@ -30,6 +30,7 @@ import { createUniqueMap } from "@/common/unique-map";
 import { getLinkedLyric } from "@renderer/core/link-lyric";
 import { fsUtil } from "@shared/utils/renderer";
 import PluginManager from "@shared/plugin-manager/renderer";
+import musicSheetDB from "@/renderer/core/db/music-sheet-db";
 
 const {
     musicQueueStore,
@@ -351,13 +352,39 @@ class TrackPlayer {
             });
 
             // extra information
-            const musicInfo = await PluginManager.callPluginDelegateMethod(
-                {
-                    platform: nextMusicItem.platform,
-                },
-                "getMusicInfo",
-                nextMusicItem,
-            ).catch(voidCallback);
+            let musicInfo: Partial<IMusic.IMusicItem> | null = null;
+            
+            // 对于本地音乐，从数据库获取最新信息
+            if (nextMusicItem.platform === localPluginHash) {
+                try {
+                    const localMusicItem = await musicSheetDB.localMusicStore.get([
+                        nextMusicItem.platform,
+                        nextMusicItem.id,
+                    ]);
+                    if (localMusicItem) {
+                        musicInfo = {
+                            title: localMusicItem.title,
+                            artist: localMusicItem.artist,
+                            album: localMusicItem.album,
+                            artwork: localMusicItem.artwork,
+                            rawLrc: localMusicItem.rawLrc,
+                        };
+                    }
+                } catch (e) {
+                    console.error("[TrackPlayer] Failed to get local music info:", e);
+                }
+            } else {
+                const result = await PluginManager.callPluginDelegateMethod(
+                    {
+                        platform: nextMusicItem.platform,
+                    },
+                    "getMusicInfo",
+                    nextMusicItem,
+                ).catch(voidCallback);
+                if (result && typeof result === "object") {
+                    musicInfo = result;
+                }
+            }
 
             if (!(musicInfo && this.isCurrentMusic(nextMusicItem) && typeof musicInfo === "object")) {
                 return;
