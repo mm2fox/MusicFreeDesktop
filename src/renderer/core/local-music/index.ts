@@ -24,9 +24,17 @@ interface ILocalFileWatcherWorker {
     flush: () => Promise<void>;
     resetProcessedFiles: () => Promise<void>;
     rescan: () => Promise<void>;
+    terminate: () => Promise<void>;
 }
 
-let localFileWatcherWorker: ILocalFileWatcherWorker;
+let localFileWatcherWorker: ILocalFileWatcherWorker | null = null;
+let workerInstance: Worker | null = null;
+let onAddCallback: ProxyMarkedFunction<
+    (musicItems: Array<IMusicItemWithLocalPath>) => Promise<void>
+> | null = null;
+let onRemoveCallback: ProxyMarkedFunction<
+    (filePaths: string[]) => Promise<void>
+> | null = null;
 
 function isSubDir(parent: string, target: string) {
     if (!target) return false;
@@ -111,87 +119,106 @@ async function doFlush() {
 
 async function setupLocalMusic() {
     try {
+        await terminateLocalMusic();
+
         const localWatchDir =
             (await getUserPreferenceIDB("localWatchDirChecked")) ?? [];
 
         const localFileWatcherWorkerPath =
             getGlobalContext().workersPath.localFileWatcher;
         if (localFileWatcherWorkerPath) {
-            const worker = new Worker(localFileWatcherWorkerPath);
-            localFileWatcherWorker = Comlink.wrap(worker);
+            workerInstance = new Worker(localFileWatcherWorkerPath);
+            localFileWatcherWorker = Comlink.wrap(workerInstance);
             await localFileWatcherWorker.setupWatcher(localWatchDir);
         }
 
-        // 加载已有本地音乐
         const allMusic = await musicSheetDB.localMusicStore.toArray();
         localMusicListStore.setValue(allMusic || []);
 
-        // 设置文件添加回调
         if (localFileWatcherWorker) {
-            localFileWatcherWorker.onAdd(
-                Comlink.proxy(async (musicItems: IMusicItemWithLocalPath[]) => {
-                    try {
-                        if (!Array.isArray(musicItems) || musicItems.length === 0) return;
+            onAddCallback = Comlink.proxy(async (musicItems: IMusicItemWithLocalPath[]) => {
+                try {
+                    if (!Array.isArray(musicItems) || musicItems.length === 0) return;
 
-                        const validItems = musicItems.filter(
-                            (it) => it && typeof it === "object" && it.$$localPath,
-                        );
-                        if (validItems.length === 0) return;
+                    const validItems = musicItems.filter(
+                        (it) => it && typeof it === "object" && it.$$localPath,
+                    );
+                    if (validItems.length === 0) return;
 
-                        // 分批写入数据库，每次最多 10 个
-                        const batchSize = 10;
-                        for (let i = 0; i < validItems.length; i += batchSize) {
-                            const batch = validItems.slice(i, i + batchSize);
-                            await musicSheetDB.localMusicStore.bulkPut(batch);
-                        }
-
-                        // 添加到待刷新列表
-                        pendingAdds.push(...validItems);
-                        scheduleFlush();
-                    } catch (e) {
-                        console.error("[LocalMusic] onAdd error:", e);
+                    const batchSize = 10;
+                    for (let i = 0; i < validItems.length; i += batchSize) {
+                        const batch = validItems.slice(i, i + batchSize);
+                        await musicSheetDB.localMusicStore.bulkPut(batch);
                     }
-                }),
-            );
 
-            // 设置文件删除回调
-            localFileWatcherWorker.onRemove(
-                Comlink.proxy(async (filePaths: string[]) => {
-                    try {
-                        if (!Array.isArray(filePaths) || filePaths.length === 0) return;
+                    pendingAdds.push(...validItems);
+                    scheduleFlush();
+                } catch (e) {
+                    console.error("[LocalMusic] onAdd error:", e);
+                }
+            });
+            localFileWatcherWorker.onAdd(onAddCallback);
 
-                        const validPaths = filePaths.filter(
-                            (p) => typeof p === "string" && p.length > 0,
-                        );
-                        if (validPaths.length === 0) return;
+            onRemoveCallback = Comlink.proxy(async (filePaths: string[]) => {
+                try {
+                    if (!Array.isArray(filePaths) || filePaths.length === 0) return;
 
-                        // 从数据库中删除
-                        const tobeDeletedFilePaths = new Set(validPaths);
-                        const allMusic = await musicSheetDB.localMusicStore.toArray();
+                    const validPaths = filePaths.filter(
+                        (p) => typeof p === "string" && p.length > 0,
+                    );
+                    if (validPaths.length === 0) return;
 
-                        const tobeDeletedPrimaryKeys: any[] = [];
-                        for (const it of allMusic) {
-                            if (it?.$$localPath && tobeDeletedFilePaths.has(it.$$localPath)) {
-                                tobeDeletedPrimaryKeys.push([it.platform, it.id]);
-                            }
+                    const tobeDeletedFilePaths = new Set(validPaths);
+                    const allMusic = await musicSheetDB.localMusicStore.toArray();
+
+                    const tobeDeletedPrimaryKeys: any[] = [];
+                    for (const it of allMusic) {
+                        if (it?.$$localPath && tobeDeletedFilePaths.has(it.$$localPath)) {
+                            tobeDeletedPrimaryKeys.push([it.platform, it.id]);
                         }
-
-                        if (tobeDeletedPrimaryKeys.length > 0) {
-                            await musicSheetDB.localMusicStore.bulkDelete(tobeDeletedPrimaryKeys);
-                        }
-
-                        // 添加到待刷新列表
-                        pendingRemoves.push(...validPaths);
-                        scheduleFlush();
-                    } catch (e) {
-                        console.error("[LocalMusic] onRemove error:", e);
                     }
-                }),
-            );
+
+                    if (tobeDeletedPrimaryKeys.length > 0) {
+                        await musicSheetDB.localMusicStore.bulkDelete(tobeDeletedPrimaryKeys);
+                    }
+
+                    pendingRemoves.push(...validPaths);
+                    scheduleFlush();
+                } catch (e) {
+                    console.error("[LocalMusic] onRemove error:", e);
+                }
+            });
+            localFileWatcherWorker.onRemove(onRemoveCallback);
         }
     } catch (e) {
         console.error("[LocalMusic] setupLocalMusic error:", e);
     }
+}
+
+async function terminateLocalMusic() {
+    pendingAdds.length = 0;
+    pendingRemoves.length = 0;
+    if (flushTimer) {
+        clearTimeout(flushTimer);
+        flushTimer = null;
+    }
+
+    if (localFileWatcherWorker) {
+        try {
+            await localFileWatcherWorker.terminate();
+        } catch (e) {
+            console.error("[LocalMusic] terminate worker error:", e);
+        }
+        localFileWatcherWorker = null;
+    }
+
+    if (workerInstance) {
+        workerInstance.terminate();
+        workerInstance = null;
+    }
+
+    onAddCallback = null;
+    onRemoveCallback = null;
 }
 
 async function changeWatchPath(logs: Map<string, "add" | "delete">) {
@@ -247,7 +274,9 @@ async function clearLocalMusic() {
     await musicSheetDB.localMusicStore.clear();
     localMusicListStore.setValue([]);
     if (localFileWatcherWorker) {
+        await localFileWatcherWorker.resetProcessedFiles();
         await localFileWatcherWorker.rescan();
+        await localFileWatcherWorker.flush();
     }
 }
 
@@ -270,4 +299,5 @@ export default {
     changeWatchPath,
     clearLocalMusic,
     rescanLocalMusic,
+    terminateLocalMusic,
 };

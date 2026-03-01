@@ -23,6 +23,10 @@ async function readTags(filePath: string): Promise<IMusicTagsResult> {
     return await ipcRenderer.invoke("@shared/music-tag/read", filePath);
 }
 
+async function readTagsWithoutArtwork(filePath: string): Promise<IMusicTagsResult> {
+    return await ipcRenderer.invoke("@shared/music-tag/read-without-artwork", filePath);
+}
+
 async function writeTags(filePath: string, tags: IMusicTags): Promise<IMusicTagsResult> {
     return await ipcRenderer.invoke("@shared/music-tag/write", filePath, tags);
 }
@@ -33,6 +37,7 @@ async function refreshBatchTags(filePaths: string[]): Promise<{ success: number;
 
 const mod = {
     readTags,
+    readTagsWithoutArtwork,
     writeTags,
     refreshBatchTags,
 };

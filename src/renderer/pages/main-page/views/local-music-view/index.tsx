@@ -101,14 +101,16 @@ export default function LocalMusicView() {
 
         let successCount = 0;
         let failCount = 0;
-        const batchSize = 10;
+        const batchSize = 3;
         const totalItems = musicList.length;
+        let lastUpdateTime = Date.now();
 
-        const processBatch = async (startIndex: number): Promise<void> => {
-            const endIndex = Math.min(startIndex + batchSize, totalItems);
+        for (let i = 0; i < totalItems; i += batchSize) {
+            const endIndex = Math.min(i + batchSize, totalItems);
+            const batchUpdates: Array<{ index: number; updates: Partial<IMusic.IMusicItem> }> = [];
             
-            for (let i = startIndex; i < endIndex; i++) {
-                const musicItem = musicList[i];
+            for (let j = i; j < endIndex; j++) {
+                const musicItem = musicList[j];
                 const filePath = (musicItem as any).$$localPath || (musicItem as any).localPath;
                 if (!filePath) {
                     failCount++;
@@ -116,27 +118,22 @@ export default function LocalMusicView() {
                 }
 
                 try {
-                    const tagResult = await (window as any)["@shared/music-tag"].readTags(filePath);
+                    const tagResult = await (window as any)["@shared/music-tag"].readTagsWithoutArtwork(filePath);
                     if (tagResult.success && tagResult.tags) {
-                        const updatedItem = {
-                            ...musicItem,
-                            title: tagResult.tags.title || musicItem.title,
-                            artist: tagResult.tags.artist || musicItem.artist,
-                            album: tagResult.tags.album || musicItem.album,
-                            artwork: tagResult.tags.artwork || musicItem.artwork,
-                            rawLrc: tagResult.tags.lyrics || undefined,
-                        };
-                        await musicSheetDB.localMusicStore.update(
-                            [musicItem.platform, musicItem.id],
-                            {
-                                title: updatedItem.title,
-                                artist: updatedItem.artist,
-                                album: updatedItem.album,
-                                artwork: updatedItem.artwork,
-                                rawLrc: updatedItem.rawLrc,
-                            },
-                        );
-                        musicList[i] = updatedItem;
+                        const updatesForItem: Partial<IMusic.IMusicItem> = {};
+                        
+                        if (tagResult.tags.title) updatesForItem.title = tagResult.tags.title;
+                        if (tagResult.tags.artist) updatesForItem.artist = tagResult.tags.artist;
+                        if (tagResult.tags.album) updatesForItem.album = tagResult.tags.album;
+                        if (tagResult.tags.lyrics) updatesForItem.rawLrc = tagResult.tags.lyrics;
+                        
+                        if (Object.keys(updatesForItem).length > 0) {
+                            await musicSheetDB.localMusicStore.update(
+                                [musicItem.platform, musicItem.id],
+                                updatesForItem,
+                            );
+                            batchUpdates.push({ index: j, updates: updatesForItem });
+                        }
                         successCount++;
                     } else {
                         failCount++;
@@ -147,15 +144,26 @@ export default function LocalMusicView() {
                 }
             }
 
-            localMusicListStore.setValue([...musicList]);
+            if (batchUpdates.length > 0) {
+                localMusicListStore.setValue(prevList => {
+                    const newList = [...prevList];
+                    for (const { index, updates } of batchUpdates) {
+                        newList[index] = { ...newList[index], ...updates };
+                    }
+                    return newList;
+                });
+            }
 
             if (endIndex < totalItems) {
-                await new Promise(resolve => setTimeout(resolve, 0));
-                await processBatch(endIndex);
+                const now = Date.now();
+                const elapsed = now - lastUpdateTime;
+                const minDelay = 150;
+                if (elapsed < minDelay) {
+                    await new Promise(resolve => setTimeout(resolve, minDelay - elapsed));
+                }
+                lastUpdateTime = Date.now();
             }
-        };
-
-        await processBatch(0);
+        }
 
         setRefreshing(false);
         toast.success(t("local_music_page.refresh_tags_complete", { 

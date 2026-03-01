@@ -220,6 +220,10 @@ class MusicTagUtil {
             return await this.readTags(filePath);
         });
 
+        ipcMain.handle("@shared/music-tag/read-without-artwork", async (_, filePath: string): Promise<IMusicTagsResult> => {
+            return await this.readTagsWithoutArtwork(filePath);
+        });
+
         ipcMain.handle("@shared/music-tag/write", async (_, filePath: string, tags: IMusicTags): Promise<IMusicTagsResult> => {
             return await this.writeTags(filePath, tags);
         });
@@ -292,6 +296,45 @@ class MusicTagUtil {
         }
     }
 
+    private async readTagsWithoutArtwork(filePath: string): Promise<IMusicTagsResult> {
+        try {
+            const fileExists = await this.fileExists(filePath);
+            if (!fileExists) {
+                return {
+                    success: false,
+                    error: `File not found: ${filePath}`,
+                };
+            }
+
+            const ext = path.extname(filePath).toLowerCase();
+            
+            if (supportedMp3Formats.includes(ext)) {
+                return await this.readMp3TagsWithoutArtwork(filePath);
+            } else if (supportedFlacFormats.includes(ext)) {
+                return await this.readFlacTagsWithoutArtwork(filePath);
+            } else {
+                const metadata = await parseFile(filePath, { skipCovers: true });
+                const common = metadata.common;
+                return {
+                    success: true,
+                    tags: {
+                        title: common.title,
+                        artist: Array.isArray(common.artist) ? common.artist.join(", ") : common.artist,
+                        album: common.album,
+                        year: common.year?.toString(),
+                        genre: Array.isArray(common.genre) ? common.genre.join(", ") : common.genre,
+                        comment: Array.isArray(common.comment) ? common.comment.join("\n") : common.comment,
+                    },
+                };
+            }
+        } catch (error: any) {
+            return {
+                success: false,
+                error: error?.message || "Failed to read tags",
+            };
+        }
+    }
+
     private async fileExists(filePath: string): Promise<boolean> {
         try {
             await fs.access(filePath);
@@ -331,6 +374,38 @@ class MusicTagUtil {
                     comment: typeof tags.comment === "object" ? (tags.comment as any).text : tags.comment || undefined,
                     lyrics: (tags as any).unsynchronisedLyrics?.text || (tags as any).unsynchronisedLyrics || undefined,
                     artwork,
+                },
+            };
+        } catch (error: any) {
+            return {
+                success: false,
+                error: error?.message || "Failed to read MP3 tags",
+            };
+        }
+    }
+
+    private async readMp3TagsWithoutArtwork(filePath: string): Promise<IMusicTagsResult> {
+        try {
+            const tags = await NodeID3Promise.read(filePath);
+            if (!tags) {
+                return {
+                    success: false,
+                    error: "Failed to read MP3 tags",
+                };
+            }
+
+            return {
+                success: true,
+                tags: {
+                    title: tags.title || undefined,
+                    artist: tags.artist || undefined,
+                    album: tags.album || undefined,
+                    albumArtist: (tags as any).albumArtist || (tags as any).band || undefined,
+                    year: tags.year || undefined,
+                    date: (tags as any).date || tags.year || undefined,
+                    genre: tags.genre || undefined,
+                    comment: typeof tags.comment === "object" ? (tags.comment as any).text : tags.comment || undefined,
+                    lyrics: (tags as any).unsynchronisedLyrics?.text || (tags as any).unsynchronisedLyrics || undefined,
                 },
             };
         } catch (error: any) {
@@ -400,6 +475,33 @@ class MusicTagUtil {
                     };
                 }
             }
+            return {
+                success: false,
+                error: error?.message || "Failed to read FLAC tags",
+            };
+        }
+    }
+
+    private async readFlacTagsWithoutArtwork(filePath: string): Promise<IMusicTagsResult> {
+        try {
+            const metadata = await parseFile(filePath, { skipCovers: true });
+            const common = metadata.common;
+
+            return {
+                success: true,
+                tags: {
+                    title: common.title,
+                    artist: Array.isArray(common.artist) ? common.artist.join(", ") : common.artist,
+                    album: common.album,
+                    albumArtist: Array.isArray(common.albumartist) ? common.albumartist.join(", ") : common.albumartist,
+                    year: common.year?.toString(),
+                    date: common.date || common.year?.toString(),
+                    genre: Array.isArray(common.genre) ? common.genre.join(", ") : common.genre,
+                    comment: Array.isArray(common.comment) ? common.comment.join("\n") : common.comment,
+                    lyrics: Array.isArray(common.lyrics) ? common.lyrics.join("\n") : common.lyrics,
+                },
+            };
+        } catch (error: any) {
             return {
                 success: false,
                 error: error?.message || "Failed to read FLAC tags",

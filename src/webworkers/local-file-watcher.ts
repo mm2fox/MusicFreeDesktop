@@ -6,12 +6,12 @@ import { supportLocalMediaType } from "@/common/constant";
 import { parseLocalMusicItemWithoutTags } from "@/common/file-util";
 import { setInternalData } from "@/common/media-util";
 
-let watcher: chokidar.FSWatcher;
+let watcher: chokidar.FSWatcher | null = null;
 
 const SCAN_DELAY = 200;
 
-let _onAdd: (musicItems: IMusic.IMusicItem[]) => void;
-let _onRemove: (filePaths: string[]) => void;
+let _onAdd: ((musicItems: IMusic.IMusicItem[]) => Promise<void> | void) | null = null;
+let _onRemove: ((filePaths: string[]) => Promise<void> | void) | null = null;
 
 let isProcessing = false;
 let pendingFiles: string[] = [];
@@ -25,7 +25,22 @@ const MAX_RECONNECT_ATTEMPTS = 3;
 const RECONNECT_DELAY = 10000;
 
 const processedFiles = new Set<string>();
+const MAX_PROCESSED_FILES = 50000;
 let ignoreRemoveEvents = false;
+
+function addToProcessedFiles(filePath: string) {
+    if (processedFiles.size >= MAX_PROCESSED_FILES) {
+        const iterator = processedFiles.values();
+        const toDelete = Math.floor(MAX_PROCESSED_FILES * 0.2);
+        for (let i = 0; i < toDelete; i++) {
+            const oldest = iterator.next().value;
+            if (oldest) {
+                processedFiles.delete(oldest);
+            }
+        }
+    }
+    processedFiles.add(filePath);
+}
 
 async function processFileQueue() {
     if (isProcessing) {
@@ -39,17 +54,14 @@ async function processFileQueue() {
     isProcessing = true;
 
     try {
-        // 处理删除 - 一次性处理所有
         if (pendingRemoves.length > 0) {
             const allRemoves = [...pendingRemoves];
             pendingRemoves = [];
-            _onRemove?.(allRemoves);
+            await _onRemove?.(allRemoves);
         }
 
-        // 处理添加 - 分批处理
         if (pendingFiles.length > 0) {
             const BATCH_SIZE = 20;
-            let processedCount = 0;
 
             while (pendingFiles.length > 0) {
                 const batch = pendingFiles.splice(0, BATCH_SIZE);
@@ -72,19 +84,16 @@ async function processFileQueue() {
                             },
                         );
                         addedMusicItems.push(musicItem);
-                        processedFiles.add(fp);
+                        addToProcessedFiles(fp);
                     } catch (e) {
                         console.error("[LocalFileWatcher] Failed to parse:", fp, e);
                     }
                 }
 
                 if (addedMusicItems.length > 0) {
-                    _onAdd?.(addedMusicItems);
+                    await _onAdd?.(addedMusicItems);
                 }
 
-                processedCount += batch.length;
-
-                // 让出事件循环
                 if (pendingFiles.length > 0) {
                     await new Promise(resolve => setTimeout(resolve, 0));
                 }
@@ -319,6 +328,11 @@ async function rescan() {
         return;
     }
 
+    if (scanTimer) {
+        clearTimeout(scanTimer);
+        scanTimer = null;
+    }
+
     ignoreRemoveEvents = true;
     processedFiles.clear();
     pendingFiles = [];
@@ -332,7 +346,14 @@ async function rescan() {
         }
     }
 
-    await processFileQueue();
+    while (pendingFiles.length > 0 || isProcessing) {
+        if (!isProcessing) {
+            await processFileQueue();
+        }
+        if (pendingFiles.length > 0 || isProcessing) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+    }
 
     setTimeout(() => {
         ignoreRemoveEvents = false;
@@ -348,10 +369,34 @@ async function scanDirectory(dirPath: string) {
         if (file.isDirectory()) {
             await scanDirectory(fullPath);
         } else if (file.isFile() && supportLocalMediaType.some((postfix) => fullPath.endsWith(postfix))) {
-            if (!processedFiles.has(fullPath)) {
-                queueFile(fullPath);
+            if (!processedFiles.has(fullPath) && !pendingFiles.includes(fullPath)) {
+                pendingFiles.push(fullPath);
             }
         }
+    }
+}
+
+async function terminate() {
+    if (scanTimer) {
+        clearTimeout(scanTimer);
+        scanTimer = null;
+    }
+
+    pendingFiles = [];
+    pendingRemoves = [];
+    isProcessing = false;
+    processedFiles.clear();
+    currentWatchPaths = [];
+    _onAdd = null;
+    _onRemove = null;
+
+    if (watcher) {
+        try {
+            await watcher.close();
+        } catch (e) {
+            console.error("[LocalFileWatcher] Error closing watcher:", e);
+        }
+        watcher = null;
     }
 }
 
@@ -363,4 +408,5 @@ Comlink.expose({
     flush,
     resetProcessedFiles,
     rescan,
+    terminate,
 });

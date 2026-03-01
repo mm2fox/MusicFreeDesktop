@@ -37,6 +37,9 @@ export default async function () {
     setupCommandAndEvents();
     setupDeviceChange();
     localMusic.setupLocalMusic();
+    window.addEventListener("beforeunload", () => {
+        localMusic.terminateLocalMusic();
+    });
     await Downloader.setupDownloader();
     setupRecentlyPlaylist();
     // 本地服务

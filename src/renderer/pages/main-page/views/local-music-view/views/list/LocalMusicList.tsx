@@ -183,7 +183,7 @@ function showLocalMusicContextMenu(
                             
                             const currentList = localMusicListStore.getValue();
                             const updatedList = currentList.filter(
-                                item => !(item.id === musicItem.id && item.platform === musicItem.platform)
+                                item => !(item.id === musicItem.id && item.platform === musicItem.platform),
                             );
                             localMusicListStore.setValue(updatedList);
 
