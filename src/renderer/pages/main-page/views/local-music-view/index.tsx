@@ -120,8 +120,6 @@ export default function LocalMusicView() {
         const batchSize = includeArtwork ? 1 : 5;
         const totalItems = itemsToRefresh.length;
 
-        console.log(`[RefreshTags] 开始刷新，总数: ${totalItems}，包含封面: ${includeArtwork}`);
-
         for (let i = 0; i < totalItems; i += batchSize) {
             const endIndex = Math.min(i + batchSize, totalItems);
             
@@ -129,22 +127,15 @@ export default function LocalMusicView() {
                 const musicItem = itemsToRefresh[j];
                 const filePath = (musicItem as any).$$localPath || (musicItem as any).localPath;
                 
-                // 输出当前处理的文件
-                console.log(`[RefreshTags] 进度: ${j + 1}/${totalItems} - ${musicItem.title || '未知标题'} - ${filePath || '无路径'}`);
-                
                 if (!filePath) {
-                    console.warn(`[RefreshTags] 跳过无路径文件: ${musicItem.title}`);
                     failCount++;
                     continue;
                 }
 
                 try {
-                    console.log(`[RefreshTags] 正在读取标签: ${filePath}`);
                     const tagResult = includeArtwork 
                         ? await (window as any)["@shared/music-tag"].readTags(filePath)
                         : await (window as any)["@shared/music-tag"].readTagsWithoutArtwork(filePath);
-                    
-                    console.log(`[RefreshTags] 标签读取完成: ${filePath}, 成功: ${tagResult.success}`);
                         
                     if (tagResult.success && tagResult.tags) {
                         const updatesForItem: Partial<IMusic.IMusicItem> = {};
@@ -155,7 +146,6 @@ export default function LocalMusicView() {
                         if (tagResult.tags.lyrics) updatesForItem.rawLrc = tagResult.tags.lyrics;
                         if (includeArtwork && tagResult.tags.artwork) {
                             updatesForItem.artwork = tagResult.tags.artwork;
-                            console.log(`[RefreshTags] 封面大小: ${Math.round(tagResult.tags.artwork.length / 1024)}KB`);
                         }
                         
                         if (Object.keys(updatesForItem).length > 0) {
@@ -165,31 +155,17 @@ export default function LocalMusicView() {
                             );
                         }
                         successCount++;
-                        console.log(`[RefreshTags] 成功: ${musicItem.title}`);
                     } else {
-                        console.warn(`[RefreshTags] 失败: ${filePath}, 错误: ${tagResult.error}`);
                         failCount++;
                     }
                 } catch (e) {
-                    console.error(`[RefreshTags] 异常: ${filePath}`, e);
                     failCount++;
-                }
-            }
-
-            // 输出内存使用情况
-            if (includeArtwork && (i % 10 === 0 || endIndex >= totalItems)) {
-                const memInfo = (performance as any).memory;
-                if (memInfo) {
-                    console.log(`[RefreshTags] 内存使用: ${Math.round(memInfo.usedJSHeapSize / 1024 / 1024)}MB / ${Math.round(memInfo.jsHeapSizeLimit / 1024 / 1024)}MB`);
                 }
             }
         }
 
         // 刷新完成后，从数据库重新加载（不包含封面）
-        console.log(`[RefreshTags] 刷新完成，重新加载数据...`);
-        // 直接从数据库重新加载，避免内存累积
         await localMusic.reloadLocalMusic();
-        console.log(`[RefreshTags] 数据加载完成`);
 
         setRefreshing(false);
         toast.success(t("local_music_page.refresh_tags_complete", { 
