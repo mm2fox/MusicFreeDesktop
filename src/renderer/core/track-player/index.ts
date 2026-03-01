@@ -777,6 +777,15 @@ class TrackPlayer {
         );
         if (downloadedData) {
             const { quality, path: _path } = downloadedData;
+            // 本地音乐跳过文件存在性检查，直接返回
+            if (musicItem.platform === localPluginHash) {
+                return {
+                    quality,
+                    mediaSource: {
+                        url: fsUtil.addFileScheme(_path),
+                    },
+                };
+            }
             if (await fsUtil.isFile(_path)) {
                 return {
                     quality,

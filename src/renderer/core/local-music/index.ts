@@ -4,6 +4,7 @@ import * as Comlink from "comlink";
 import musicSheetDB from "../db/music-sheet-db";
 import { getGlobalContext } from "@/shared/global-context/renderer";
 import AppConfig from "@shared/app-config/renderer";
+import { getInternalData, setInternalData } from "@/common/media-util";
 
 type ProxyMarkedFunction<T extends (...args: any) => void> = T &
     Comlink.ProxyMarked;
@@ -133,7 +134,16 @@ async function setupLocalMusic() {
         }
 
         const allMusic = await musicSheetDB.localMusicStore.toArray();
-        localMusicListStore.setValue(allMusic || []);
+        const processedMusic = (allMusic || []).map(item => {
+            if (item.$$localPath && !getInternalData(item, "downloadData")) {
+                setInternalData(item, "downloadData", {
+                    path: item.$$localPath,
+                    quality: "standard",
+                });
+            }
+            return item;
+        });
+        localMusicListStore.setValue(processedMusic);
 
         if (localFileWatcherWorker) {
             onAddCallback = Comlink.proxy(async (musicItems: IMusicItemWithLocalPath[]) => {
