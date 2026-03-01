@@ -121,6 +121,8 @@ export default function LocalMusicView() {
         const totalItems = itemsToRefresh.length;
         let lastUpdateTime = Date.now();
 
+        console.log(`[RefreshTags] 开始刷新，总数: ${totalItems}，包含封面: ${includeArtwork}`);
+
         for (let i = 0; i < totalItems; i += batchSize) {
             const endIndex = Math.min(i + batchSize, totalItems);
             const batchUpdates: Array<{ item: IMusic.IMusicItem; updates: Partial<IMusic.IMusicItem> }> = [];
@@ -128,15 +130,23 @@ export default function LocalMusicView() {
             for (let j = i; j < endIndex; j++) {
                 const musicItem = itemsToRefresh[j];
                 const filePath = (musicItem as any).$$localPath || (musicItem as any).localPath;
+                
+                // 输出当前处理的文件
+                console.log(`[RefreshTags] 进度: ${j + 1}/${totalItems} - ${musicItem.title || '未知标题'} - ${filePath || '无路径'}`);
+                
                 if (!filePath) {
+                    console.warn(`[RefreshTags] 跳过无路径文件: ${musicItem.title}`);
                     failCount++;
                     continue;
                 }
 
                 try {
+                    console.log(`[RefreshTags] 正在读取标签: ${filePath}`);
                     const tagResult = includeArtwork 
                         ? await (window as any)["@shared/music-tag"].readTags(filePath)
                         : await (window as any)["@shared/music-tag"].readTagsWithoutArtwork(filePath);
+                    
+                    console.log(`[RefreshTags] 标签读取完成: ${filePath}, 成功: ${tagResult.success}`);
                         
                     if (tagResult.success && tagResult.tags) {
                         const updatesForItem: Partial<IMusic.IMusicItem> = {};
@@ -147,6 +157,7 @@ export default function LocalMusicView() {
                         if (tagResult.tags.lyrics) updatesForItem.rawLrc = tagResult.tags.lyrics;
                         if (includeArtwork && tagResult.tags.artwork) {
                             updatesForItem.artwork = tagResult.tags.artwork;
+                            console.log(`[RefreshTags] 封面大小: ${Math.round(tagResult.tags.artwork.length / 1024)}KB`);
                         }
                         
                         if (Object.keys(updatesForItem).length > 0) {
@@ -157,14 +168,16 @@ export default function LocalMusicView() {
                             batchUpdates.push({ item: musicItem, updates: updatesForItem });
                         }
                         successCount++;
+                        console.log(`[RefreshTags] 成功: ${musicItem.title}`);
                     } else {
+                        console.warn(`[RefreshTags] 失败: ${filePath}, 错误: ${tagResult.error}`);
                         failCount++;
                     }
                     
                     // 清理引用，帮助 GC
                     tagResult.tags = null;
                 } catch (e) {
-                    console.error("[RefreshTags] Failed:", e);
+                    console.error(`[RefreshTags] 异常: ${filePath}`, e);
                     failCount++;
                 }
             }
@@ -182,6 +195,14 @@ export default function LocalMusicView() {
                 });
                 // 清空数组，帮助 GC
                 batchUpdates.length = 0;
+            }
+
+            // 输出内存使用情况
+            if (includeArtwork && (i % 10 === 0 || endIndex >= totalItems)) {
+                const memInfo = (performance as any).memory;
+                if (memInfo) {
+                    console.log(`[RefreshTags] 内存使用: ${Math.round(memInfo.usedJSHeapSize / 1024 / 1024)}MB / ${Math.round(memInfo.jsHeapSizeLimit / 1024 / 1024)}MB`);
+                }
             }
 
             // 包含封面时，增加延迟并让出主线程
