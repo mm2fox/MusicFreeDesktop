@@ -4,7 +4,6 @@ import { i18n } from "@/shared/i18n/renderer";
 import { secondsToDuration } from "@/common/time-util";
 import { localPluginName, RequestStateCode } from "@/common/constant";
 import { IContextMenuItem, showContextMenu } from "@/renderer/components/ContextMenu";
-import { getInternalData, getMediaPrimaryKey, isSameMedia } from "@/common/media-util";
 import { showModal, hideModal } from "@/renderer/components/Modal";
 import { toast } from "react-toastify";
 import hotkeys from "hotkeys-js";
@@ -27,6 +26,7 @@ import AppConfig from "@shared/app-config/renderer";
 import currentListSourceStore from "@/renderer/core/current-list-source/store";
 import { shellUtil, fsUtil } from "@shared/utils/renderer";
 import { locateMusicStore } from "@/renderer/components/MusicSheetlikeView/store";
+import { navigateTo } from "@/renderer/utils/navigate";
 
 interface ILocalMusicListProps {
     localMusicList: IMusic.IMusicItem[];
@@ -47,12 +47,30 @@ function showLocalMusicContextMenu(
     if (!isArray) {
         menuItems.push(
             {
-                title: `ID: ${getMediaPrimaryKey(musicItems)}`,
-                icon: "identification",
+                title: `${i18n.t("media.media_title")}: ${musicItems.title ?? i18n.t("media.unknown_title")}`,
+                icon: "musical-note",
+                onClick() {
+                    const title = musicItems.title ?? i18n.t("media.unknown_title");
+                    navigateTo(`/main/search/${encodeURIComponent(title)}`);
+                },
             },
             {
                 title: `${i18n.t("media.media_type_artist")}: ${musicItems.artist ?? i18n.t("media.unknown_artist")}`,
                 icon: "user",
+                onClick() {
+                    const artist = musicItems.artist ?? i18n.t("media.unknown_artist");
+                    navigateTo(`/main/search/${encodeURIComponent(artist)}`);
+                },
+            },
+            {
+                title: `${i18n.t("media.media_type_album")}: ${musicItems.album ?? i18n.t("media.unknown_album")}`,
+                icon: "album",
+                show: !!musicItems.album,
+                onClick() {
+                    if (musicItems.album) {
+                        navigateTo(`/main/search/${encodeURIComponent(musicItems.album)}`);
+                    }
+                },
             },
             {
                 divider: true,
@@ -107,6 +125,7 @@ function showLocalMusicContextMenu(
                                     album: tagResult.tags.album || musicItem.album,
                                     artwork: tagResult.tags.artwork || musicItem.artwork,
                                     rawLrc: tagResult.tags.lyrics || undefined,
+                                    duration: tagResult.tags.duration || musicItem.duration,
                                 },
                             );
 
@@ -120,6 +139,7 @@ function showLocalMusicContextMenu(
                                         album: tagResult.tags.album || item.album,
                                         artwork: tagResult.tags.artwork || item.artwork,
                                         rawLrc: tagResult.tags.lyrics || undefined,
+                                        duration: tagResult.tags.duration || item.duration,
                                     };
                                 }
                                 return item;

@@ -457,6 +457,7 @@ export function showMusicContextMenu(
                                     artist: tagResult.tags.artist || musicItem.artist,
                                     album: tagResult.tags.album || musicItem.album,
                                     artwork: tagResult.tags.artwork || musicItem.artwork,
+                                    duration: tagResult.tags.duration || musicItem.duration,
                                 },
                             );
                             
@@ -469,6 +470,7 @@ export function showMusicContextMenu(
                                         artist: tagResult.tags.artist || item.artist,
                                         album: tagResult.tags.album || item.album,
                                         artwork: tagResult.tags.artwork || item.artwork,
+                                        duration: tagResult.tags.duration || item.duration,
                                     };
                                 }
                                 return item;

@@ -116,7 +116,8 @@ export default function LocalMusicView() {
 
         let successCount = 0;
         let failCount = 0;
-        const batchSize = includeArtwork ? 2 : 5;
+        // 包含封面时，一次只处理 1 个文件，并增加延迟
+        const batchSize = includeArtwork ? 1 : 5;
         const totalItems = itemsToRefresh.length;
         let lastUpdateTime = Date.now();
 
@@ -159,6 +160,9 @@ export default function LocalMusicView() {
                     } else {
                         failCount++;
                     }
+                    
+                    // 清理引用，帮助 GC
+                    tagResult.tags = null;
                 } catch (e) {
                     console.error("[RefreshTags] Failed:", e);
                     failCount++;
@@ -176,15 +180,21 @@ export default function LocalMusicView() {
                     }
                     return newList;
                 });
+                // 清空数组，帮助 GC
+                batchUpdates.length = 0;
             }
 
+            // 包含封面时，增加延迟并让出主线程
             if (endIndex < totalItems) {
                 const now = Date.now();
                 const elapsed = now - lastUpdateTime;
-                const minDelay = includeArtwork ? 300 : 100;
+                // 包含封面时，延迟更长，给 GC 更多时间
+                const minDelay = includeArtwork ? 800 : 100;
                 if (elapsed < minDelay) {
                     await new Promise(resolve => setTimeout(resolve, minDelay - elapsed));
                 }
+                // 让出主线程，防止 UI 卡死，也给 GC 机会
+                await new Promise(resolve => setTimeout(resolve, includeArtwork ? 100 : 0));
                 lastUpdateTime = Date.now();
             }
         }

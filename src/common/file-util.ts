@@ -19,7 +19,7 @@ export async function parseLocalMusicItem(
 ): Promise<IMusic.IMusicItem> {
     const hash = CryptoJS.MD5(filePath).toString();
     try {
-        const { common = {} as ICommonTagsResult } = await parseFile(filePath);
+        const { common = {} as ICommonTagsResult, format } = await parseFile(filePath);
 
         let encoding: string | null = null;
         let conf = 0;
@@ -86,6 +86,7 @@ export async function parseLocalMusicItem(
                 ? getB64Picture(common.picture[0])
                 : undefined,
             album: common.album ?? "未知专辑",
+            duration: format.duration ? Math.round(format.duration) : undefined,
             year: common.year?.toString(),
             genre: Array.isArray(common.genre) ? common.genre.join(", ") : common.genre,
             comment: Array.isArray(common.comment) ? common.comment.join("\n") : common.comment,
@@ -112,6 +113,13 @@ export async function parseLocalMusicItemWithoutTags(
     filePath: string,
 ): Promise<IMusic.IMusicItem> {
     const hash = CryptoJS.MD5(filePath).toString();
+    let duration: number | undefined;
+    try {
+        const { format } = await parseFile(filePath, { skipCovers: true });
+        duration = format.duration ? Math.round(format.duration) : undefined;
+    } catch {
+        // 忽略错误，duration 保持 undefined
+    }
     return {
         title: path.parse(filePath).name || filePath,
         id: hash,
@@ -120,6 +128,7 @@ export async function parseLocalMusicItemWithoutTags(
         url: addFileScheme(filePath),
         artist: "未知作者",
         album: "未知专辑",
+        duration,
     };
 }
 

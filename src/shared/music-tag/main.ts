@@ -16,6 +16,7 @@ interface IMusicTags {
     comment?: string;
     lyrics?: string;
     artwork?: string;
+    duration?: number;
 }
 
 interface IMusicTagsResult {
@@ -270,6 +271,7 @@ class MusicTagUtil {
             } else {
                 const metadata = await parseFile(filePath);
                 const common = metadata.common;
+                const format = metadata.format;
                 let artwork: string | undefined;
                 if (common.picture && common.picture.length > 0) {
                     const pic = common.picture[0];
@@ -285,6 +287,7 @@ class MusicTagUtil {
                         genre: Array.isArray(common.genre) ? common.genre.join(", ") : common.genre,
                         comment: Array.isArray(common.comment) ? common.comment.join("\n") : common.comment,
                         artwork,
+                        duration: format.duration ? Math.round(format.duration) : undefined,
                     },
                 };
             }
@@ -315,6 +318,7 @@ class MusicTagUtil {
             } else {
                 const metadata = await parseFile(filePath, { skipCovers: true });
                 const common = metadata.common;
+                const format = metadata.format;
                 return {
                     success: true,
                     tags: {
@@ -324,6 +328,7 @@ class MusicTagUtil {
                         year: common.year?.toString(),
                         genre: Array.isArray(common.genre) ? common.genre.join(", ") : common.genre,
                         comment: Array.isArray(common.comment) ? common.comment.join("\n") : common.comment,
+                        duration: format.duration ? Math.round(format.duration) : undefined,
                     },
                 };
             }
@@ -422,6 +427,7 @@ class MusicTagUtil {
                 skipCovers: false,
             });
             const common = metadata.common;
+            const format = metadata.format;
 
             let artwork: string | undefined;
             try {
@@ -446,6 +452,7 @@ class MusicTagUtil {
                     comment: Array.isArray(common.comment) ? common.comment.join("\n") : common.comment,
                     lyrics: Array.isArray(common.lyrics) ? common.lyrics.join("\n") : common.lyrics,
                     artwork,
+                    duration: format.duration ? Math.round(format.duration) : undefined,
                 },
             };
         } catch (error: any) {
@@ -453,6 +460,7 @@ class MusicTagUtil {
                 try {
                     const metadata = await parseFile(filePath, { skipCovers: true });
                     const common = metadata.common;
+                    const format = metadata.format;
                     return {
                         success: true,
                         tags: {
@@ -466,6 +474,7 @@ class MusicTagUtil {
                             comment: Array.isArray(common.comment) ? common.comment.join("\n") : common.comment,
                             lyrics: Array.isArray((common as any).lyrics) ? (common as any).lyrics.join("\n") : (common as any).lyrics,
                             artwork: undefined,
+                            duration: format.duration ? Math.round(format.duration) : undefined,
                         },
                     };
                 } catch (retryError: any) {
@@ -486,6 +495,7 @@ class MusicTagUtil {
         try {
             const metadata = await parseFile(filePath, { skipCovers: true });
             const common = metadata.common;
+            const format = metadata.format;
 
             return {
                 success: true,
@@ -499,6 +509,7 @@ class MusicTagUtil {
                     genre: Array.isArray(common.genre) ? common.genre.join(", ") : common.genre,
                     comment: Array.isArray(common.comment) ? common.comment.join("\n") : common.comment,
                     lyrics: Array.isArray(common.lyrics) ? common.lyrics.join("\n") : common.lyrics,
+                    duration: format.duration ? Math.round(format.duration) : undefined,
                 },
             };
         } catch (error: any) {
