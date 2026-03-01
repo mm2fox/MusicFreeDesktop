@@ -164,10 +164,13 @@ export default function LocalMusicView() {
                                 [musicItem.platform, musicItem.id],
                                 updatesForItem,
                             );
-                            // 包含封面时，不更新 store，避免内存累积
-                            // 封面数据会在播放时从 IndexedDB 读取
-                            if (!includeArtwork) {
-                                batchUpdates.push({ item: musicItem, updates: updatesForItem });
+                            // 更新 store，但排除封面数据避免内存累积
+                            const storeUpdates = { ...updatesForItem };
+                            if (includeArtwork && storeUpdates.artwork) {
+                                delete storeUpdates.artwork;
+                            }
+                            if (Object.keys(storeUpdates).length > 0) {
+                                batchUpdates.push({ item: musicItem, updates: storeUpdates });
                             }
                         }
                         successCount++;
