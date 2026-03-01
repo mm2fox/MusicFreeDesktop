@@ -351,51 +351,8 @@ class TrackPlayer {
                 autoPlay: true,
             });
 
-            // extra information
-            let musicInfo: Partial<IMusic.IMusicItem> | null = null;
-            
-            // 对于本地音乐，从数据库获取最新信息
-            if (nextMusicItem.platform === localPluginHash) {
-                try {
-                    const localMusicItem = await musicSheetDB.localMusicStore.get([
-                        nextMusicItem.platform,
-                        nextMusicItem.id,
-                    ]);
-                    if (localMusicItem) {
-                        musicInfo = {
-                            title: localMusicItem.title,
-                            artist: localMusicItem.artist,
-                            album: localMusicItem.album,
-                            artwork: localMusicItem.artwork,
-                            rawLrc: localMusicItem.rawLrc,
-                        };
-                    }
-                } catch (e) {
-                    console.error("[TrackPlayer] Failed to get local music info:", e);
-                }
-            } else {
-                const result = await PluginManager.callPluginDelegateMethod(
-                    {
-                        platform: nextMusicItem.platform,
-                    },
-                    "getMusicInfo",
-                    nextMusicItem,
-                ).catch(voidCallback);
-                if (result && typeof result === "object") {
-                    musicInfo = result;
-                }
-            }
-
-            if (!(musicInfo && this.isCurrentMusic(nextMusicItem) && typeof musicInfo === "object")) {
-                return;
-            }
-
-            this.setCurrentMusic({
-                ...nextMusicItem,
-                ...musicInfo,
-                platform: nextMusicItem.platform,
-                id: nextMusicItem.id,
-            });
+            // 异步获取额外信息，不阻塞播放
+            this.updateMusicInfoAsync(nextMusicItem);
 
         } catch (e) {
             // 播放失败
@@ -405,6 +362,51 @@ class TrackPlayer {
         }
 
 
+    }
+
+    private async updateMusicInfoAsync(musicItem: IMusic.IMusicItem) {
+        let musicInfo: Partial<IMusic.IMusicItem> | null = null;
+        
+        if (musicItem.platform === localPluginHash) {
+            // 本地音乐：检查是否需要更新信息（只有在缺少信息时才查询数据库）
+            const needsUpdate = !musicItem.artwork || !musicItem.rawLrc;
+            if (needsUpdate) {
+                try {
+                    const localMusicItem = await musicSheetDB.localMusicStore.get([
+                        musicItem.platform,
+                        musicItem.id,
+                    ]);
+                    if (localMusicItem && this.isCurrentMusic(musicItem)) {
+                        musicInfo = {
+                            artwork: localMusicItem.artwork,
+                            rawLrc: localMusicItem.rawLrc,
+                        };
+                    }
+                } catch (e) {
+                    console.error("[TrackPlayer] Failed to get local music info:", e);
+                }
+            }
+        } else {
+            const result = await PluginManager.callPluginDelegateMethod(
+                {
+                    platform: musicItem.platform,
+                },
+                "getMusicInfo",
+                musicItem,
+            ).catch(voidCallback);
+            if (result && typeof result === "object") {
+                musicInfo = result;
+            }
+        }
+
+        if (musicInfo && this.isCurrentMusic(musicItem) && typeof musicInfo === "object") {
+            this.setCurrentMusic({
+                ...musicItem,
+                ...musicInfo,
+                platform: musicItem.platform,
+                id: musicItem.id,
+            });
+        }
     }
 
     public async playMusic(musicItem: IMusic.IMusicItem, options: IPlayOptions = {}) {
