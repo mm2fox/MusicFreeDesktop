@@ -134,6 +134,8 @@
     "refresh_tags_options_title": "Select Refresh Tags Option",
     "refresh_tags_without_artwork": "Refresh Tags (Without Artwork)",
     "refresh_tags_with_artwork": "Refresh Tags (With Artwork)",
+    "all_have_artwork": "All songs already have artwork, no need to refresh",
+    "skipped_have_artwork": "Skipped {{count}} songs that already have artwork",
     "search_local_music": "Search Local Music",
     "list_view": "List View",
     "artist_view": "Artist View",

@@ -96,21 +96,36 @@ export default function LocalMusicView() {
             return;
         }
 
+        // 如果包含封面，过滤掉已有封面的文件
+        const itemsToRefresh = includeArtwork 
+            ? musicList.filter(item => !item.artwork)
+            : musicList;
+            
+        if (itemsToRefresh.length === 0) {
+            toast.info(t("local_music_page.all_have_artwork"));
+            return;
+        }
+
+        const skippedCount = musicList.length - itemsToRefresh.length;
+        if (skippedCount > 0) {
+            toast.info(t("local_music_page.skipped_have_artwork", { count: skippedCount }));
+        }
+
         setRefreshing(true);
         toast.info(t("local_music_page.refreshing_tags"));
 
         let successCount = 0;
         let failCount = 0;
         const batchSize = includeArtwork ? 2 : 5;
-        const totalItems = musicList.length;
+        const totalItems = itemsToRefresh.length;
         let lastUpdateTime = Date.now();
 
         for (let i = 0; i < totalItems; i += batchSize) {
             const endIndex = Math.min(i + batchSize, totalItems);
-            const batchUpdates: Array<{ index: number; updates: Partial<IMusic.IMusicItem> }> = [];
+            const batchUpdates: Array<{ item: IMusic.IMusicItem; updates: Partial<IMusic.IMusicItem> }> = [];
             
             for (let j = i; j < endIndex; j++) {
-                const musicItem = musicList[j];
+                const musicItem = itemsToRefresh[j];
                 const filePath = (musicItem as any).$$localPath || (musicItem as any).localPath;
                 if (!filePath) {
                     failCount++;
@@ -138,7 +153,7 @@ export default function LocalMusicView() {
                                 [musicItem.platform, musicItem.id],
                                 updatesForItem,
                             );
-                            batchUpdates.push({ index: j, updates: updatesForItem });
+                            batchUpdates.push({ item: musicItem, updates: updatesForItem });
                         }
                         successCount++;
                     } else {
@@ -153,8 +168,11 @@ export default function LocalMusicView() {
             if (batchUpdates.length > 0) {
                 localMusicListStore.setValue(prevList => {
                     const newList = [...prevList];
-                    for (const { index, updates } of batchUpdates) {
-                        newList[index] = { ...newList[index], ...updates };
+                    for (const { item, updates } of batchUpdates) {
+                        const idx = newList.findIndex(m => m.platform === item.platform && m.id === item.id);
+                        if (idx !== -1) {
+                            newList[idx] = { ...newList[idx], ...updates };
+                        }
                     }
                     return newList;
                 });

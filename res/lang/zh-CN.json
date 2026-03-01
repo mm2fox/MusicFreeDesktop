@@ -122,6 +122,8 @@
     "refresh_tags_options_title": "选择刷新标签选项",
     "refresh_tags_without_artwork": "刷新标签（不包含封面）",
     "refresh_tags_with_artwork": "刷新标签（包含封面）",
+    "all_have_artwork": "所有歌曲都已有封面，无需刷新",
+    "skipped_have_artwork": "已跳过 {{count}} 首有封面的歌曲",
     "search_local_music": "搜索本地音乐",
     "list_view": "列表视图",
     "artist_view": "作者视图",
