@@ -87,7 +87,7 @@ export default function LocalMusicView() {
         }
     };
 
-    const handleRefreshTags = async () => {
+    const handleRefreshTags = async (includeArtwork: boolean = false) => {
         if (refreshing) return;
         
         const musicList = localMusicListStore.getValue();
@@ -101,7 +101,7 @@ export default function LocalMusicView() {
 
         let successCount = 0;
         let failCount = 0;
-        const batchSize = 3;
+        const batchSize = includeArtwork ? 2 : 5;
         const totalItems = musicList.length;
         let lastUpdateTime = Date.now();
 
@@ -118,7 +118,10 @@ export default function LocalMusicView() {
                 }
 
                 try {
-                    const tagResult = await (window as any)["@shared/music-tag"].readTagsWithoutArtwork(filePath);
+                    const tagResult = includeArtwork 
+                        ? await (window as any)["@shared/music-tag"].readTags(filePath)
+                        : await (window as any)["@shared/music-tag"].readTagsWithoutArtwork(filePath);
+                        
                     if (tagResult.success && tagResult.tags) {
                         const updatesForItem: Partial<IMusic.IMusicItem> = {};
                         
@@ -126,6 +129,9 @@ export default function LocalMusicView() {
                         if (tagResult.tags.artist) updatesForItem.artist = tagResult.tags.artist;
                         if (tagResult.tags.album) updatesForItem.album = tagResult.tags.album;
                         if (tagResult.tags.lyrics) updatesForItem.rawLrc = tagResult.tags.lyrics;
+                        if (includeArtwork && tagResult.tags.artwork) {
+                            updatesForItem.artwork = tagResult.tags.artwork;
+                        }
                         
                         if (Object.keys(updatesForItem).length > 0) {
                             await musicSheetDB.localMusicStore.update(
@@ -157,7 +163,7 @@ export default function LocalMusicView() {
             if (endIndex < totalItems) {
                 const now = Date.now();
                 const elapsed = now - lastUpdateTime;
-                const minDelay = 150;
+                const minDelay = includeArtwork ? 300 : 100;
                 if (elapsed < minDelay) {
                     await new Promise(resolve => setTimeout(resolve, minDelay - elapsed));
                 }
@@ -170,6 +176,21 @@ export default function LocalMusicView() {
             success: successCount, 
             fail: failCount, 
         }));
+    };
+
+    const showRefreshTagsDialog = () => {
+        if (refreshing) return;
+        
+        showModal("SelectOne", {
+            title: t("local_music_page.refresh_tags_options_title"),
+            choices: [
+                { label: t("local_music_page.refresh_tags_without_artwork"), value: false },
+                { label: t("local_music_page.refresh_tags_with_artwork"), value: true },
+            ],
+            onOk: (value: boolean) => {
+                handleRefreshTags(value);
+            },
+        });
     };
 
     return (
@@ -210,7 +231,7 @@ export default function LocalMusicView() {
                 <div
                     data-type="normalButton"
                     role="button"
-                    onClick={handleRefreshTags}
+                    onClick={showRefreshTagsDialog}
                     data-disabled={refreshing}
                 >
                     {refreshing ? t("local_music_page.refreshing") : t("local_music_page.refresh_tags")}
