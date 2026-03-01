@@ -165,7 +165,11 @@ export default function LocalMusicView() {
                                 [musicItem.platform, musicItem.id],
                                 updatesForItem,
                             );
-                            batchUpdates.push({ item: musicItem, updates: updatesForItem });
+                            // 包含封面时，不更新 store，避免内存累积
+                            // 封面数据会在播放时从 IndexedDB 读取
+                            if (!includeArtwork) {
+                                batchUpdates.push({ item: musicItem, updates: updatesForItem });
+                            }
                         }
                         successCount++;
                         console.log(`[RefreshTags] 成功: ${musicItem.title}`);
