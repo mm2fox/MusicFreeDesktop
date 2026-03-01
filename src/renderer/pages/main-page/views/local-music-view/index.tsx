@@ -124,7 +124,6 @@ export default function LocalMusicView() {
 
         for (let i = 0; i < totalItems; i += batchSize) {
             const endIndex = Math.min(i + batchSize, totalItems);
-            const batchUpdates: Array<{ item: IMusic.IMusicItem; updates: Partial<IMusic.IMusicItem> }> = [];
             
             for (let j = i; j < endIndex; j++) {
                 const musicItem = itemsToRefresh[j];
@@ -164,14 +163,6 @@ export default function LocalMusicView() {
                                 [musicItem.platform, musicItem.id],
                                 updatesForItem,
                             );
-                            // 更新 store，但排除封面数据避免内存累积
-                            const storeUpdates = { ...updatesForItem };
-                            if (includeArtwork && storeUpdates.artwork) {
-                                delete storeUpdates.artwork;
-                            }
-                            if (Object.keys(storeUpdates).length > 0) {
-                                batchUpdates.push({ item: musicItem, updates: storeUpdates });
-                            }
                         }
                         successCount++;
                         console.log(`[RefreshTags] 成功: ${musicItem.title}`);
@@ -179,28 +170,10 @@ export default function LocalMusicView() {
                         console.warn(`[RefreshTags] 失败: ${filePath}, 错误: ${tagResult.error}`);
                         failCount++;
                     }
-                    
-                    // 清理引用，帮助 GC
-                    tagResult.tags = null;
                 } catch (e) {
                     console.error(`[RefreshTags] 异常: ${filePath}`, e);
                     failCount++;
                 }
-            }
-
-            if (batchUpdates.length > 0) {
-                localMusicListStore.setValue(prevList => {
-                    const newList = [...prevList];
-                    for (const { item, updates } of batchUpdates) {
-                        const idx = newList.findIndex(m => m.platform === item.platform && m.id === item.id);
-                        if (idx !== -1) {
-                            newList[idx] = { ...newList[idx], ...updates };
-                        }
-                    }
-                    return newList;
-                });
-                // 清空数组，帮助 GC
-                batchUpdates.length = 0;
             }
 
             // 输出内存使用情况
@@ -211,6 +184,12 @@ export default function LocalMusicView() {
                 }
             }
         }
+
+        // 刷新完成后，从数据库重新加载（不包含封面）
+        console.log(`[RefreshTags] 刷新完成，重新加载数据...`);
+        // 直接从数据库重新加载，避免内存累积
+        await localMusic.reloadLocalMusic();
+        console.log(`[RefreshTags] 数据加载完成`);
 
         setRefreshing(false);
         toast.success(t("local_music_page.refresh_tags_complete", { 

@@ -304,10 +304,25 @@ async function rescanLocalMusic() {
     }
 }
 
+async function reloadLocalMusic() {
+    try {
+        const allMusic = await musicSheetDB.localMusicStore.toArray();
+        // 清除封面数据，避免内存累积
+        const cleanedMusic = (allMusic || []).map(item => {
+            const { artwork, ...rest } = item as any;
+            return rest;
+        });
+        localMusicListStore.setValue(cleanedMusic);
+    } catch (e) {
+        console.error("[LocalMusic] reloadLocalMusic error:", e);
+    }
+}
+
 export default {
     setupLocalMusic,
     changeWatchPath,
     clearLocalMusic,
     rescanLocalMusic,
+    reloadLocalMusic,
     terminateLocalMusic,
 };
