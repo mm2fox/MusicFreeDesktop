@@ -116,10 +116,9 @@ export default function LocalMusicView() {
 
         let successCount = 0;
         let failCount = 0;
-        // 包含封面时，一次只处理 1 个文件，并增加延迟
+        // 包含封面时，一次只处理 1 个文件
         const batchSize = includeArtwork ? 1 : 5;
         const totalItems = itemsToRefresh.length;
-        let lastUpdateTime = Date.now();
 
         console.log(`[RefreshTags] 开始刷新，总数: ${totalItems}，包含封面: ${includeArtwork}`);
 
@@ -207,20 +206,6 @@ export default function LocalMusicView() {
                 if (memInfo) {
                     console.log(`[RefreshTags] 内存使用: ${Math.round(memInfo.usedJSHeapSize / 1024 / 1024)}MB / ${Math.round(memInfo.jsHeapSizeLimit / 1024 / 1024)}MB`);
                 }
-            }
-
-            // 包含封面时，增加延迟并让出主线程
-            if (endIndex < totalItems) {
-                const now = Date.now();
-                const elapsed = now - lastUpdateTime;
-                // 包含封面时，延迟更长，给 GC 更多时间
-                const minDelay = includeArtwork ? 800 : 100;
-                if (elapsed < minDelay) {
-                    await new Promise(resolve => setTimeout(resolve, minDelay - elapsed));
-                }
-                // 让出主线程，防止 UI 卡死，也给 GC 机会
-                await new Promise(resolve => setTimeout(resolve, includeArtwork ? 100 : 0));
-                lastUpdateTime = Date.now();
             }
         }
 
