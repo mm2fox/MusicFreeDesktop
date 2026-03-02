@@ -196,7 +196,8 @@
     "download_sheet": "Batch Download",
     "download_sheet_empty": "Playlist is empty",
     "download_sheet_no_new": "No songs to download",
-    "download_sheet_started": "Started downloading {{count}} songs"
+    "download_sheet_started": "Started downloading {{count}} songs",
+    "download_sheet_error": "Failed to get playlist info"
   },
   "app_header": {
     "nav_back": "Back",

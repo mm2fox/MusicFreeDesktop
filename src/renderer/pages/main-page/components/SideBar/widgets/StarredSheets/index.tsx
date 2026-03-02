@@ -6,6 +6,10 @@ import MusicSheet, { defaultSheet } from "@/renderer/core/music-sheet";
 import { localPluginName } from "@/common/constant";
 import { showContextMenu } from "@/renderer/components/ContextMenu";
 import { useTranslation } from "react-i18next";
+import Downloader from "@/renderer/core/downloader";
+import { toast } from "react-toastify";
+import PluginManager from "@shared/plugin-manager/renderer";
+import isLocalMusic from "@/renderer/utils/is-local-music";
 
 export default function StarredSheets() {
     const sheetIdMatch = useMatch("/main/musicsheet/:platform/:sheetId");
@@ -66,6 +70,39 @@ export default function StarredSheets() {
                                                         );
                                                     }
                                                 });
+                                            },
+                                        },
+                                        {
+                                            title: t("side_bar.download_sheet"),
+                                            icon: "array-download-tray",
+                                            async onClick() {
+                                                try {
+                                                    const result = await PluginManager.callPluginDelegateMethod(
+                                                        item as IMusic.IMusicSheetItem,
+                                                        "getMusicSheetInfo",
+                                                        item as IMusic.IMusicSheetItem,
+                                                        1,
+                                                    );
+                                                    if (!result?.musicList?.length) {
+                                                        toast.warn(t("side_bar.download_sheet_empty"));
+                                                        return;
+                                                    }
+                                                    const musicList = result.musicList.filter(
+                                                        (it: IMusic.IMusicItem) => !isLocalMusic(it) && !Downloader.isDownloaded(it)
+                                                    );
+                                                    if (musicList.length === 0) {
+                                                        toast.info(t("side_bar.download_sheet_no_new"));
+                                                        return;
+                                                    }
+                                                    Downloader.startDownload(musicList);
+                                                    toast.success(
+                                                        t("side_bar.download_sheet_started", {
+                                                            count: musicList.length,
+                                                        })
+                                                    );
+                                                } catch (error) {
+                                                    toast.error(t("side_bar.download_sheet_error"));
+                                                }
                                             },
                                         },
                                     ],

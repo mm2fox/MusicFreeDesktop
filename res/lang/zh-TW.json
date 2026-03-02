@@ -185,7 +185,8 @@
     "download_sheet": "批量下載",
     "download_sheet_empty": "歌單為空",
     "download_sheet_no_new": "沒有需要下載的歌曲",
-    "download_sheet_started": "已開始下載 {{count}} 首歌曲"
+    "download_sheet_started": "已開始下載 {{count}} 首歌曲",
+    "download_sheet_error": "獲取歌單信息失敗"
   },
   "app_header": {
     "nav_back": "返回",
