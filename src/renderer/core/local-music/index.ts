@@ -155,14 +155,27 @@ async function setupLocalMusic() {
                     );
                     if (validItems.length === 0) return;
 
-                    const batchSize = 10;
-                    for (let i = 0; i < validItems.length; i += batchSize) {
-                        const batch = validItems.slice(i, i + batchSize);
-                        await musicSheetDB.localMusicStore.bulkPut(batch);
-                    }
+                    const existingItems = await musicSheetDB.localMusicStore
+                        .where("[platform+id]")
+                        .anyOf(validItems.map(it => [it.platform, it.id]))
+                        .toArray();
+                    const existingKeys = new Set(
+                        existingItems.map(it => `${it.platform}-${it.id}`)
+                    );
 
-                    pendingAdds.push(...validItems);
-                    scheduleFlush();
+                    const newItems = validItems.filter(
+                        it => !existingKeys.has(`${it.platform}-${it.id}`)
+                    );
+
+                    if (newItems.length > 0) {
+                        const batchSize = 10;
+                        for (let i = 0; i < newItems.length; i += batchSize) {
+                            const batch = newItems.slice(i, i + batchSize);
+                            await musicSheetDB.localMusicStore.bulkPut(batch);
+                        }
+                        pendingAdds.push(...newItems);
+                        scheduleFlush();
+                    }
                 } catch (e) {
                     console.error("[LocalMusic] onAdd error:", e);
                 }
