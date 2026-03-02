@@ -251,6 +251,15 @@ export default function LocalMusicView() {
                 >
                     {t("local_music_page.format_convert")}
                 </div>
+                <div
+                    data-type="normalButton"
+                    role="button"
+                    onClick={() => {
+                        showModal("TagSheetConverter");
+                    }}
+                >
+                    {t("local_music_page.tag_sheet_convert")}
+                </div>
                 <div className="operations-layout">
                     <input
                         className="search-local-music"

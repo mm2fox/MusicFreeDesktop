@@ -149,7 +149,8 @@
     "selected_count": "{{count}} selected",
     "manual_scan": "Manual Scan",
     "manual_scanning": "Scanning...",
-    "format_convert": "Format Convert"
+    "format_convert": "Format Convert",
+    "tag_sheet_convert": "Tag/Sheet Convert"
   },
 
   "music_list_context_menu": {
@@ -522,5 +523,27 @@
     "saving": "Saving...",
     "no_tags_hint": "No tags yet. Right-click a song to add tags",
     "select_tag_hint": "Please select a tag from the left panel"
+  },
+  "tag_sheet_converter": {
+    "title": "Tag & Sheet Converter",
+    "tag_to_sheet": "Tag to Sheet",
+    "sheet_to_tag": "Sheet to Tag",
+    "select_tags": "Select tags to convert",
+    "select_sheets": "Select sheets to convert",
+    "no_tags_hint": "No custom tags yet. Please add tags to songs first",
+    "no_tags_selected": "Please select tags to convert",
+    "no_sheets_selected": "Please select sheets to convert",
+    "songs": "songs",
+    "tag_to_sheet_hint": "Convert selected tags to playlists. Each tag will create a playlist with the same name containing all local music with that tag.",
+    "sheet_to_tag_hint": "Write playlist names to local music file comment tags. Only MP3 and FLAC formats are supported, and only files in the local music list will be processed.",
+    "execute": "Execute",
+    "processing": "Processing...",
+    "complete": "Complete",
+    "result_success": "Success",
+    "result_fail": "Failed",
+    "result_skip": "Skipped",
+    "close": "Close",
+    "tag_to_sheet_complete": "Conversion complete. Created {{success}} playlists, skipped {{skip}} empty tags",
+    "sheet_to_tag_complete": "Conversion complete. {{success}} succeeded, {{fail}} failed, {{skip}} skipped"
   }
 }

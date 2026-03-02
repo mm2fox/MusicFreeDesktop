@@ -139,7 +139,8 @@
     "tag_view": "標籤視圖",
     "total_music_num": "共 {{number}} 首歌曲",
     "manual_scan": "手動掃描",
-    "manual_scanning": "掃描中..."
+    "manual_scanning": "掃描中...",
+    "tag_sheet_convert": "標籤/歌單轉換"
   },
 
   "music_list_context_menu": {
@@ -478,5 +479,27 @@
     "saving": "保存中...",
     "no_tags_hint": "暫無標籤，右鍵點擊歌曲添加標籤",
     "select_tag_hint": "請選擇左側標籤查看歌曲"
+  },
+  "tag_sheet_converter": {
+    "title": "標籤與歌單轉換",
+    "tag_to_sheet": "標籤轉歌單",
+    "sheet_to_tag": "歌單轉標籤",
+    "select_tags": "選擇要轉換的標籤",
+    "select_sheets": "選擇要轉換的歌單",
+    "no_tags_hint": "暫無自定義標籤，請先為歌曲添加標籤",
+    "no_tags_selected": "請選擇要轉換的標籤",
+    "no_sheets_selected": "請選擇要轉換的歌單",
+    "songs": "首",
+    "tag_to_sheet_hint": "將選中的標籤轉換為歌單，每個標籤對應一個同名歌單，歌單內包含該標籤下的所有本地音樂。",
+    "sheet_to_tag_hint": "將選中的歌單名稱寫入本地音樂文件的備註(comment)標籤中。僅支持 MP3 和 FLAC 格式，且僅處理本地音樂列表中的文件。",
+    "execute": "執行",
+    "processing": "處理中...",
+    "complete": "轉換完成",
+    "result_success": "成功",
+    "result_fail": "失敗",
+    "result_skip": "跳過",
+    "close": "關閉",
+    "tag_to_sheet_complete": "轉換完成，成功創建 {{success}} 個歌單，跳過 {{skip}} 個空標籤",
+    "sheet_to_tag_complete": "轉換完成，成功 {{success}} 首，失敗 {{fail}} 首，跳過 {{skip}} 首"
   }
 }

@@ -137,7 +137,8 @@
     "selected_count": "已选中 {{count}} 首",
     "manual_scan": "手动扫描",
     "manual_scanning": "扫描中...",
-    "format_convert": "格式转换"
+    "format_convert": "格式转换",
+    "tag_sheet_convert": "标签/歌单转换"
   },
   "music_list_context_menu": {
     "next_play": "下一首播放",
@@ -503,5 +504,27 @@
     "saving": "保存中...",
     "no_tags_hint": "暂无标签，右键点击歌曲添加标签",
     "select_tag_hint": "请选择左侧标签查看歌曲"
+  },
+  "tag_sheet_converter": {
+    "title": "标签与歌单转换",
+    "tag_to_sheet": "标签转歌单",
+    "sheet_to_tag": "歌单转标签",
+    "select_tags": "选择要转换的标签",
+    "select_sheets": "选择要转换的歌单",
+    "no_tags_hint": "暂无自定义标签，请先为歌曲添加标签",
+    "no_tags_selected": "请选择要转换的标签",
+    "no_sheets_selected": "请选择要转换的歌单",
+    "songs": "首",
+    "tag_to_sheet_hint": "将选中的标签转换为歌单，每个标签对应一个同名歌单，歌单内包含该标签下的所有本地音乐。",
+    "sheet_to_tag_hint": "将选中的歌单名称写入本地音乐文件的备注(comment)标签中。仅支持 MP3 和 FLAC 格式，且仅处理本地音乐列表中的文件。",
+    "execute": "执行",
+    "processing": "处理中...",
+    "complete": "转换完成",
+    "result_success": "成功",
+    "result_fail": "失败",
+    "result_skip": "跳过",
+    "close": "关闭",
+    "tag_to_sheet_complete": "转换完成，成功创建 {{success}} 个歌单，跳过 {{skip}} 个空标签",
+    "sheet_to_tag_complete": "转换完成，成功 {{success}} 首，失败 {{fail}} 首，跳过 {{skip}} 首"
   }
 }

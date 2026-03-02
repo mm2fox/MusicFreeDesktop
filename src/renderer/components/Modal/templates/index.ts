@@ -13,6 +13,7 @@ import SelectOne from "./SelectOne";
 import SimpleInputWithState from "./SimpleInputWithState";
 import Sparkles from "./Sparkles";
 import TagEditor from "./TagEditor";
+import TagSheetConverter from "./TagSheetConverter";
 import Update from "./Update";
 import WatchLocalDir from "./WatchLocalDir";
 
@@ -34,4 +35,5 @@ export default {
     TagEditor,
     FileConverter,
     CustomTagsEditor,
+    TagSheetConverter,
 };
