@@ -192,7 +192,11 @@
     "delete_sheet": "Delete",
     "rename_sheet": "Rename",
     "unstar_sheet": "Unstar",
-    "recently_play": "Recently Play"
+    "recently_play": "Recently Play",
+    "download_sheet": "Batch Download",
+    "download_sheet_empty": "Playlist is empty",
+    "download_sheet_no_new": "No songs to download",
+    "download_sheet_started": "Started downloading {{count}} songs"
   },
   "app_header": {
     "nav_back": "Back",

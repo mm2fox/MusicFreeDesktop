@@ -9,6 +9,10 @@ import { localPluginName } from "@/common/constant";
 import { showContextMenu } from "@/renderer/components/ContextMenu";
 import { useTranslation } from "react-i18next";
 import { useSupportedPlugin } from "@shared/plugin-manager/renderer";
+import Downloader from "@/renderer/core/downloader";
+import { toast } from "react-toastify";
+import * as backend from "@/renderer/core/music-sheet/backend";
+import isLocalMusic from "@/renderer/utils/is-local-music";
 
 
 export default function MySheets() {
@@ -109,6 +113,31 @@ export default function MySheets() {
                                                         );
                                                     }
                                                 });
+                                            },
+                                        },
+                                        {
+                                            title: t("side_bar.download_sheet"),
+                                            icon: "array-download-tray",
+                                            show: item.id !== defaultSheet.id,
+                                            async onClick() {
+                                                const sheetDetail = await backend.getSheetItemDetail(item.id);
+                                                if (!sheetDetail?.musicList?.length) {
+                                                    toast.warn(t("side_bar.download_sheet_empty"));
+                                                    return;
+                                                }
+                                                const musicList = sheetDetail.musicList.filter(
+                                                    (it) => !isLocalMusic(it) && !Downloader.isDownloaded(it)
+                                                );
+                                                if (musicList.length === 0) {
+                                                    toast.info(t("side_bar.download_sheet_no_new"));
+                                                    return;
+                                                }
+                                                Downloader.startDownload(musicList);
+                                                toast.success(
+                                                    t("side_bar.download_sheet_started", {
+                                                        count: musicList.length,
+                                                    })
+                                                );
                                             },
                                         },
                                     ],

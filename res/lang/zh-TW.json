@@ -181,7 +181,11 @@
     "delete_sheet": "刪除歌單",
     "rename_sheet": "重歌單",
     "unstar_sheet": "取消收藏",
-    "recently_play": "最近播放"
+    "recently_play": "最近播放",
+    "download_sheet": "批量下載",
+    "download_sheet_empty": "歌單為空",
+    "download_sheet_no_new": "沒有需要下載的歌曲",
+    "download_sheet_started": "已開始下載 {{count}} 首歌曲"
   },
   "app_header": {
     "nav_back": "返回",
