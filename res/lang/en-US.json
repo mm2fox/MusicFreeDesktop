@@ -141,6 +141,7 @@
     "artist_view": "Artist View",
     "album_view": "Album View",
     "folder_view": "Folder View",
+    "tag_view": "Tag View",
     "total_music_num": "Total {{number}} songs",
     "lyrics": "Lyrics",
     "has_lyrics": "Has Lyrics",
@@ -504,5 +505,22 @@
     "ffmpeg_not_found": "FFmpeg not found. Please install FFmpeg or place ffmpeg.exe in the resources folder",
     "filter_by_format": "Filter by Format",
     "filter_all": "All Formats"
+  },
+  "custom_tags": {
+    "title": "Manage Custom Tags",
+    "title_multiple": "Manage Custom Tags ({{count}} songs)",
+    "manage_tags": "Manage Tags",
+    "current_tags": "Current Tags",
+    "no_tags": "No tags",
+    "add_tag": "Add Tag",
+    "tag_placeholder": "Enter tag name",
+    "suggested_tags": "Existing Tags (Click to Add)",
+    "tag_already_exists": "Tag already exists",
+    "save_success": "Tags saved successfully",
+    "save_success_multiple": "Successfully saved tags for {{count}} songs",
+    "save_error": "Failed to save tags",
+    "saving": "Saving...",
+    "no_tags_hint": "No tags yet. Right-click a song to add tags",
+    "select_tag_hint": "Please select a tag from the left panel"
   }
 }

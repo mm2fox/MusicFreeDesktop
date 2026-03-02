@@ -1,6 +1,7 @@
 import AddMusicToSheet from "./AddMusicToSheet";
 import AddNewSheet from "./AddNewSheet";
 import Base from "./Base";
+import CustomTagsEditor from "./CustomTagsEditor";
 import ExitConfirm from "./ExitConfirm";
 import FileConverter from "./FileConverter";
 import ImportMusicSheet from "./ImportMusicSheet";
@@ -32,4 +33,5 @@ export default {
     MusicInfo,
     TagEditor,
     FileConverter,
+    CustomTagsEditor,
 };

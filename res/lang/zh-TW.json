@@ -136,6 +136,7 @@
     "artist_view": "藝術家視圖",
     "album_view": "專輯視圖",
     "folder_view": "文件夾視圖",
+    "tag_view": "標籤視圖",
     "total_music_num": "共 {{number}} 首歌曲",
     "manual_scan": "手動掃描",
     "manual_scanning": "掃描中..."
@@ -460,5 +461,22 @@
     "swap_title_artist": "交換標題和藝術家",
     "restore_cover": "恢復原封面",
     "cover_load_error": "載入封面圖片失敗"
+  },
+  "custom_tags": {
+    "title": "管理自定義標籤",
+    "title_multiple": "管理自定義標籤 ({{count}}首)",
+    "manage_tags": "管理標籤",
+    "current_tags": "當前標籤",
+    "no_tags": "暫無標籤",
+    "add_tag": "添加標籤",
+    "tag_placeholder": "輸入標籤名稱",
+    "suggested_tags": "已有標籤（點擊添加）",
+    "tag_already_exists": "標籤已存在",
+    "save_success": "標籤保存成功",
+    "save_success_multiple": "已成功為 {{count}} 首歌曲保存標籤",
+    "save_error": "標籤保存失敗",
+    "saving": "保存中...",
+    "no_tags_hint": "暫無標籤，右鍵點擊歌曲添加標籤",
+    "select_tag_hint": "請選擇左側標籤查看歌曲"
   }
 }

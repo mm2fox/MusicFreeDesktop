@@ -129,6 +129,7 @@
     "artist_view": "作者视图",
     "album_view": "专辑视图",
     "folder_view": "文件夹视图",
+    "tag_view": "标签视图",
     "total_music_num": "共 {{number}} 首",
     "lyrics": "歌词",
     "has_lyrics": "有歌词",
@@ -485,5 +486,22 @@
     "ffmpeg_not_found": "未找到 FFmpeg，请安装 FFmpeg 或将 ffmpeg.exe 放入 resources 文件夹",
     "filter_by_format": "筛选格式",
     "filter_all": "全部格式"
+  },
+  "custom_tags": {
+    "title": "管理自定义标签",
+    "title_multiple": "管理自定义标签 ({{count}}首)",
+    "manage_tags": "管理标签",
+    "current_tags": "当前标签",
+    "no_tags": "暂无标签",
+    "add_tag": "添加标签",
+    "tag_placeholder": "输入标签名称",
+    "suggested_tags": "已有标签（点击添加）",
+    "tag_already_exists": "标签已存在",
+    "save_success": "标签保存成功",
+    "save_success_multiple": "已成功为 {{count}} 首歌曲保存标签",
+    "save_error": "标签保存失败",
+    "saving": "保存中...",
+    "no_tags_hint": "暂无标签，右键点击歌曲添加标签",
+    "select_tag_hint": "请选择左侧标签查看歌曲"
   }
 }

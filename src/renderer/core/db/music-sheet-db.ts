@@ -12,6 +12,7 @@ class MusicSheetDB extends Dexie {
     >;
     localMusicStore: Table<IMusic.IMusicItem & {
         $$localPath: string; // 本地地址
+        $$customTags?: string[]; // 自定义标签
     }>;
 
     constructor() {

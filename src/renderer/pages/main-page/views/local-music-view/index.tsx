@@ -10,6 +10,7 @@ import ListView from "./views/list";
 import ArtistView from "./views/artist";
 import AlbumView from "./views/album";
 import FolderView from "./views/folder";
+import TagView from "./views/tag";
 import AppConfig from "@shared/app-config/renderer";
 import { toast } from "react-toastify";
 import musicSheetDB from "@/renderer/core/db/music-sheet-db";
@@ -20,6 +21,7 @@ enum DisplayView {
     ARTIST,
     ALBUM,
     FOLDER,
+    TAG,
 }
 
 export default function LocalMusicView() {
@@ -298,6 +300,16 @@ export default function LocalMusicView() {
                     >
                         <SvgAsset iconName="folder-open"></SvgAsset>
                     </div>
+                    <div
+                        className="list-view-action"
+                        data-selected={displayView === DisplayView.TAG}
+                        title={t("local_music_page.tag_view")}
+                        onClick={() => {
+                            setDisplayView(DisplayView.TAG);
+                        }}
+                    >
+                        <SvgAsset iconName="tag"></SvgAsset>
+                    </div>
                 </div>
             </div>
             <SwitchCase.Switch switch={displayView}>
@@ -312,6 +324,9 @@ export default function LocalMusicView() {
                 </SwitchCase.Case>
                 <SwitchCase.Case case={DisplayView.FOLDER}>
                     <FolderView localMusicList={finalMusicList}></FolderView>
+                </SwitchCase.Case>
+                <SwitchCase.Case case={DisplayView.TAG}>
+                    <TagView localMusicList={finalMusicList}></TagView>
                 </SwitchCase.Case>
             </SwitchCase.Switch>
         </div>

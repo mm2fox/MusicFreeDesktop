@@ -27,6 +27,7 @@ import currentListSourceStore from "@/renderer/core/current-list-source/store";
 import { shellUtil, fsUtil } from "@shared/utils/renderer";
 import { locateMusicStore } from "@/renderer/components/MusicSheetlikeView/store";
 import { navigateTo } from "@/renderer/utils/navigate";
+import { getMusicTags, useAllCustomTags } from "@/renderer/core/local-music/custom-tags";
 
 interface ILocalMusicListProps {
     localMusicList: IMusic.IMusicItem[];
@@ -99,6 +100,19 @@ function showLocalMusicContextMenu(
             show: !isArray,
             onClick() {
                 showModal("TagEditor", { musicItem: musicItems as IMusic.IMusicItem });
+            },
+        },
+        {
+            divider: true,
+        },
+        {
+            title: i18n.t("custom_tags.manage_tags"),
+            icon: "tag",
+            onClick() {
+                showModal("CustomTagsEditor", { 
+                    musicItem: isArray ? musicItems[0] : musicItems,
+                    musicItems: isArray ? musicItems : [musicItems],
+                });
             },
         },
         {

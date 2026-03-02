@@ -40,6 +40,7 @@ import { shellUtil } from "@shared/utils/renderer";
 import { navigateTo } from "@/renderer/utils/navigate";
 import { locateMusicStore } from "../MusicSheetlikeView/store";
 import currentListSourceStore from "@/renderer/core/current-list-source/store";
+import { isLocalMusicOrDownloaded } from "@/renderer/utils/is-local-music";
 
 interface IMusicListProps {
     /** 展示的播放列表 */
@@ -432,6 +433,22 @@ export function showMusicContextMenu(
             show: !isArray && (musicItems?.platform === localPluginName || Downloader.isDownloaded(musicItems)),
             onClick() {
                 showModal("TagEditor", { musicItem: musicItems as IMusic.IMusicItem });
+            },
+        },
+        {
+            title: i18n.t("custom_tags.manage_tags"),
+            icon: "tag",
+            show: isArray 
+                ? musicItems.some(item => isLocalMusicOrDownloaded(item))
+                : isLocalMusicOrDownloaded(musicItems),
+            onClick() {
+                const items = isArray ? musicItems.filter(item => isLocalMusicOrDownloaded(item)) : [musicItems];
+                if (items.length > 0) {
+                    showModal("CustomTagsEditor", { 
+                        musicItem: items[0],
+                        musicItems: items,
+                    });
+                }
             },
         },
         {

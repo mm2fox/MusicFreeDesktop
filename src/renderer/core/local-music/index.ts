@@ -5,6 +5,7 @@ import musicSheetDB from "../db/music-sheet-db";
 import { getGlobalContext } from "@/shared/global-context/renderer";
 import AppConfig from "@shared/app-config/renderer";
 import { getInternalData, setInternalData } from "@/common/media-util";
+import { initCustomTagsStore } from "./custom-tags";
 
 type ProxyMarkedFunction<T extends (...args: any) => void> = T &
     Comlink.ProxyMarked;
@@ -144,6 +145,7 @@ async function setupLocalMusic() {
             return item;
         });
         localMusicListStore.setValue(processedMusic);
+        initCustomTagsStore();
 
         if (localFileWatcherWorker) {
             onAddCallback = Comlink.proxy(async (musicItems: IMusicItemWithLocalPath[]) => {
