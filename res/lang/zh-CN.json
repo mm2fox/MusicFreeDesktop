@@ -135,7 +135,8 @@
     "no_lyrics": "无歌词",
     "selected_count": "已选中 {{count}} 首",
     "manual_scan": "手动扫描",
-    "manual_scanning": "扫描中..."
+    "manual_scanning": "扫描中...",
+    "format_convert": "格式转换"
   },
   "music_list_context_menu": {
     "next_play": "下一首播放",
@@ -459,5 +460,30 @@
     "cover_load_error": "加载封面图片失败",
     "open_in_explorer": "打开文件所在目录",
     "open_folder_error": "打开文件夹失败"
+  },
+  "file_converter": {
+    "title": "音频格式转换",
+    "output_format": "输出格式",
+    "quality": "音质",
+    "quality_original": "保持原始质量",
+    "quality_low": "低音质 (128kbps)",
+    "quality_standard": "标准音质 (192kbps)",
+    "quality_high": "高音质 (320kbps)",
+    "output_directory": "输出目录",
+    "select_output_directory": "请选择输出目录",
+    "browse": "浏览",
+    "task_list": "转换列表",
+    "task_summary": "成功 {{success}} 首，失败 {{failed}} 首",
+    "status_pending": "等待中",
+    "status_converting": "转换中",
+    "status_success": "成功",
+    "status_failed": "失败",
+    "start_convert": "开始转换",
+    "converting": "转换中...",
+    "convert_complete": "转换完成，成功 {{success}} 首，失败 {{fail}} 首",
+    "no_music_to_convert": "没有可转换的音乐",
+    "ffmpeg_not_found": "未找到 FFmpeg，请安装 FFmpeg 或将 ffmpeg.exe 放入 resources 文件夹",
+    "filter_by_format": "筛选格式",
+    "filter_all": "全部格式"
   }
 }

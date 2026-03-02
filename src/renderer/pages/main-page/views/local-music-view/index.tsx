@@ -232,6 +232,23 @@ export default function LocalMusicView() {
                 >
                     {refreshing ? t("local_music_page.refreshing") : t("local_music_page.refresh_tags")}
                 </div>
+                <div
+                    data-type="normalButton"
+                    role="button"
+                    onClick={() => {
+                        const musicList = localMusicListStore.getValue();
+                        if (musicList.length === 0) {
+                            toast.info(t("file_converter.no_music_to_convert"));
+                            return;
+                        }
+                        showModal("FileConverter", {
+                            musicItems: musicList,
+                            defaultFormat: "flac",
+                        });
+                    }}
+                >
+                    {t("local_music_page.format_convert")}
+                </div>
                 <div className="operations-layout">
                     <input
                         className="search-local-music"

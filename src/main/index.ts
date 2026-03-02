@@ -33,6 +33,7 @@ import voidCallback from "@/common/void-callback";
 import { xiaoaiService } from "./xiaoai-service";
 import MusicSearchUtil from "@shared/music-search/main";
 import MusicTagUtil from "@shared/music-tag/main";
+import FileConverter from "@shared/file-converter/main";
 
 // 开发版使用不同的 userData 目录，允许与正式版同时运行
 if (process.defaultApp) {
@@ -143,6 +144,7 @@ app.whenReady().then(async () => {
     shortCut.setup().then(voidCallback);
     MusicSearchUtil.setup();
     MusicTagUtil.setup();
+    FileConverter.setup();
     xiaoaiService.init();
     logger.logPerf("Create Main Window");
     // Setup message bus & app state

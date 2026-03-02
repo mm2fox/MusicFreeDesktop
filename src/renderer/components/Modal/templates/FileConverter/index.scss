@@ -1,0 +1,198 @@
+.modal--file-converter-container {
+    width: 580px;
+    max-height: 80vh;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+
+    .ffmpeg-warning {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 16px;
+        background-color: rgba(255, 152, 0, 0.15);
+        border-radius: 6px;
+        margin: 0 16px;
+        color: #ff9800;
+        font-size: 13px;
+
+        svg {
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+        }
+
+        .error-detail {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+    }
+
+    .modal--body-container {
+        padding: 16px;
+        overflow-y: auto;
+        flex: 1;
+
+        .options-row {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+
+            .option-group {
+                flex: 1;
+
+                label {
+                    display: block;
+                    font-size: 13px;
+                    margin-bottom: 6px;
+                    opacity: 0.8;
+                }
+
+                select {
+                    width: 100%;
+                    padding: 8px 12px;
+                    border-radius: 6px;
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    background-color: rgba(0, 0, 0, 0.2);
+                    color: inherit;
+                    font-size: 14px;
+                    cursor: pointer;
+
+                    &:disabled {
+                        opacity: 0.5;
+                        cursor: not-allowed;
+                    }
+
+                    &:focus {
+                        outline: none;
+                        border-color: var(--primaryColor, #e4393c);
+                    }
+                }
+            }
+        }
+
+        .output-dir-row {
+            margin-bottom: 16px;
+
+            label {
+                display: block;
+                font-size: 13px;
+                margin-bottom: 6px;
+                opacity: 0.8;
+            }
+
+            .output-dir-input {
+                display: flex;
+                gap: 8px;
+
+                input {
+                    flex: 1;
+                    padding: 8px 12px;
+                    border-radius: 6px;
+                    border: 1px solid rgba(255, 255, 255, 0.1);
+                    background-color: rgba(0, 0, 0, 0.2);
+                    color: inherit;
+                    font-size: 14px;
+
+                    &::placeholder {
+                        opacity: 0.5;
+                    }
+                }
+
+                button {
+                    padding: 8px 16px;
+                    border-radius: 6px;
+                    white-space: nowrap;
+
+                    &:disabled {
+                        opacity: 0.5;
+                        cursor: not-allowed;
+                    }
+                }
+            }
+        }
+
+        .task-list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 13px;
+
+            .task-summary {
+                opacity: 0.7;
+            }
+        }
+
+        .task-list {
+            max-height: 200px;
+            overflow-y: auto;
+            border-radius: 6px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background-color: rgba(0, 0, 0, 0.1);
+
+            .task-item {
+                padding: 10px 12px;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+
+                &:last-child {
+                    border-bottom: none;
+                }
+
+                &.converting {
+                    background-color: rgba(33, 150, 243, 0.1);
+                }
+
+                &.success {
+                    background-color: rgba(76, 175, 80, 0.1);
+                }
+
+                &.failed {
+                    background-color: rgba(244, 67, 54, 0.1);
+                }
+
+                .task-info {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+
+                    .task-name {
+                        font-size: 13px;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        white-space: nowrap;
+                        max-width: 280px;
+                    }
+
+                    .task-status {
+                        display: flex;
+                        align-items: center;
+                        gap: 4px;
+                        font-size: 12px;
+                        opacity: 0.8;
+
+                        svg {
+                            width: 14px;
+                            height: 14px;
+                        }
+                    }
+                }
+
+                .task-error {
+                    margin-top: 6px;
+                    font-size: 11px;
+                    color: #f44336;
+                    opacity: 0.8;
+                }
+            }
+        }
+    }
+
+    .footer-options {
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        padding: 12px 16px;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+    }
+}

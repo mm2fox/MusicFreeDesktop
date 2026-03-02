@@ -147,7 +147,8 @@
     "no_lyrics": "No Lyrics",
     "selected_count": "{{count}} selected",
     "manual_scan": "Manual Scan",
-    "manual_scanning": "Scanning..."
+    "manual_scanning": "Scanning...",
+    "format_convert": "Format Convert"
   },
 
   "music_list_context_menu": {
@@ -478,5 +479,30 @@
     "cover_load_error": "Failed to load cover image",
     "open_in_explorer": "Open in Explorer",
     "open_folder_error": "Failed to open folder"
+  },
+  "file_converter": {
+    "title": "Audio Format Converter",
+    "output_format": "Output Format",
+    "quality": "Quality",
+    "quality_original": "Keep Original Quality",
+    "quality_low": "Low Quality (128kbps)",
+    "quality_standard": "Standard Quality (192kbps)",
+    "quality_high": "High Quality (320kbps)",
+    "output_directory": "Output Directory",
+    "select_output_directory": "Please select output directory",
+    "browse": "Browse",
+    "task_list": "Conversion List",
+    "task_summary": "{{success}} succeeded, {{failed}} failed",
+    "status_pending": "Pending",
+    "status_converting": "Converting",
+    "status_success": "Success",
+    "status_failed": "Failed",
+    "start_convert": "Start Convert",
+    "converting": "Converting...",
+    "convert_complete": "Conversion complete, {{success}} succeeded, {{fail}} failed",
+    "no_music_to_convert": "No music to convert",
+    "ffmpeg_not_found": "FFmpeg not found. Please install FFmpeg or place ffmpeg.exe in the resources folder",
+    "filter_by_format": "Filter by Format",
+    "filter_all": "All Formats"
   }
 }

@@ -8,3 +8,4 @@ import "@shared/message-bus/preload/main";
 import "@shared/short-cut/preload";
 import "@shared/music-search/preload";
 import "@shared/music-tag/preload";
+import "@shared/file-converter/preload";

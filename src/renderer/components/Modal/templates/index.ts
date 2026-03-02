@@ -2,6 +2,7 @@ import AddMusicToSheet from "./AddMusicToSheet";
 import AddNewSheet from "./AddNewSheet";
 import Base from "./Base";
 import ExitConfirm from "./ExitConfirm";
+import FileConverter from "./FileConverter";
 import ImportMusicSheet from "./ImportMusicSheet";
 import MusicInfo from "./MusicInfo";
 import PluginSubscription from "./PluginSubscription";
@@ -30,4 +31,5 @@ export default {
     ImportMusicSheet,
     MusicInfo,
     TagEditor,
+    FileConverter,
 };
