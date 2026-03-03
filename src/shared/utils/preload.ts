@@ -40,6 +40,10 @@ function addFileScheme(filePath: string) {
         : url.pathToFileURL(filePath).toString();
 }
 
+async function renameFile(oldPath: string, newPath: string) {
+    return fs.rename(oldPath, newPath);
+}
+
 const fsUtil = {
     writeFile,
     readFile,
@@ -47,6 +51,7 @@ const fsUtil = {
     isFolder,
     rimraf,
     addFileScheme,
+    renameFile,
 };
 
 /****** app utils *****/

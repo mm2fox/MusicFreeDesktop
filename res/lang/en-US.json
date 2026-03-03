@@ -85,7 +85,23 @@
 
   "download_page": {
     "waiting": "Waiting...",
-    "failed": "Download Failed"
+    "failed": "Download Failed",
+    "invalid_downloads": "Invalid Downloads",
+    "invalid_downloads_count": "{{count}} invalid songs",
+    "redownload": "Redownload",
+    "redownload_started": "Started redownloading {{count}} songs",
+    "associate_local_file": "Associate Local File",
+    "local_file_path": "Local File Path",
+    "select_local_file": "Select Local File",
+    "select_local_file_hint": "Please select or input local file path",
+    "audio_files": "Audio Files",
+    "please_select_file": "Please select a file",
+    "file_not_exists": "File does not exist",
+    "music_not_found": "Music info not found",
+    "associate_success": "Associated successfully",
+    "associate_failed": "Association failed",
+    "remove_from_list": "Remove from List",
+    "removed_from_list": "Removed {{count}} songs"
   },
   "plugin_management_page": {
     "plugin_management": "Plugin Management",
@@ -172,7 +188,13 @@
     "delete_local_file": "Delete Local File",
     "delete_local_file_confirm": "Are you sure you want to delete the local file?",
     "delete_local_file_success": "Deleted local file [{{songName}}]",
-    "delete_local_file_failed": "Failed to delete local file"
+    "delete_local_file_failed": "Failed to delete local file",
+    "rename_local_file": "Rename File",
+    "rename_local_file_title": "Rename Local File",
+    "rename_local_file_success": "File renamed to {{newName}}",
+    "rename_local_file_failed": "Failed to rename file",
+    "rename_local_file_empty": "Filename cannot be empty",
+    "tag_management": "Tag Management"
   },
 
   "search_result_page": {
@@ -197,7 +219,13 @@
     "download_sheet_empty": "Playlist is empty",
     "download_sheet_no_new": "No songs to download",
     "download_sheet_started": "Started downloading {{count}} songs",
-    "download_sheet_error": "Failed to get playlist info"
+    "download_sheet_error": "Failed to get playlist info",
+    "convert_to_local": "Convert to Local Music",
+    "convert_to_local_no_downloaded": "No downloaded songs in playlist",
+    "convert_to_local_no_match": "No matching local songs found",
+    "convert_to_local_success": "Replaced {{count}} songs with local versions",
+    "convert_to_local_success_with_sheet": "Matched {{count}} local songs, created playlist \"{{sheetName}}\"",
+    "convert_to_local_suffix": "Local"
   },
   "app_header": {
     "nav_back": "Back",

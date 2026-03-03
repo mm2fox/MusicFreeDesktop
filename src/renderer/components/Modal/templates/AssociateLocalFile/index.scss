@@ -1,0 +1,89 @@
+.modal--associate-local-file-container {
+    width: 480px;
+    max-width: 90vw;
+    
+    .modal--body-container {
+        padding: 1rem 1.5rem;
+        
+        .music-info {
+            margin-bottom: 1rem;
+            padding: 0.75rem;
+            background: var(--maskColor);
+            border-radius: 8px;
+            
+            .info-row {
+                display: flex;
+                margin-bottom: 0.5rem;
+                
+                &:last-child {
+                    margin-bottom: 0;
+                }
+                
+                .label {
+                    flex-shrink: 0;
+                    width: 60px;
+                    color: var(--textColor);
+                    opacity: 0.7;
+                }
+                
+                .value {
+                    flex: 1;
+                    color: var(--textColor);
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                }
+            }
+        }
+        
+        .file-selector {
+            .selector-label {
+                margin-bottom: 0.5rem;
+                color: var(--textColor);
+            }
+            
+            .selector-row {
+                display: flex;
+                gap: 0.5rem;
+                
+                input {
+                    flex: 1;
+                    padding: 0.5rem 0.75rem;
+                    border: 1px solid var(--dividerColor);
+                    border-radius: 4px;
+                    background: var(--maskColor);
+                    color: var(--textColor);
+                    font-size: 0.9rem;
+                    
+                    &:focus {
+                        outline: none;
+                        border-color: var(--primaryColor);
+                    }
+                    
+                    &::placeholder {
+                        color: var(--textColor);
+                        opacity: 0.5;
+                    }
+                }
+                
+                button {
+                    flex-shrink: 0;
+                    padding: 0.5rem 1rem;
+                    border: none;
+                    border-radius: 4px;
+                    background: var(--btnBgColor);
+                    color: var(--btnTextColor);
+                    cursor: pointer;
+                    
+                    &:hover {
+                        background: var(--btnHoverBgColor);
+                    }
+                }
+            }
+        }
+    }
+    
+    .footer-options {
+        justify-content: flex-end;
+    }
+}

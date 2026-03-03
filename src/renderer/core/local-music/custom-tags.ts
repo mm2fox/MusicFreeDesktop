@@ -52,7 +52,7 @@ export async function addTagToMusic(musicItem: IMusic.IMusicItem, tag: string): 
     try {
         await musicSheetDB.localMusicStore.update(
             [musicItem.platform, musicItem.id],
-            { $$customTags: newTags }
+            { $$customTags: newTags },
         );
         
         const currentList = localMusicListStore.getValue();
@@ -81,7 +81,7 @@ export async function removeTagFromMusic(musicItem: IMusic.IMusicItem, tag: stri
     try {
         await musicSheetDB.localMusicStore.update(
             [musicItem.platform, musicItem.id],
-            { $$customTags: newTags.length > 0 ? newTags : undefined }
+            { $$customTags: newTags.length > 0 ? newTags : undefined },
         );
         
         const currentList = localMusicListStore.getValue();
@@ -107,7 +107,7 @@ export async function setMusicTags(musicItem: IMusic.IMusicItem, tags: string[])
     try {
         await musicSheetDB.localMusicStore.update(
             [musicItem.platform, musicItem.id],
-            { $$customTags: cleanedTags.length > 0 ? cleanedTags : undefined }
+            { $$customTags: cleanedTags.length > 0 ? cleanedTags : undefined },
         );
         
         const currentList = localMusicListStore.getValue();

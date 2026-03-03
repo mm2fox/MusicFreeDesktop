@@ -1,5 +1,6 @@
 import AddMusicToSheet from "./AddMusicToSheet";
 import AddNewSheet from "./AddNewSheet";
+import AssociateLocalFile from "./AssociateLocalFile";
 import Base from "./Base";
 import CustomTagsEditor from "./CustomTagsEditor";
 import ExitConfirm from "./ExitConfirm";
@@ -22,6 +23,7 @@ export default {
     ExitConfirm,
     AddNewSheet,
     AddMusicToSheet,
+    AssociateLocalFile,
     Sparkles,
     SimpleInputWithState,
     Reconfirm,

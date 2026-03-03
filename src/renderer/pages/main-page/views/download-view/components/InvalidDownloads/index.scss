@@ -1,0 +1,33 @@
+.invalid-downloads-container {
+    .invalid-downloads-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.5rem 1rem;
+        border-bottom: 1px solid var(--dividerColor);
+        
+        span {
+            font-size: 0.9rem;
+            color: var(--textColor);
+        }
+        
+        .refresh-btn {
+            padding: 0.25rem 0.75rem;
+            font-size: 0.8rem;
+            border-radius: 4px;
+            background-color: var(--btnBgColor);
+            color: var(--btnTextColor);
+            border: none;
+            cursor: pointer;
+            
+            &:hover:not(:disabled) {
+                background-color: var(--btnHoverBgColor);
+            }
+            
+            &:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
+        }
+    }
+}

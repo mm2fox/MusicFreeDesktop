@@ -33,14 +33,14 @@ import SvgAsset from "../SvgAsset";
 import musicSheetDB from "@/renderer/core/db/music-sheet-db";
 import DragReceiver, { startDrag } from "../DragReceiver";
 import { i18n } from "@/shared/i18n/renderer";
-import isLocalMusic from "@/renderer/utils/is-local-music";
+import isLocalMusic, { isLocalMusicOrDownloaded } from "@/renderer/utils/is-local-music";
 import localMusicListStore from "@/renderer/core/local-music/store";
 import AppConfig from "@shared/app-config/renderer";
 import { shellUtil } from "@shared/utils/renderer";
 import { navigateTo } from "@/renderer/utils/navigate";
 import { locateMusicStore } from "../MusicSheetlikeView/store";
 import currentListSourceStore from "@/renderer/core/current-list-source/store";
-import { isLocalMusicOrDownloaded } from "@/renderer/utils/is-local-music";
+
 
 interface IMusicListProps {
     /** 展示的播放列表 */
@@ -68,7 +68,9 @@ interface IMusicListProps {
     /** 拖拽结束 */
     onDragEnd?: (newMusicList: IMusic.IMusicItem[]) => void;
     /** context */
-    contextMenu?: IContextMenuItem[];
+    contextMenu?: (Omit<IContextMenuItem, "onClick"> & {
+        onClick?: (musicItems: IMusic.IMusicItem | IMusic.IMusicItem[]) => void;
+    })[];
 }
 
 const columnHelper = createColumnHelper<IMusic.IMusicItem>();
@@ -527,6 +529,7 @@ function _MusicList(props: IMusicListProps) {
         hideRows,
         enableDrag,
         onDragEnd,
+        contextMenu,
     } = props;
 
     const [sorting, setSorting] = useState<SortingState>([]);
@@ -723,7 +726,19 @@ function _MusicList(props: IMusicListProps) {
                                     activeItems.has(virtualItem.rowIndex)
                                 }
                                 onContextMenu={(e) => {
-                                    if (
+                                    if (contextMenu) {
+                                        const selectedItems: IMusic.IMusicItem[] = activeItems.size > 1
+                                            ? Array.from(activeItems).map(idx => table.getRowModel().rows[idx].original)
+                                            : [row.original];
+                                        showContextMenu({
+                                            x: e.clientX,
+                                            y: e.clientY,
+                                            menuItems: contextMenu.map(item => ({
+                                                ...item,
+                                                onClick: () => item.onClick?.(selectedItems.length > 1 ? selectedItems : selectedItems[0]),
+                                            })),
+                                        });
+                                    } else if (
                                         activeItems.size > 1
                                     ) {
                                         const selectedItems: IMusic.IMusicItem[] = [];

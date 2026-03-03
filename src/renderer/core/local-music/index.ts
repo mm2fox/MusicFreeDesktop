@@ -162,11 +162,11 @@ async function setupLocalMusic() {
                         .anyOf(validItems.map(it => [it.platform, it.id]))
                         .toArray();
                     const existingKeys = new Set(
-                        existingItems.map(it => `${it.platform}-${it.id}`)
+                        existingItems.map(it => `${it.platform}-${it.id}`),
                     );
 
                     const newItems = validItems.filter(
-                        it => !existingKeys.has(`${it.platform}-${it.id}`)
+                        it => !existingKeys.has(`${it.platform}-${it.id}`),
                     );
 
                     if (newItems.length > 0) {

@@ -75,7 +75,23 @@
   },
   "download_page": {
     "waiting": "等待中...",
-    "failed": "下载失败"
+    "failed": "下载失败",
+    "invalid_downloads": "失效下载",
+    "invalid_downloads_count": "共 {{count}} 首失效歌曲",
+    "redownload": "重新下载",
+    "redownload_started": "已开始重新下载 {{count}} 首歌曲",
+    "associate_local_file": "关联本地文件",
+    "local_file_path": "本地文件路径",
+    "select_local_file": "选择本地文件",
+    "select_local_file_hint": "请选择或输入本地文件路径",
+    "audio_files": "音频文件",
+    "please_select_file": "请选择文件",
+    "file_not_exists": "文件不存在",
+    "music_not_found": "未找到歌曲信息",
+    "associate_success": "关联成功",
+    "associate_failed": "关联失败",
+    "remove_from_list": "从列表移除",
+    "removed_from_list": "已移除 {{count}} 首歌曲"
   },
   "plugin_management_page": {
     "plugin_management": "插件管理",
@@ -159,7 +175,13 @@
     "delete_local_file": "删除本地文件",
     "delete_local_file_confirm": "确定要删除本地文件吗？",
     "delete_local_file_success": "已删除本地文件 [{{songName}}]",
-    "delete_local_file_failed": "删除本地文件失败"
+    "delete_local_file_failed": "删除本地文件失败",
+    "rename_local_file": "重命名文件",
+    "rename_local_file_title": "重命名本地文件",
+    "rename_local_file_success": "文件已重命名为 {{newName}}",
+    "rename_local_file_failed": "重命名文件失败",
+    "rename_local_file_empty": "文件名不能为空",
+    "tag_management": "标签管理"
   },
   "search_result_page": {
     "search_result_title": "的搜索结果"
@@ -181,7 +203,13 @@
     "download_sheet_empty": "歌单为空",
     "download_sheet_no_new": "没有需要下载的歌曲",
     "download_sheet_started": "已开始下载 {{count}} 首歌曲",
-    "download_sheet_error": "获取歌单信息失败"
+    "download_sheet_error": "获取歌单信息失败",
+    "convert_to_local": "转为本地歌曲",
+    "convert_to_local_no_downloaded": "歌单中没有已下载的歌曲",
+    "convert_to_local_no_match": "没有匹配的本地歌曲",
+    "convert_to_local_success": "已将 {{count}} 首歌曲替换为本地版本",
+    "convert_to_local_success_with_sheet": "已匹配 {{count}} 首本地歌曲，已创建歌单「{{sheetName}}」",
+    "convert_to_local_suffix": "本地版"
   },
   "app_header": {
     "nav_back": "后退",

@@ -62,11 +62,17 @@ function hideContextMenu() {
 
 const menuItemWidth = 240;
 const menuItemHeight = 32;
-const menuContainerMaxHeight = menuItemHeight * 10;
 
 function SingleColumnContextMenuComponent(props: IContextMenuData) {
     const { menuItems, x, y, setSubMenu, onItemClick } = props;
     const menuContainerRef = useRef<HTMLDivElement>();
+
+    const containerHeight = menuItems.reduce(
+        (prev, curr) =>
+            prev +
+            (curr.show !== false ? (curr.divider ? 1 : menuItemHeight) : 0),
+        menuItemHeight / 2,
+    );
 
     return (
         <div
@@ -77,7 +83,7 @@ function SingleColumnContextMenuComponent(props: IContextMenuData) {
                 paddingBottom: menuItemHeight / 4,
                 top: y,
                 left: x,
-                maxHeight: menuContainerMaxHeight,
+                maxHeight: containerHeight,
             }}
             ref={menuContainerRef}
         >
@@ -106,9 +112,11 @@ function SingleColumnContextMenuComponent(props: IContextMenuData) {
                     y +
                     (e.target as HTMLDivElement).offsetTop -
                     menuContainerRef.current.scrollTop;
-                                    const realHeight = Math.min(
-                                        subMenu.length * menuItemHeight,
-                                        menuContainerMaxHeight,
+                                    const realHeight = subMenu.reduce(
+                                        (prev, curr) =>
+                                            prev +
+                                            (curr.show !== false ? (curr.divider ? 1 : menuItemHeight) : 0),
+                                        menuItemHeight / 2,
                                     );
                                     let [subX, subY] = [
                                         x - menuItemWidth - offset,
@@ -168,17 +176,14 @@ export function ContextMenuComponent() {
         const isLeft = x < window.innerWidth / 2 ? 0 : 1;
         const isTop = y < window.innerHeight / 2 ? 0 : 2;
     
-        const containerHeight = Math.min(
-            component
-                ? height
-                : menuItems.reduce(
-                    (prev, curr) =>
-                        prev +
+        const containerHeight = component
+            ? height
+            : menuItems.reduce(
+                (prev, curr) =>
+                    prev +
               (curr.show !== false ? (curr.divider ? 1 : menuItemHeight) : 0),
-                    menuItemHeight / 2,
-                ),
-            menuContainerMaxHeight,
-        );
+                menuItemHeight / 2,
+            );
 
         const containerWidth = width ?? menuItemWidth;
 
@@ -248,7 +253,7 @@ export function ContextMenuComponent() {
                         width: width ?? menuItemWidth,
                         top: actualY,
                         left: actualX,
-                        maxHeight: menuContainerMaxHeight,
+                        maxHeight: height,
                     }}
                 >
                     {component}

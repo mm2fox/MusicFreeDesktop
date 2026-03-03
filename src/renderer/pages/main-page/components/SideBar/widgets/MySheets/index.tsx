@@ -13,6 +13,10 @@ import Downloader from "@/renderer/core/downloader";
 import { toast } from "react-toastify";
 import * as backend from "@/renderer/core/music-sheet/backend";
 import isLocalMusic from "@/renderer/utils/is-local-music";
+import musicSheetDB from "@/renderer/core/db/music-sheet-db";
+import localMusicListStore from "@/renderer/core/local-music/store";
+import { getInternalData } from "@/common/media-util";
+import { fsUtil } from "@shared/utils/renderer";
 
 
 export default function MySheets() {
@@ -126,7 +130,7 @@ export default function MySheets() {
                                                     return;
                                                 }
                                                 const musicList = sheetDetail.musicList.filter(
-                                                    (it) => !isLocalMusic(it) && !Downloader.isDownloaded(it)
+                                                    (it) => !isLocalMusic(it) && !Downloader.isDownloaded(it),
                                                 );
                                                 if (musicList.length === 0) {
                                                     toast.info(t("side_bar.download_sheet_no_new"));
@@ -136,7 +140,88 @@ export default function MySheets() {
                                                 toast.success(
                                                     t("side_bar.download_sheet_started", {
                                                         count: musicList.length,
-                                                    })
+                                                    }),
+                                                );
+                                            },
+                                        },
+                                        {
+                                            title: t("side_bar.convert_to_local"),
+                                            icon: "folder-open",
+                                            show: item.id !== defaultSheet.id,
+                                            async onClick() {
+                                                const sheetDetail = await backend.getSheetItemDetail(item.id);
+                                                if (!sheetDetail?.musicList?.length) {
+                                                    toast.warn(t("side_bar.download_sheet_empty"));
+                                                    return;
+                                                }
+                                                const onlineMusic = sheetDetail.musicList.filter(
+                                                    (it) => !isLocalMusic(it) && Downloader.isDownloaded(it),
+                                                );
+                                                if (onlineMusic.length === 0) {
+                                                    toast.info(t("side_bar.convert_to_local_no_downloaded"));
+                                                    return;
+                                                }
+                                                const musicDetails = await musicSheetDB.musicStore.bulkGet(
+                                                    onlineMusic.map((it) => [it.platform, it.id]),
+                                                );
+                                                const existingLocalMusic = localMusicListStore.getValue() || [];
+                                                const localMusicByPath = new Map<string, typeof existingLocalMusic[0]>();
+                                                const localMusicByFilename = new Map<string, typeof existingLocalMusic[0]>();
+                                                for (const local of existingLocalMusic) {
+                                                    if (local?.$$localPath) {
+                                                        localMusicByPath.set(local.$$localPath, local);
+                                                        const filename = window.path.basename(local.$$localPath).toLowerCase();
+                                                        if (!localMusicByFilename.has(filename)) {
+                                                            localMusicByFilename.set(filename, local);
+                                                        }
+                                                    }
+                                                }
+                                                const localMusicItems: Array<IMusic.IMusicItem & { $$localPath: string }> = [];
+                                                const toRemove: IMusic.IMusicItem[] = [];
+                                                for (let i = 0; i < musicDetails.length; i++) {
+                                                    const detail = musicDetails[i];
+                                                    if (!detail) continue;
+                                                    const downloadData = getInternalData<IMusic.IMusicItemInternalData>(detail, "downloadData");
+                                                    if (!downloadData?.path) continue;
+                                                    const fileExists = await fsUtil.isFile(downloadData.path).catch(() => false);
+                                                    if (fileExists) {
+                                                        localMusicItems.push({
+                                                            ...detail,
+                                                            platform: localPluginName,
+                                                            $$localPath: downloadData.path,
+                                                        });
+                                                        toRemove.push(onlineMusic[i]);
+                                                    } else {
+                                                        const filename = window.path.basename(downloadData.path).toLowerCase();
+                                                        const localMatch = localMusicByFilename.get(filename);
+                                                        if (localMatch) {
+                                                            localMusicItems.push({
+                                                                ...localMatch,
+                                                            } as IMusic.IMusicItem & { $$localPath: string });
+                                                            toRemove.push(onlineMusic[i]);
+                                                        }
+                                                    }
+                                                }
+                                                if (localMusicItems.length === 0) {
+                                                    toast.info(t("side_bar.convert_to_local_no_match"));
+                                                    return;
+                                                }
+                                                const existingPaths = new Set(
+                                                    existingLocalMusic.map((it) => it?.$$localPath).filter(Boolean),
+                                                );
+                                                const newLocalItems = localMusicItems.filter(
+                                                    (it) => !existingPaths.has(it.$$localPath),
+                                                );
+                                                if (newLocalItems.length > 0) {
+                                                    await musicSheetDB.localMusicStore.bulkPut(newLocalItems);
+                                                    localMusicListStore.setValue([...existingLocalMusic, ...newLocalItems]);
+                                                }
+                                                await MusicSheet.frontend.removeMusicFromSheet(toRemove, item.id);
+                                                await MusicSheet.frontend.addMusicToSheet(localMusicItems, item.id);
+                                                toast.success(
+                                                    t("side_bar.convert_to_local_success", {
+                                                        count: localMusicItems.length,
+                                                    }),
                                                 );
                                             },
                                         },

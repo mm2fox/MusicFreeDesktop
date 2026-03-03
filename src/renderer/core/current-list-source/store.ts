@@ -1,7 +1,7 @@
 import Store from "@/common/store";
 
 export interface ICurrentListSource {
-    type: "search" | "local-music" | "music-sheet" | "download" | "recently-play";
+    type: "search" | "local-music" | "music-sheet" | "download" | "recently-play" | "invalid-downloads";
     path: string;
     title?: string;
 }

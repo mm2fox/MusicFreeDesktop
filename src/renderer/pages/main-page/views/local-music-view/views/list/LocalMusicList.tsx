@@ -45,6 +45,22 @@ function showLocalMusicContextMenu(
     const isArray = Array.isArray(musicItems);
     const menuItems: IContextMenuItem[] = [];
 
+    menuItems.push(
+        {
+            title: i18n.t("music_list_context_menu.tag_management"),
+            icon: "tag",
+            onClick() {
+                showModal("CustomTagsEditor", { 
+                    musicItem: isArray ? musicItems[0] : musicItems,
+                    musicItems: isArray ? musicItems : [musicItems],
+                });
+            },
+        },
+        {
+            divider: true,
+        },
+    );
+
     if (!isArray) {
         menuItems.push(
             {
@@ -95,24 +111,14 @@ function showLocalMusicContextMenu(
             },
         },
         {
+            divider: true,
+        },
+        {
             title: `${i18n.t("music_list_context_menu.edit_tags")} (Alt+E)`,
             icon: "tag",
             show: !isArray,
             onClick() {
                 showModal("TagEditor", { musicItem: musicItems as IMusic.IMusicItem });
-            },
-        },
-        {
-            divider: true,
-        },
-        {
-            title: i18n.t("custom_tags.manage_tags"),
-            icon: "tag",
-            onClick() {
-                showModal("CustomTagsEditor", { 
-                    musicItem: isArray ? musicItems[0] : musicItems,
-                    musicItems: isArray ? musicItems : [musicItems],
-                });
             },
         },
         {
@@ -172,6 +178,9 @@ function showLocalMusicContextMenu(
             },
         },
         {
+            divider: true,
+        },
+        {
             title: i18n.t("music_list_context_menu.reveal_local_music_in_file_explorer"),
             icon: "folder-open",
             show: !isArray,
@@ -192,6 +201,75 @@ function showLocalMusicContextMenu(
                         `${i18n.t("music_list_context_menu.reveal_local_music_in_file_explorer_fail")} ${e?.message ?? ""}`,
                     );
                 }
+            },
+        },
+        {
+            title: i18n.t("music_list_context_menu.rename_local_file"),
+            icon: "pencil-square",
+            show: !isArray,
+            onClick() {
+                const musicItem = musicItems as IMusic.IMusicItem;
+                const filePath = (musicItem as any).$$localPath || (musicItem as any).localPath;
+                if (!filePath) {
+                    toast.error(i18n.t("music_list_context_menu.rename_local_file_failed"));
+                    return;
+                }
+
+                const fileName = window.path.basename(filePath);
+                const ext = window.path.extname(fileName);
+                const baseName = window.path.basename(fileName, ext);
+                const dirPath = window.path.dirname(filePath);
+
+                showModal("SimpleInputWithState", {
+                    title: i18n.t("music_list_context_menu.rename_local_file_title"),
+                    defaultValue: baseName,
+                    placeholder: i18n.t("music_list_context_menu.rename_local_file_title"),
+                    okText: i18n.t("common.confirm"),
+                    withLoading: true,
+                    loadingText: i18n.t("common.loading"),
+                    onOk: async (newName: string) => {
+                        if (!newName || newName.trim() === "") {
+                            toast.error(i18n.t("music_list_context_menu.rename_local_file_empty"));
+                            return Promise.reject();
+                        }
+
+                        const newFileName = newName.trim() + ext;
+                        const newFilePath = window.path.join(dirPath, newFileName);
+
+                        try {
+                            const fs = (window as any)["@shared/utils"].fs;
+                            await fs.renameFile(filePath, newFilePath);
+
+                            await musicSheetDB.localMusicStore.update(
+                                [musicItem.platform, musicItem.id],
+                                {
+                                    $$localPath: newFilePath,
+                                    title: newName.trim(),
+                                },
+                            );
+
+                            const currentList = localMusicListStore.getValue();
+                            const updatedList = currentList.map(item => {
+                                if (item.id === musicItem.id && item.platform === musicItem.platform) {
+                                    return {
+                                        ...item,
+                                        $$localPath: newFilePath,
+                                        title: newName.trim(),
+                                    };
+                                }
+                                return item;
+                            });
+                            localMusicListStore.setValue(updatedList);
+
+                            toast.success(i18n.t("music_list_context_menu.rename_local_file_success", { newName: newFileName }));
+                            hideModal();
+                        } catch (e) {
+                            console.error("[RenameLocalFile] Error:", e);
+                            toast.error(i18n.t("music_list_context_menu.rename_local_file_failed"));
+                            return Promise.reject(e);
+                        }
+                    },
+                });
             },
         },
         {
