@@ -151,10 +151,16 @@
     "has_lyrics": "有歌词",
     "no_lyrics": "无歌词",
     "selected_count": "已选中 {{count}} 首",
+    "artist_length": "作者长度",
     "manual_scan": "手动扫描",
     "manual_scanning": "扫描中...",
     "format_convert": "格式转换",
-    "tag_sheet_convert": "标签/歌单转换"
+    "tag_sheet_convert": "标签/歌单转换",
+    "auto_tag": "自动标签",
+    "auto_tagging": "自动标签中...",
+    "auto_tag_complete": "自动标签完成，成功 {{success}}/{{total}} 首",
+    "auto_tag_failed": "自动标签失败",
+    "no_music_to_auto_tag": "没有需要自动标签的音乐"
   },
   "music_list_context_menu": {
     "next_play": "下一首播放",

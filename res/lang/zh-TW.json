@@ -154,9 +154,15 @@
     "folder_view": "文件夾視圖",
     "tag_view": "標籤視圖",
     "total_music_num": "共 {{number}} 首歌曲",
+    "artist_length": "作者長度",
     "manual_scan": "手動掃描",
     "manual_scanning": "掃描中...",
-    "tag_sheet_convert": "標籤/歌單轉換"
+    "tag_sheet_convert": "標籤/歌單轉換",
+    "auto_tag": "自動標籤",
+    "auto_tagging": "自動標籤中...",
+    "auto_tag_complete": "自動標籤完成，成功 {{success}}/{{total}} 首",
+    "auto_tag_failed": "自動標籤失敗",
+    "no_music_to_auto_tag": "沒有需要自動標籤的音樂"
   },
 
   "music_list_context_menu": {

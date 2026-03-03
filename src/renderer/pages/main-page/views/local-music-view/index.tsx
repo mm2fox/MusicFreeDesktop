@@ -15,6 +15,7 @@ import AppConfig from "@shared/app-config/renderer";
 import { toast } from "react-toastify";
 import musicSheetDB from "@/renderer/core/db/music-sheet-db";
 import localMusic from "@/renderer/core/local-music";
+import { autoTagFromArtist } from "@/renderer/core/local-music/custom-tags";
 
 enum DisplayView {
     LIST,
@@ -191,6 +192,34 @@ export default function LocalMusicView() {
         });
     };
 
+    const [autoTagging, setAutoTagging] = useState(false);
+
+    const handleAutoTag = async () => {
+        if (autoTagging) return;
+        
+        const musicList = localMusicListStore.getValue();
+        if (musicList.length === 0) {
+            toast.info(t("local_music_page.no_music_to_auto_tag"));
+            return;
+        }
+
+        setAutoTagging(true);
+        toast.info(t("local_music_page.auto_tagging"));
+
+        try {
+            const result = await autoTagFromArtist(musicList);
+            toast.success(t("local_music_page.auto_tag_complete", { 
+                success: result.success, 
+                total: result.total,
+            }));
+        } catch (e) {
+            console.error("[AutoTag] Error:", e);
+            toast.error(t("local_music_page.auto_tag_failed"));
+        } finally {
+            setAutoTagging(false);
+        }
+    };
+
     return (
         <div
             id="page-container"
@@ -259,6 +288,14 @@ export default function LocalMusicView() {
                     }}
                 >
                     {t("local_music_page.tag_sheet_convert")}
+                </div>
+                <div
+                    data-type="normalButton"
+                    role="button"
+                    onClick={handleAutoTag}
+                    data-disabled={autoTagging}
+                >
+                    {autoTagging ? t("local_music_page.auto_tagging") : t("local_music_page.auto_tag")}
                 </div>
                 <div className="operations-layout">
                     <input

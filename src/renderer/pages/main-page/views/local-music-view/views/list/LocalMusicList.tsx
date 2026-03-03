@@ -371,6 +371,21 @@ function _LocalMusicList(props: ILocalMusicListProps) {
             // @ts-ignore
             fr: 2,
         }),
+        columnHelper.accessor(
+            (row) => {
+                const artist = row.artist || "";
+                return artist.length;
+            },
+            {
+                id: "artistLength",
+                header: () => i18n.t("local_music_page.artist_length"),
+                size: 50,
+                minSize: 40,
+                maxSize: 80,
+                cell: (info) => <span>{info.getValue()}</span>,
+                enableSorting: true,
+            },
+        ),
         columnHelper.accessor("album", {
             header: () => i18n.t("media.media_type_album"),
             size: 120,
@@ -504,10 +519,15 @@ function _LocalMusicList(props: ILocalMusicListProps) {
     }, [locateMusic, localMusicList]);
 
     const activeItemsRef = useRef(activeItems);
+    const tableRef = useRef(table);
     
     useEffect(() => {
         activeItemsRef.current = activeItems;
     }, [activeItems]);
+
+    useEffect(() => {
+        tableRef.current = table;
+    }, [table]);
     
     useEffect(() => {
         const ctrlAHandler = (evt: Event) => {
@@ -519,9 +539,10 @@ function _LocalMusicList(props: ILocalMusicListProps) {
             evt.preventDefault();
             if (activeItemsRef.current.size === 1) {
                 const selectedIndex = Array.from(activeItemsRef.current)[0];
-                const selectedItem = musicListRef.current[selectedIndex];
-                if (selectedItem) {
-                    showModal("TagEditor", { musicItem: selectedItem });
+                const rows = tableRef.current.getRowModel().rows;
+                const selectedRow = rows[selectedIndex];
+                if (selectedRow?.original) {
+                    showModal("TagEditor", { musicItem: selectedRow.original });
                 }
             }
         };

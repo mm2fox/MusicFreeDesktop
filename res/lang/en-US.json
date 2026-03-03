@@ -163,10 +163,16 @@
     "has_lyrics": "Has Lyrics",
     "no_lyrics": "No Lyrics",
     "selected_count": "{{count}} selected",
+    "artist_length": "Artist Length",
     "manual_scan": "Manual Scan",
     "manual_scanning": "Scanning...",
     "format_convert": "Format Convert",
-    "tag_sheet_convert": "Tag/Sheet Convert"
+    "tag_sheet_convert": "Tag/Sheet Convert",
+    "auto_tag": "Auto Tag",
+    "auto_tagging": "Auto Tagging...",
+    "auto_tag_complete": "Auto tag complete, {{success}}/{{total}} succeeded",
+    "auto_tag_failed": "Auto tag failed",
+    "no_music_to_auto_tag": "No music to auto tag"
   },
 
   "music_list_context_menu": {

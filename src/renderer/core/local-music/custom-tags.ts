@@ -162,3 +162,57 @@ export function initCustomTagsStore() {
 }
 
 export { allCustomTagsStore };
+
+export async function autoTagFromArtist(musicItems: IMusic.IMusicItem[]): Promise<{ success: number; total: number }> {
+    let successCount = 0;
+    const total = musicItems.length;
+    
+    for (const item of musicItems) {
+        if (!item.artist) continue;
+        
+        const artistStr = item.artist.trim();
+        if (!artistStr) continue;
+        
+        const artists = artistStr
+            .split(/[,，、\/\\&]/)
+            .map(a => a.trim())
+            .filter(a => a.length > 0);
+        
+        if (artists.length === 0) continue;
+        
+        const currentTags = getMusicTags(item);
+        const newTagsSet = new Set(currentTags);
+        
+        artists.forEach(artist => newTagsSet.add(artist));
+        
+        if (artists.length > 1) {
+            newTagsSet.add("合唱");
+        }
+        
+        const newTags = Array.from(newTagsSet);
+        
+        try {
+            await musicSheetDB.localMusicStore.update(
+                [item.platform, item.id],
+                { $$customTags: newTags },
+            );
+            
+            const currentList = localMusicListStore.getValue();
+            const updatedList = currentList.map(music => {
+                if (music.id === item.id && music.platform === item.platform) {
+                    return { ...music, $$customTags: newTags };
+                }
+                return music;
+            });
+            localMusicListStore.setValue(updatedList);
+            
+            successCount++;
+        } catch (e) {
+            console.error("[CustomTags] Failed to auto tag:", e);
+        }
+    }
+    
+    updateAllTagsStore();
+    
+    return { success: successCount, total };
+}
