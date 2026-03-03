@@ -28,6 +28,8 @@ import { shellUtil, fsUtil } from "@shared/utils/renderer";
 import { locateMusicStore } from "@/renderer/components/MusicSheetlikeView/store";
 import { navigateTo } from "@/renderer/utils/navigate";
 import { getMusicTags, useAllCustomTags } from "@/renderer/core/local-music/custom-tags";
+import { getInternalData, setInternalData } from "@/common/media-util";
+import { internalDataKey } from "@/common/constant";
 
 interface ILocalMusicListProps {
     localMusicList: IMusic.IMusicItem[];
@@ -260,6 +262,24 @@ function showLocalMusicContextMenu(
                                 return item;
                             });
                             localMusicListStore.setValue(updatedList);
+
+                            const allMusic = await musicSheetDB.musicStore.toArray();
+                            for (const item of allMusic) {
+                                const downloadData = getInternalData<IMusic.IMusicItemInternalData>(item, "downloadData");
+                                if (downloadData?.path === filePath) {
+                                    const updatedItem = setInternalData<IMusic.IMusicItemInternalData>(
+                                        item,
+                                        "downloadData",
+                                        { ...downloadData, path: newFilePath },
+                                        true
+                                    );
+                                    await musicSheetDB.musicStore.update(
+                                        [item.platform, item.id],
+                                        { [internalDataKey]: updatedItem[internalDataKey] }
+                                    );
+                                    break;
+                                }
+                            }
 
                             toast.success(i18n.t("music_list_context_menu.rename_local_file_success", { newName: newFileName }));
                             hideModal();

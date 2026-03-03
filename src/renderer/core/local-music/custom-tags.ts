@@ -167,6 +167,8 @@ export async function autoTagFromArtist(musicItems: IMusic.IMusicItem[]): Promis
     let successCount = 0;
     const total = musicItems.length;
     
+    const updates: Array<{ platform: string; id: string; tags: string[] }> = [];
+    
     for (const item of musicItems) {
         if (!item.artist) continue;
         
@@ -183,33 +185,41 @@ export async function autoTagFromArtist(musicItems: IMusic.IMusicItem[]): Promis
         const currentTags = getMusicTags(item);
         const newTagsSet = new Set(currentTags);
         
-        artists.forEach(artist => newTagsSet.add(artist));
-        
         if (artists.length > 1) {
             newTagsSet.add("合唱");
         }
         
         const newTags = Array.from(newTagsSet);
-        
-        try {
-            await musicSheetDB.localMusicStore.update(
-                [item.platform, item.id],
-                { $$customTags: newTags },
-            );
+        updates.push({ platform: item.platform, id: item.id, tags: newTags });
+    }
+    
+    if (updates.length > 0) {
+        const batchSize = 50;
+        for (let i = 0; i < updates.length; i += batchSize) {
+            const batch = updates.slice(i, i + batchSize);
             
-            const currentList = localMusicListStore.getValue();
-            const updatedList = currentList.map(music => {
-                if (music.id === item.id && music.platform === item.platform) {
-                    return { ...music, $$customTags: newTags };
+            for (const update of batch) {
+                try {
+                    await musicSheetDB.localMusicStore.update(
+                        [update.platform, update.id],
+                        { $$customTags: update.tags }
+                    );
+                    successCount++;
+                } catch (e) {
+                    console.error("[CustomTags] Failed to update tag:", e);
                 }
-                return music;
-            });
-            localMusicListStore.setValue(updatedList);
-            
-            successCount++;
-        } catch (e) {
-            console.error("[CustomTags] Failed to auto tag:", e);
+            }
         }
+        
+        const currentList = localMusicListStore.getValue();
+        const updatedList = currentList.map(music => {
+            const update = updates.find(u => u.id === music.id && u.platform === music.platform);
+            if (update) {
+                return { ...music, $$customTags: update.tags };
+            }
+            return music;
+        });
+        localMusicListStore.setValue(updatedList);
     }
     
     updateAllTagsStore();
