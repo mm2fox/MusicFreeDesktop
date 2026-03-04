@@ -61,15 +61,15 @@ async function processFileQueue() {
         }
 
         if (pendingFiles.length > 0) {
-            const BATCH_SIZE = 20;
+            const BATCH_SIZE = 50;
 
             while (pendingFiles.length > 0) {
                 const batch = pendingFiles.splice(0, BATCH_SIZE);
                 const addedMusicItems: IMusic.IMusicItem[] = [];
 
-                for (const fp of batch) {
+                const parsePromises = batch.map(async (fp) => {
                     if (processedFiles.has(fp)) {
-                        continue;
+                        return null;
                     }
 
                     try {
@@ -83,10 +83,18 @@ async function processFileQueue() {
                                 quality: "standard",
                             },
                         );
-                        addedMusicItems.push(musicItem);
                         addToProcessedFiles(fp);
+                        return musicItem;
                     } catch (e) {
                         console.error("[LocalFileWatcher] Failed to parse:", fp, e);
+                        return null;
+                    }
+                });
+
+                const results = await Promise.all(parsePromises);
+                for (const musicItem of results) {
+                    if (musicItem) {
+                        addedMusicItems.push(musicItem);
                     }
                 }
 
@@ -95,7 +103,7 @@ async function processFileQueue() {
                 }
 
                 if (pendingFiles.length > 0) {
-                    await new Promise(resolve => setTimeout(resolve, 0));
+                    await new Promise(resolve => setTimeout(resolve, 10));
                 }
             }
         }

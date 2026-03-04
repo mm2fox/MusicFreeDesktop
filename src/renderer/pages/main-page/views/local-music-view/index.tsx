@@ -147,6 +147,7 @@ export default function LocalMusicView() {
                         if (tagResult.tags.artist) updatesForItem.artist = tagResult.tags.artist;
                         if (tagResult.tags.album) updatesForItem.album = tagResult.tags.album;
                         if (tagResult.tags.lyrics) updatesForItem.rawLrc = tagResult.tags.lyrics;
+                        if (tagResult.tags.duration) updatesForItem.duration = tagResult.tags.duration;
                         if (includeArtwork && tagResult.tags.artwork) {
                             updatesForItem.artwork = tagResult.tags.artwork;
                         }

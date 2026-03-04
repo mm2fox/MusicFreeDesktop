@@ -154,6 +154,7 @@
     "artist_length": "作者长度",
     "manual_scan": "手动扫描",
     "manual_scanning": "扫描中...",
+    "rescan": "扫描完成",
     "format_convert": "格式转换",
     "tag_sheet_convert": "标签/歌单转换",
     "auto_tag": "自动标签",

@@ -316,6 +316,7 @@ async function rescanLocalMusic() {
         await localFileWatcherWorker.resetProcessedFiles();
         await localFileWatcherWorker.rescan();
         await localFileWatcherWorker.flush();
+        await reloadLocalMusic();
     }
 }
 

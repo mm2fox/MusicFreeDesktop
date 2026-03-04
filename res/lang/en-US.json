@@ -166,6 +166,7 @@
     "artist_length": "Artist Length",
     "manual_scan": "Manual Scan",
     "manual_scanning": "Scanning...",
+    "rescan": "Scan complete",
     "format_convert": "Format Convert",
     "tag_sheet_convert": "Tag/Sheet Convert",
     "auto_tag": "Auto Tag",
