@@ -53,8 +53,12 @@ class XiaoaiController extends ControllerBase implements IAudioController {
     }
 
     async play(): Promise<void> {
+        logger.logInfo("XiaoaiController.play() 被调用");
+        
         // 重新从用户偏好设置获取设备 ID，确保使用的是最新选择的设备
         this._deviceId = getUserPreference("xiaoaiDeviceId");
+
+        logger.logInfo(`设备ID: ${this._deviceId}, hasSource: ${this.hasSource}, currentUrl: ${this._currentUrl}`);
 
         if (!this.hasSource || !this._deviceId) {
             logger.logError("无法播放：没有音源或设备 ID", new Error(`hasSource: ${this.hasSource}, deviceId: ${this._deviceId}`));
@@ -71,6 +75,8 @@ class XiaoaiController extends ControllerBase implements IAudioController {
                 duration: this._duration,
             });
 
+            logger.logInfo(`播放结果: ${success}`);
+            
             if (success) {
                 this.playerState = PlayerState.Playing;
                 this._startProgressTimer();
@@ -84,16 +90,50 @@ class XiaoaiController extends ControllerBase implements IAudioController {
     }
 
     async pause(): Promise<void> {
+        logger.logInfo("XiaoaiController.pause() 被调用");
+        
+        this._deviceId = getUserPreference("xiaoaiDeviceId");
+        
         if (!this._deviceId) {
+            logger.logError("无法暂停：没有设备 ID", new Error("No deviceId"));
             return;
         }
 
         try {
-            await XiaoaiService.pause(this._deviceId);
-            this.playerState = PlayerState.Paused;
-            this._stopProgressTimer();
+            logger.logInfo(`发送暂停命令到设备: ${this._deviceId}`);
+            const success = await XiaoaiService.pause(this._deviceId);
+            logger.logInfo(`暂停结果: ${success}`);
+            
+            if (success) {
+                this.playerState = PlayerState.Paused;
+                this._stopProgressTimer();
+            }
         } catch (error) {
             logger.logError("小米音箱暂停失败", error);
+        }
+    }
+
+    async resume(): Promise<void> {
+        logger.logInfo("XiaoaiController.resume() 被调用");
+        
+        this._deviceId = getUserPreference("xiaoaiDeviceId");
+        
+        if (!this._deviceId) {
+            logger.logError("无法恢复：没有设备 ID", new Error("No deviceId"));
+            return;
+        }
+
+        try {
+            logger.logInfo(`发送恢复命令到设备: ${this._deviceId}`);
+            const success = await XiaoaiService.resume(this._deviceId);
+            logger.logInfo(`恢复结果: ${success}`);
+            
+            if (success) {
+                this.playerState = PlayerState.Playing;
+                this._startProgressTimer();
+            }
+        } catch (error) {
+            logger.logError("小米音箱恢复播放失败", error);
         }
     }
 
@@ -107,26 +147,10 @@ class XiaoaiController extends ControllerBase implements IAudioController {
     }
 
     async seekTo(seconds: number): Promise<void> {
-        if (!this._deviceId || !this._currentUrl) {
-            return;
-        }
-
-        try {
-            this._currentTime = seconds;
-            await XiaoaiService.play(this._deviceId, {
-                url: this._currentUrl,
-                title: this._musicItem?.title,
-                artist: this._musicItem?.artist,
-                album: this._musicItem?.album,
-                duration: this._duration,
-            });
-            this.onProgressUpdate?.({
-                currentTime: seconds,
-                duration: this._duration,
-            });
-        } catch (error) {
-            logger.logError("小米音箱跳转失败", error);
-        }
+        logger.logInfo(`XiaoaiController.seekTo(${seconds}) 被调用`);
+        
+        // 小米音箱不支持跳转，这是硬件限制
+        logger.logInfo("小米音箱不支持跳转功能");
     }
 
     setLoop(_isLoop: boolean): void {

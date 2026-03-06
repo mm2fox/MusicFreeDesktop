@@ -170,6 +170,7 @@ class TrackPlayer {
 
 
     private createAudioController(controllerType: "audio" | "xiaoai" = "audio") {
+        logger.logInfo(`createAudioController: ${controllerType}`);
         let audioController: IAudioController;
 
         if (controllerType === "xiaoai") {
@@ -246,7 +247,8 @@ class TrackPlayer {
         const deviceId = AppConfig.getConfig("playMusic.audioOutputDevice")?.deviceId;
 
         // 2. init audio controller
-        this.createAudioController();
+        // 注意：初始化时始终使用本地播放，小米音箱模式会在设置页面登录后自动切换
+        this.createAudioController("audio");
         this.setupEvents();
 
         // 3. resume state
@@ -264,8 +266,15 @@ class TrackPlayer {
             this.setAudioOutputDevice(deviceId);
         }
 
+        // 获取默认音量设置
+        const defaultVolumeConfig = AppConfig.getConfig("playMusic.defaultVolume");
+        const defaultVolume = defaultVolumeConfig ? parseFloat(defaultVolumeConfig) : 0.5;
+        
         if (volume !== null && volume !== undefined) {
             this.setVolume(volume);
+        } else {
+            // 如果没有保存的音量，使用默认音量
+            this.setVolume(defaultVolume);
         }
 
         if (speed) {
@@ -500,10 +509,12 @@ class TrackPlayer {
     }
 
     public seekTo(seconds: number) {
+        logger.logInfo(`trackPlayer.seekTo(${seconds}) 被调用, audioController 类型: ${this.audioController.constructor.name}`);
         this.audioController.seekTo(seconds);
     }
 
     public pause() {
+        logger.logInfo(`trackPlayer.pause() 被调用, audioController 类型: ${this.audioController.constructor.name}`);
         this.audioController.pause();
         if (this.playerState !== this.audioController.playerState) {
             this.setPlayerState(this.audioController.playerState);
@@ -511,6 +522,7 @@ class TrackPlayer {
     }
 
     public resume() {
+        logger.logInfo(`trackPlayer.resume() 被调用, audioController 类型: ${this.audioController.constructor.name}`);
         this.audioController.play();
 
         if (this.playerState !== this.audioController.playerState) {
@@ -664,28 +676,58 @@ class TrackPlayer {
     }
 
     public async setOutputController(controllerType: "audio" | "xiaoai") {
+        logger.logInfo(`setOutputController: ${controllerType}`);
+        
         const currentMusic = this.currentMusic;
         const currentProgress = this.progress.currentTime;
-        const currentVolume = this.volume;
         const currentSpeed = this.speed;
+        const wasPlaying = this.playerState === PlayerState.Playing
+
+        logger.logInfo(`当前状态: currentMusic=${JSON.stringify(currentMusic)}, wasPlaying=${wasPlaying}, progress=${currentProgress}`);
 
         this.audioController.destroy();
         this.createAudioController(controllerType);
 
-        if (currentMusic) {
-            this.audioController.prepareTrack(currentMusic);
+        // 获取默认音量设置
+        const defaultVolumeConfig = AppConfig.getConfig("playMusic.defaultVolume");
+        const defaultVolume = defaultVolumeConfig ? parseFloat(defaultVolumeConfig) : 0.5;
+        
+        // 如果切换到小爱音箱，设置默认音量
+        if (controllerType === "xiaoai") {
+            logger.logInfo(`设置小爱音箱默认音量: ${defaultVolume * 100}%`);
+            this.audioController.setVolume(defaultVolume);
+            this._volume = defaultVolume;
+        } else if (this._volume) {
+            // 切换到本地播放时，恢复之前的音量
+            this.audioController.setVolume(this._volume);
         }
 
-        if (currentVolume) {
-            this.audioController.setVolume(currentVolume);
+        if (currentMusic) {
+            this.audioController.prepareTrack(currentMusic);
+            
+            try {
+                logger.logInfo("获取音源中...");
+                const { mediaSource, quality } = await this.fetchMediaSource(currentMusic);
+                logger.logInfo(`音源获取结果: url=${mediaSource?.url}`);
+                if (this.isCurrentMusic(currentMusic) && mediaSource.url) {
+                    this.audioController.setTrackSource(mediaSource, currentMusic);
+                    this.setCurrentQuality(quality);
+                    if (currentProgress && controllerType === "audio") {
+                        // 只有本地播放才支持跳转
+                        this.audioController.seekTo(currentProgress);
+                    }
+                    if (wasPlaying) {
+                        logger.logInfo("自动开始播放");
+                        this.audioController.play();
+                    }
+                }
+            } catch (e) {
+                logger.logError(`切换到${controllerType === "xiaoai" ? "小米音箱" : "本地播放"}时获取音源失败`, e as Error);
+            }
         }
 
         if (currentSpeed) {
             this.audioController.setSpeed(currentSpeed);
-        }
-
-        if (controllerType === "xiaoai" && currentProgress) {
-            this.audioController.seekTo(currentProgress);
         }
     }
 

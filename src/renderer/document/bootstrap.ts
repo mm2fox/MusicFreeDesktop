@@ -188,6 +188,13 @@ function setupCommandAndEvents() {
         appWindowUtil.toggleMainWindowVisible();
     });
 
+    messageBus.onCommand("ToggleAlwaysOnTop", () => {
+        const alwaysOnTop = AppConfig.getConfig("normal.alwaysOnTop");
+        AppConfig.setConfig({
+            "normal.alwaysOnTop": !alwaysOnTop,
+        });
+    });
+
 
     const sendAppStateTo = (from: "main" | number) => {
         const appState: IAppState = {

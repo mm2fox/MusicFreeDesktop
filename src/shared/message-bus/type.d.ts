@@ -39,6 +39,8 @@ export interface ICommand {
   OpenMusicDetailPage: void;
   /** 切换主窗口显示 */
   ToggleMainWindowVisible: void;
+  /** 切换窗口置顶 */
+  ToggleAlwaysOnTop: void;
 }
 
 // 内部使用的消息

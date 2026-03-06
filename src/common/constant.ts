@@ -89,6 +89,7 @@ export const shortCutKeys: IShortCutKeys[] = [
     "toggle-desktop-lyric",
     "like/dislike",
     "toggle-main-window-visible",
+    "toggle-always-on-top",
 ];
 
 // 快捷键列表对应的指令
@@ -102,6 +103,7 @@ export const shortCutKeysCommands: Record<IShortCutKeys, keyof ICommand> =
     "toggle-desktop-lyric": "ToggleDesktopLyric",
     "like/dislike": "ToggleFavorite",
     "toggle-main-window-visible": "ToggleMainWindowVisible",
+    "toggle-always-on-top": "ToggleAlwaysOnTop",
 };
 
 // 主进程的Resource

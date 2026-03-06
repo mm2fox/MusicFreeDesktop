@@ -7,6 +7,7 @@ interface _IAppConfig {
     "normal.taskbarThumb": "window" | "artwork";
     "normal.musicListColumnsShown": Array<"duration" | "platform">;
     "normal.language": string;
+    "normal.alwaysOnTop": boolean;
 
     /** 歌单内搜索区分大小写 */
     "playMusic.caseSensitiveInSearch": boolean;
@@ -20,6 +21,8 @@ interface _IAppConfig {
     "playMusic.playError": "pause" | "skip";
     /** 输出设备 */
     "playMusic.audioOutputDevice": MediaDeviceInfo | null;
+    /** 默认音量 */
+    "playMusic.defaultVolume": "0.3" | "0.5" | "0.7" | "1";
     /** 设备变化时 */
     "playMusic.whenDeviceRemoved": "pause" | "play";
 
@@ -52,8 +55,9 @@ interface _IAppConfig {
         | "toggle-desktop-lyric"
         | "volume-up"
         | "volume-down"
-        | "like/dislike",
-        | "toggle-main-window-visible",
+        | "like/dislike"
+        | "toggle-main-window-visible"
+        | "toggle-always-on-top",
         {
             local?: string[] | null;
             global?: string[] | null;

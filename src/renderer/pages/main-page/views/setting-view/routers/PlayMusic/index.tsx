@@ -18,53 +18,35 @@ export default function PlayMusic() {
 
     const [xiaoaiUsername, setXiaoaiUsername] = useState("");
     const [xiaoaiPassword, setXiaoaiPassword] = useState("");
-    const [xiaoaiServerUrl, setXiaoaiServerUrl] = useState("http://192.168.31.29:8090");
     const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [devices, setDevices] = useState<IXiaoaiDevice[]>([]);
     const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [useXiaoai, setUseXiaoai] = useState(false);
-    const [loginMode, setLoginMode] = useState<"direct" | "server">("direct");
-    const [deviceLanIps, setDeviceLanIps] = useState<Record<string, string>>({});
 
     useEffect(() => {
         const init = async () => {
             const savedDeviceId = getUserPreference("xiaoaiDeviceId");
+            const savedUseXiaoai = getUserPreference("useXiaoaiOutput");
+            
             if (savedDeviceId) {
                 setSelectedDeviceId(savedDeviceId);
-                setUseXiaoai(true);
             }
+            
+            // 恢复上次的输出模式UI 状态
+            setUseXiaoai(savedUseXiaoai === true);
 
             const savedUsername = getUserPreference("xiaoaiUsername") || "";
             const savedPassword = getUserPreference("xiaoaiPassword") || "";
-            const savedLoginMode = getUserPreference("xiaoaiLoginMode") || "direct";
-            const savedServerUrl = getUserPreference("xiaoaiServerUrl") || "http://192.168.31.29:8090";
-            const savedLanIps = getUserPreference("xiaoaiDeviceLanIps") || {};
 
             setXiaoaiUsername(savedUsername);
             setXiaoaiPassword(savedPassword);
-            setLoginMode(savedLoginMode);
-            setXiaoaiServerUrl(savedServerUrl);
-            setDeviceLanIps(savedLanIps);
 
+            // 检查登录状态（自动登录已在 App 组件中处理）
             const loggedIn = await XiaoaiService.isLoggedIn();
             if (loggedIn) {
                 setIsLoggedIn(true);
                 await loadDevices();
-            } else if (savedUsername && savedPassword) {
-                if (savedLoginMode === "direct") {
-                    const success = await XiaoaiService.login(savedUsername, savedPassword);
-                    if (success) {
-                        setIsLoggedIn(true);
-                        await loadDevices();
-                    }
-                } else if (savedLoginMode === "server" && savedServerUrl) {
-                    const success = await XiaoaiService.configure(savedServerUrl, "", "");
-                    if (success) {
-                        setIsLoggedIn(true);
-                        await loadDevices();
-                    }
-                }
             }
         };
         init();
@@ -83,14 +65,13 @@ export default function PlayMusic() {
         }
     };
 
-    const handleDirectLogin = async () => {
+    const handleLogin = async () => {
         try {
             setLoading(true);
             const success = await XiaoaiService.login(xiaoaiUsername, xiaoaiPassword);
             if (success) {
                 setUserPreference("xiaoaiUsername", xiaoaiUsername);
                 setUserPreference("xiaoaiPassword", xiaoaiPassword);
-                setUserPreference("xiaoaiLoginMode", "direct");
                 setIsLoggedIn(true);
                 await loadDevices();
             } else {
@@ -100,25 +81,6 @@ export default function PlayMusic() {
         } catch (_error) {
             alert("登录失败,请检查网络连接");
             setXiaoaiPassword("");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const handleServerLogin = async () => {
-        try {
-            setLoading(true);
-            const success = await XiaoaiService.configure(xiaoaiServerUrl, "", "");
-            if (success) {
-                setUserPreference("xiaoaiServerUrl", xiaoaiServerUrl);
-                setUserPreference("xiaoaiLoginMode", "server");
-                setIsLoggedIn(true);
-                await loadDevices();
-            } else {
-                alert("连接失败,请检查服务器地址是否正确");
-            }
-        } catch (_error) {
-            alert("连接失败,请检查网络连接");
         } finally {
             setLoading(false);
         }
@@ -150,28 +112,14 @@ export default function PlayMusic() {
     };
 
     const handleOutputModeChange = async (useXiaoaiMode: boolean) => {
+        // 保存输出模式设置
+        setUserPreference("useXiaoaiOutput", useXiaoaiMode);
+        
         setUseXiaoai(useXiaoaiMode);
         if (useXiaoaiMode) {
             await trackPlayer.setOutputController("xiaoai");
         } else {
             await trackPlayer.setOutputController("audio");
-        }
-    };
-
-    const handleLanIpChange = (deviceId: string, ip: string) => {
-        setDeviceLanIps(prev => ({
-            ...prev,
-            [deviceId]: ip,
-        }));
-    };
-
-    const saveLanIp = async (deviceId: string) => {
-        const ip = deviceLanIps[deviceId];
-        if (ip) {
-            await XiaoaiService.setDeviceLanIp(deviceId, ip);
-            const newLanIps = { ...deviceLanIps, [deviceId]: ip };
-            setUserPreference("xiaoaiDeviceLanIps", newLanIps);
-            alert(`已保存设备局域网 IP: ${ip}`);
         }
     };
 
@@ -252,87 +200,36 @@ export default function PlayMusic() {
             {useXiaoai && (
                 <>
                     {!isLoggedIn ? (
-                        <>
-                            <div className="setting-item">
-                                <div className="setting-item-label">登录方式</div>
-                                <div className="setting-item-content">
-                                    <div className="radio-group">
-                                        <label className="radio-item">
-                                            <input
-                                                type="radio"
-                                                checked={loginMode === "direct"}
-                                                onChange={() => setLoginMode("direct")}
-                                            />
-                                            <span>小米账号登录</span>
-                                        </label>
-                                        <label className="radio-item">
-                                            <input
-                                                type="radio"
-                                                checked={loginMode === "server"}
-                                                onChange={() => setLoginMode("server")}
-                                            />
-                                            <span>xiaomusic 服务器</span>
-                                        </label>
-                                    </div>
+                        <div className="setting-item">
+                            <div className="setting-item-label">小米账号登录</div>
+                            <div className="setting-item-content">
+                                <div className="xiaoai-login-form">
+                                    <input
+                                        type="text"
+                                        placeholder="小米账号"
+                                        value={xiaoaiUsername}
+                                        onChange={(e) => setXiaoaiUsername(e.target.value)}
+                                        className="input-field"
+                                        disabled={loading}
+                                    />
+                                    <input
+                                        type="password"
+                                        placeholder="密码"
+                                        value={xiaoaiPassword}
+                                        onChange={(e) => setXiaoaiPassword(e.target.value)}
+                                        className="input-field"
+                                        disabled={loading}
+                                    />
+                                    <button
+                                        onClick={handleLogin}
+                                        disabled={loading || !xiaoaiUsername || !xiaoaiPassword}
+                                        className="login-button"
+                                    >
+                                        {loading ? "登录中..." : "登录"}
+                                    </button>
                                 </div>
                             </div>
-
-                            {loginMode === "direct" ? (
-                                <div className="setting-item">
-                                    <div className="setting-item-label">小米账号登录</div>
-                                    <div className="setting-item-content">
-                                        <div className="xiaoai-login-form">
-                                            <input
-                                                type="text"
-                                                placeholder="小米账号"
-                                                value={xiaoaiUsername}
-                                                onChange={(e) => setXiaoaiUsername(e.target.value)}
-                                                className="input-field"
-                                                disabled={loading}
-                                            />
-                                            <input
-                                                type="password"
-                                                placeholder="密码"
-                                                value={xiaoaiPassword}
-                                                onChange={(e) => setXiaoaiPassword(e.target.value)}
-                                                className="input-field"
-                                                disabled={loading}
-                                            />
-                                            <button
-                                                onClick={handleDirectLogin}
-                                                disabled={loading || !xiaoaiUsername || !xiaoaiPassword}
-                                                className="login-button"
-                                            >
-                                                {loading ? "登录中..." : "登录"}
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="setting-item">
-                                    <div className="setting-item-label">xiaomusic 服务器配置</div>
-                                    <div className="setting-item-content">
-                                        <div className="xiaoai-login-form">
-                                            <input
-                                                type="text"
-                                                placeholder="服务器地址 (例如: http://192.168.31.29:8090)"
-                                                value={xiaoaiServerUrl}
-                                                onChange={(e) => setXiaoaiServerUrl(e.target.value)}
-                                                className="input-field"
-                                                disabled={loading}
-                                            />
-                                            <button
-                                                onClick={handleServerLogin}
-                                                disabled={loading || !xiaoaiServerUrl}
-                                                className="login-button"
-                                            >
-                                                {loading ? "连接中..." : "连接 xiaomusic"}
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                        </>
+                        </div>
                     ) : (
                         <>
                             <div className="setting-item">
@@ -372,27 +269,6 @@ export default function PlayMusic() {
                                                         {device.roomName && <span>{device.roomName}</span>}
                                                         {!device.isOnline && <span className="offline-badge">离线</span>}
                                                     </div>
-                                                    {selectedDeviceId === device.deviceID && (
-                                                        <div className="lan-ip-setting">
-                                                            <input
-                                                                type="text"
-                                                                placeholder="局域网 IP (如: 192.168.31.100)"
-                                                                value={deviceLanIps[device.deviceID] || ""}
-                                                                onChange={(e) => handleLanIpChange(device.deviceID, e.target.value)}
-                                                                onClick={(e) => e.stopPropagation()}
-                                                                className="lan-ip-input"
-                                                            />
-                                                            <button
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    saveLanIp(device.deviceID);
-                                                                }}
-                                                                className="save-ip-button"
-                                                            >
-                                                                保存
-                                                            </button>
-                                                        </div>
-                                                    )}
                                                 </div>
                                             ))}
                                         </div>
@@ -420,6 +296,12 @@ export default function PlayMusic() {
                 }}
                 options={audioDevices}
             ></ListBoxSettingItem>
+            <RadioGroupSettingItem
+                label={t("settings.play_music.default_volume")}
+                keyPath="playMusic.defaultVolume"
+                options={["0.3", "0.5", "0.7", "1"]}
+                renderItem={it => `${Math.round(parseFloat(it) * 100)}%`}
+            ></RadioGroupSettingItem>
             <RadioGroupSettingItem
                 label={t("settings.play_music.when_device_removed")}
                 keyPath="playMusic.whenDeviceRemoved"

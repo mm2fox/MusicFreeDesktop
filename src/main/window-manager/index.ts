@@ -220,6 +220,21 @@ class WindowManager implements IWindowManager {
         ThumbBarUtil.setThumbBarButtons(mainWindow, false);
         WindowManager.mainWindow = mainWindow;
 
+        // 初始化窗口置顶状态
+        const alwaysOnTop = AppConfig.getConfig("normal.alwaysOnTop");
+        mainWindow.setAlwaysOnTop(alwaysOnTop);
+
+        // 监听置顶配置变化
+        const onConfigUpdate = (patch: IAppConfig) => {
+            if (patch["normal.alwaysOnTop"] !== undefined) {
+                mainWindow.setAlwaysOnTop(patch["normal.alwaysOnTop"]);
+            }
+        };
+        AppConfig.onConfigUpdated(onConfigUpdate);
+        mainWindow.on("closed", () => {
+            AppConfig.offConfigUpdated(onConfigUpdate);
+        });
+
         // 6. 发出信号
         this.emit("WindowCreated", {
             windowName: "main",

@@ -365,7 +365,8 @@
       "search_engine": "Song Info Search Engine",
       "search_engine_baidu": "Baidu",
       "search_engine_bing": "Bing",
-      "local_music_auto_refresh": "Auto refresh UI when local files change"
+      "local_music_auto_refresh": "Auto refresh UI when local files change",
+      "always_on_top": "Always on Top"
     },
     "play_music": {
       "case_sensitive_in_search": "Case-sensitive search in playlist",
@@ -382,7 +383,8 @@
       "replace_playlist_with_musiclist": "Replace playback queue with current music list",
       "audio_output_device": "Audio output device",
       "when_device_removed": "When device is removed",
-      "continue_playing": "Continue playing"
+      "continue_playing": "Continue playing",
+      "default_volume": "Default Volume"
     },
     "download": {
       "download_folder": "Download Directory",
@@ -419,7 +421,8 @@
       "toggle-desktop-lyric": "Toggle Desktop Lyric",
       "like/dislike": "Like/Dislike Current Song",
       "no_short_cut": "None",
-      "toggle-main-window-visible": "Show/Hide Main Window"
+      "toggle-main-window-visible": "Show/Hide Main Window",
+      "toggle-always-on-top": "Toggle Always on Top"
     },
     "network": {
       "host": "Host",

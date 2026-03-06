@@ -346,7 +346,8 @@
       "search_engine": "歌曲信息搜索引擎",
       "search_engine_baidu": "百度",
       "search_engine_bing": "必应",
-      "local_music_auto_refresh": "本地文件变动时自动刷新界面"
+      "local_music_auto_refresh": "本地文件变动时自动刷新界面",
+      "always_on_top": "窗口置顶"
     },
     "play_music": {
       "case_sensitive_in_search": "歌单内搜索时区分大小写",
@@ -363,7 +364,8 @@
       "replace_playlist_with_musiclist": "使用当前音乐列表替换播放队列",
       "audio_output_device": "音频输出设备",
       "when_device_removed": "音频设备移除时",
-      "continue_playing": "继续播放"
+      "continue_playing": "继续播放",
+      "default_volume": "默认音量"
     },
     "download": {
       "download_folder": "下载目录",
@@ -400,7 +402,8 @@
       "toggle-desktop-lyric": "打开/关闭桌面歌词",
       "like/dislike": "喜欢/不喜欢当前歌曲",
       "no_short_cut": "空",
-      "toggle-main-window-visible": "显示/隐藏主窗口"
+      "toggle-main-window-visible": "显示/隐藏主窗口",
+      "toggle-always-on-top": "窗口置顶"
     },
     "network": {
       "host": "主机",

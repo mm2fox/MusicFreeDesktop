@@ -21,17 +21,17 @@ class XiaoaiService {
         }
     }
 
-    async configure(serverUrl: string, username: string, password: string): Promise<boolean> {
+    async autoLogin(username: string, password: string): Promise<boolean> {
         try {
             const xiaoai = getXiaoai();
             if (!xiaoai) {
                 logger.logError("xiaoai API 未初始化", new Error("xiaoai API not initialized"));
                 return false;
             }
-            const success = await xiaoai.configure(serverUrl, username, password);
+            const success = await xiaoai.autoLogin(username, password);
             return success;
         } catch (error) {
-            logger.logError("小米音箱配置失败", error as Error);
+            logger.logError("小米音箱自动登录失败", error as Error);
             return false;
         }
     }
@@ -81,6 +81,21 @@ class XiaoaiService {
         }
     }
 
+    async resume(deviceId: string): Promise<boolean> {
+        try {
+            const xiaoai = getXiaoai();
+            if (!xiaoai) {
+                logger.logError("xiaoai API 未初始化", new Error("xiaoai API not initialized"));
+                return false;
+            }
+            const success = await xiaoai.resume(deviceId);
+            return success;
+        } catch (error) {
+            logger.logError("小米音箱恢复播放失败", error as Error);
+            return false;
+        }
+    }
+
     async stop(deviceId: string): Promise<boolean> {
         try {
             const xiaoai = getXiaoai();
@@ -92,6 +107,21 @@ class XiaoaiService {
             return success;
         } catch (error) {
             logger.logError("小米音箱停止失败", error as Error);
+            return false;
+        }
+    }
+
+    async seek(deviceId: string, position: number): Promise<boolean> {
+        try {
+            const xiaoai = getXiaoai();
+            if (!xiaoai) {
+                logger.logError("xiaoai API 未初始化", new Error("xiaoai API not initialized"));
+                return false;
+            }
+            const success = await xiaoai.seek(deviceId, position);
+            return success;
+        } catch (error) {
+            logger.logError("小米音箱跳转失败", error as Error);
             return false;
         }
     }
@@ -181,19 +211,6 @@ class XiaoaiService {
             await xiaoai.logout();
         } catch (error) {
             logger.logError("小米音箱登出失败", error as Error);
-        }
-    }
-
-    async setDeviceLanIp(deviceId: string, lanIp: string): Promise<void> {
-        try {
-            const xiaoai = getXiaoai();
-            if (!xiaoai) {
-                logger.logError("xiaoai API 未初始化", new Error("xiaoai API not initialized"));
-                return;
-            }
-            await xiaoai.setDeviceLanIp(deviceId, lanIp);
-        } catch (error) {
-            logger.logError("设置设备局域网 IP 失败", error as Error);
         }
     }
 }

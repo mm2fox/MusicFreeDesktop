@@ -23,14 +23,8 @@ declare namespace IUserPreference {
     xiaoaiUsername: string;
     /** 小米账号密码 */
     xiaoaiPassword: string;
-    /** 小米登录模式 */
-    xiaoaiLoginMode: "direct" | "server";
-    /** xiaomusic 服务器地址 */
-    xiaoaiServerUrl: string;
     /** 小米设备ID */
     xiaoaiDeviceId: string;
-    /** 小米设备局域网IP映射 */
-    xiaoaiDeviceLanIps: Record<string, string>;
   }
 
   interface IDBType {

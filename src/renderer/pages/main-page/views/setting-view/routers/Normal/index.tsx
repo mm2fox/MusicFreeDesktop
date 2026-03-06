@@ -108,6 +108,10 @@ export default function Normal() {
                 label={t("settings.normal.local_music_auto_refresh")}
                 keyPath="localMusic.autoRefreshOnFileChange"
             ></CheckBoxSettingItem>
+            <CheckBoxSettingItem
+                label={t("settings.normal.always_on_top")}
+                keyPath="normal.alwaysOnTop"
+            ></CheckBoxSettingItem>
         </div>
     );
 }

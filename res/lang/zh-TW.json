@@ -354,7 +354,8 @@
       "search_engine": "歌曲資訊搜尋引擎",
       "search_engine_baidu": "百度",
       "search_engine_bing": "必應",
-      "local_music_auto_refresh": "本地文件變動時自動刷新界面"
+      "local_music_auto_refresh": "本地文件變動時自動刷新界面",
+      "always_on_top": "視窗置頂"
     },
     "play_music": {
       "case_sensitive_in_search": "搜尋歌單時區分大小寫",
@@ -408,7 +409,8 @@
       "toggle-desktop-lyric": "開啟/關閉桌面歌詞",
       "like/dislike": "喜歡/不喜歡當前歌曲",
       "no_short_cut": "無",
-      "toggle-main-window-visible": "顯示/隱藏主窗口"
+      "toggle-main-window-visible": "顯示/隱藏主窗口",
+      "toggle-always-on-top": "視窗置頂"
     },
     "network": {
       "host": "主機",
