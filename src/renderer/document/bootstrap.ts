@@ -1,9 +1,10 @@
-import { localPluginHash, PlayerState, RepeatMode, supportLocalMediaType } from "@/common/constant";
+import { DownloadState, localPluginHash, PlayerState, RepeatMode, supportLocalMediaType } from "@/common/constant";
 import MusicSheet from "../core/music-sheet";
 import trackPlayer from "../core/track-player";
 import localMusic from "../core/local-music";
 import { setAutoFreeze } from "immer";
 import Downloader from "../core/downloader";
+import { ee as downloadEe, DownloadEvts } from "../core/downloader/ee";
 import AppConfig from "@shared/app-config/renderer";
 import { setupI18n } from "@/shared/i18n/renderer";
 import ThemePack from "@/shared/themepack/renderer";
@@ -17,6 +18,7 @@ import throttle from "lodash.throttle";
 import { IAppState } from "@shared/message-bus/type";
 import MusicDetail from "@renderer/components/MusicDetail";
 import shortCut from "@shared/short-cut/renderer";
+import { isSameMedia } from "@/common/media-util";
 
 
 setAutoFreeze(false);
@@ -195,17 +197,26 @@ function setupCommandAndEvents() {
         });
     });
 
+    messageBus.onCommand("DownloadMusic", (item) => {
+        const realItem = item || trackPlayer.currentMusic;
+        if (realItem) {
+            Downloader.startDownload(realItem);
+        }
+    });
+
 
     const sendAppStateTo = (from: "main" | number) => {
+        const currentMusic = trackPlayer.currentMusicBasicInfo;
         const appState: IAppState = {
             repeatMode: trackPlayer.repeatMode || RepeatMode.Queue,
             playerState: trackPlayer.playerState || PlayerState.None,
-            musicItem: trackPlayer.currentMusicBasicInfo || null,
+            musicItem: currentMusic || null,
             lyricText: trackPlayer.lyric?.currentLrc?.lrc || null,
             parsedLrc: trackPlayer.lyric?.currentLrc || null,
             fullLyric: trackPlayer.lyric?.parser?.getLyricItems() || [],
             progress: trackPlayer.progress?.currentTime || 0,
             duration: trackPlayer.progress?.duration || 0,
+            downloadState: Downloader.getDownloadState(currentMusic),
         };
 
         messageBus.syncAppState(appState, from);
@@ -260,8 +271,32 @@ function setupCommandAndEvents() {
             parsedLrc: null,
             progress: 0,
             duration: 0,
+            downloadState: Downloader.getDownloadState(musicItem),
         });
         addToRecentlyPlaylist(musicItem);
+    });
+
+    // 下载状态变化同步
+    downloadEe.on(DownloadEvts.DownloadStatusUpdated, (musicItem: IMusic.IMusicItem) => {
+        const currentMusic = trackPlayer.currentMusicBasicInfo;
+        if (currentMusic && isSameMedia(musicItem, currentMusic)) {
+            messageBus.syncAppState({
+                downloadState: Downloader.getDownloadState(currentMusic),
+            });
+        }
+    });
+
+    downloadEe.on(DownloadEvts.Downloaded, (musicItems: IMusic.IMusicItem | IMusic.IMusicItem[]) => {
+        const currentMusic = trackPlayer.currentMusicBasicInfo;
+        if (currentMusic) {
+            const items = Array.isArray(musicItems) ? musicItems : [musicItems];
+            const matched = items.some(item => isSameMedia(item, currentMusic));
+            if (matched) {
+                messageBus.syncAppState({
+                    downloadState: DownloadState.DONE,
+                });
+            }
+        }
     });
 }
 

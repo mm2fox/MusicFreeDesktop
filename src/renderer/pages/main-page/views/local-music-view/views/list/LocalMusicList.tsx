@@ -2,7 +2,7 @@ import { ColumnDef, createColumnHelper, flexRender, getCoreRowModel, getSortedRo
 import { useEffect, useState, useRef, memo, useCallback } from "react";
 import { i18n } from "@/shared/i18n/renderer";
 import { secondsToDuration } from "@/common/time-util";
-import { localPluginName, RequestStateCode } from "@/common/constant";
+import { localPluginName, RequestStateCode , internalDataKey } from "@/common/constant";
 import { IContextMenuItem, showContextMenu } from "@/renderer/components/ContextMenu";
 import { showModal, hideModal } from "@/renderer/components/Modal";
 import { toast } from "react-toastify";
@@ -29,7 +29,7 @@ import { locateMusicStore } from "@/renderer/components/MusicSheetlikeView/store
 import { navigateTo } from "@/renderer/utils/navigate";
 import { getMusicTags, useAllCustomTags } from "@/renderer/core/local-music/custom-tags";
 import { getInternalData, setInternalData } from "@/common/media-util";
-import { internalDataKey } from "@/common/constant";
+
 
 interface ILocalMusicListProps {
     localMusicList: IMusic.IMusicItem[];
@@ -271,11 +271,11 @@ function showLocalMusicContextMenu(
                                         item,
                                         "downloadData",
                                         { ...downloadData, path: newFilePath },
-                                        true
+                                        true,
                                     );
                                     await musicSheetDB.musicStore.update(
                                         [item.platform, item.id],
-                                        { [internalDataKey]: updatedItem[internalDataKey] }
+                                        { [internalDataKey]: updatedItem[internalDataKey] },
                                     );
                                     break;
                                 }

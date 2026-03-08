@@ -3,7 +3,7 @@ import classNames from "@/renderer/utils/classnames";
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import Condition from "@/renderer/components/Condition";
 import SvgAsset from "@/renderer/components/SvgAsset";
-import { PlayerState } from "@/common/constant";
+import { DownloadState, PlayerState, localPluginName } from "@/common/constant";
 import getTextWidth from "@/renderer/utils/get-text-width";
 import useAppConfig from "@/hooks/useAppConfig";
 import { appWindowUtil } from "@shared/utils/renderer";
@@ -14,6 +14,7 @@ import { IAppState } from "@shared/message-bus/type";
 export default function LyricWindowPage() {
     const currentMusic = useAppStatePartial("musicItem");
     const playerState = useAppStatePartial("playerState");
+    const downloadState = useAppStatePartial("downloadState");
     const lockLyric = useAppConfig("lyric.lockLyric");
     const [showOperations, setShowOperations] = useState(false);
 
@@ -25,12 +26,31 @@ export default function LyricWindowPage() {
         }
     }, [lockLyric]);
 
+    const isDownloadedOrLocal =
+        downloadState === DownloadState.DONE ||
+        currentMusic?.platform === localPluginName;
+
+    const isDownloading =
+        downloadState !== DownloadState.NONE &&
+        downloadState !== DownloadState.ERROR &&
+        downloadState !== DownloadState.DONE;
+
+    let downloadIconName: "array-download-tray" | "check-circle" | "rolling-1s" = "array-download-tray";
+    if (isDownloadedOrLocal) {
+        downloadIconName = "check-circle";
+    } else if (isDownloading) {
+        downloadIconName = "rolling-1s";
+    }
+
     return (
         <div
             className={classNames({
                 "container": true,
                 "lock-lyric": lockLyric,
             })}
+            onDoubleClick={() => {
+                appWindowUtil.showMainWindow();
+            }}
             onMouseOver={() => {
                 if (!lockLyric || mouseOverTimerRef.current) {
                     if (!lockLyric) {
@@ -76,6 +96,9 @@ export default function LyricWindowPage() {
                                 </div>
                             }
                         >
+                            <div className="music-title">
+                                {currentMusic ? `${currentMusic.title} - ${currentMusic.artist}` : ""}
+                            </div>
                             <div
                                 className="operation-button"
                                 onClick={() => {
@@ -105,6 +128,16 @@ export default function LyricWindowPage() {
                                 }}
                             >
                                 <SvgAsset iconName="skip-right"></SvgAsset>
+                            </div>
+                            <div
+                                className="operation-button"
+                                onClick={() => {
+                                    if (currentMusic && !isDownloadedOrLocal && !isDownloading) {
+                                        messageBus.sendCommand("DownloadMusic", currentMusic);
+                                    }
+                                }}
+                            >
+                                <SvgAsset iconName={downloadIconName}></SvgAsset>
                             </div>
                             <div
                                 className="operation-button"

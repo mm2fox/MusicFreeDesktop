@@ -57,7 +57,7 @@ function ShortCutTable() {
                     <div className="short-cut-cell">
                         <ShortCutItem
                             enabled={enableLocalShortCut}
-                            value={shortCuts?.[it]?.local}
+                            value={shortCuts?.[it as IShortCutKeys]?.local}
                             onChange={(val) => {
                                 shortCut.registerLocalShortCut(it as IShortCutKeys, val);
                             }}
@@ -70,7 +70,7 @@ function ShortCutTable() {
                     <div className="short-cut-cell">
                         <ShortCutItem
                             enabled={enableGlobalShortCut}
-                            value={shortCuts?.[it]?.global}
+                            value={shortCuts?.[it as IShortCutKeys]?.global}
                             onChange={(val) => {
                                 shortCut.registerGlobalShortCut(it as IShortCutKeys, val);
                             }}

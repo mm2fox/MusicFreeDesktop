@@ -321,6 +321,18 @@ function useDownloadState(musicItem: IMusic.IMusicItem) {
     );
 }
 
+function getDownloadState(musicItem: IMusic.IMusicItem | null) {
+    if (!musicItem) {
+        return DownloadState.NONE;
+    }
+    const pk = getMediaPrimaryKey(musicItem);
+    const progress = downloadingProgress.get(pk);
+    if (progress) {
+        return progress.state;
+    }
+    return isDownloaded(musicItem) ? DownloadState.DONE : DownloadState.NONE;
+}
+
 const Downloader = {
     setupDownloader,
     startDownload,
@@ -332,5 +344,6 @@ const Downloader = {
     removeDownloadedMusic,
     setDownloadingConcurrency,
     useDownloadState,
+    getDownloadState,
 };
 export default Downloader;

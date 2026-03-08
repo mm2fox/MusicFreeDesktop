@@ -202,7 +202,7 @@ export async function autoTagFromArtist(musicItems: IMusic.IMusicItem[]): Promis
                 try {
                     await musicSheetDB.localMusicStore.update(
                         [update.platform, update.id],
-                        { $$customTags: update.tags }
+                        { $$customTags: update.tags },
                     );
                     successCount++;
                 } catch (e) {

@@ -681,7 +681,7 @@ class TrackPlayer {
         const currentMusic = this.currentMusic;
         const currentProgress = this.progress.currentTime;
         const currentSpeed = this.speed;
-        const wasPlaying = this.playerState === PlayerState.Playing
+        const wasPlaying = this.playerState === PlayerState.Playing;
 
         logger.logInfo(`当前状态: currentMusic=${JSON.stringify(currentMusic)}, wasPlaying=${wasPlaying}, progress=${currentProgress}`);
 
@@ -696,10 +696,9 @@ class TrackPlayer {
         if (controllerType === "xiaoai") {
             logger.logInfo(`设置小爱音箱默认音量: ${defaultVolume * 100}%`);
             this.audioController.setVolume(defaultVolume);
-            this._volume = defaultVolume;
-        } else if (this._volume) {
+        } else if (this.volume) {
             // 切换到本地播放时，恢复之前的音量
-            this.audioController.setVolume(this._volume);
+            this.audioController.setVolume(this.volume);
         }
 
         if (currentMusic) {

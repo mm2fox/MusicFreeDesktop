@@ -222,12 +222,18 @@ class WindowManager implements IWindowManager {
 
         // 初始化窗口置顶状态
         const alwaysOnTop = AppConfig.getConfig("normal.alwaysOnTop");
-        mainWindow.setAlwaysOnTop(alwaysOnTop);
+        if (alwaysOnTop) {
+            mainWindow.setAlwaysOnTop(true, "normal");
+        }
 
         // 监听置顶配置变化
         const onConfigUpdate = (patch: IAppConfig) => {
             if (patch["normal.alwaysOnTop"] !== undefined) {
-                mainWindow.setAlwaysOnTop(patch["normal.alwaysOnTop"]);
+                if (patch["normal.alwaysOnTop"]) {
+                    mainWindow.setAlwaysOnTop(true, "normal");
+                } else {
+                    mainWindow.setAlwaysOnTop(false);
+                }
             }
         };
         AppConfig.onConfigUpdated(onConfigUpdate);
@@ -322,6 +328,8 @@ class WindowManager implements IWindowManager {
             alwaysOnTop: true,
             icon: nativeImage.createFromPath(getResourcePath(ResourceName.LOGO_IMAGE)),
         });
+
+        lyricWindow.setAlwaysOnTop(true, "screen-saver");
 
         const display = screen.getDisplayNearestPoint(lyricWindow.getBounds());
         WindowManager.lyricWindowMaxSize.width = display.bounds.width;

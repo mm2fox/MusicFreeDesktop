@@ -25,6 +25,10 @@ declare namespace IUserPreference {
     xiaoaiPassword: string;
     /** 小米设备ID */
     xiaoaiDeviceId: string;
+    /** 是否使用小米音箱输出 */
+    useXiaoaiOutput: boolean;
+    /** 小米登录模式 */
+    xiaoaiLoginMode: string;
   }
 
   interface IDBType {

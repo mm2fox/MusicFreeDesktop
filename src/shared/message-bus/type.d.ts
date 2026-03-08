@@ -1,4 +1,4 @@
-import { PlayerState, RepeatMode } from "@/common/constant";
+import { DownloadState, PlayerState, RepeatMode } from "@/common/constant";
 import type { IParsedLrcItem } from "@renderer/utils/lyric-parser";
 
 export interface IAppState {
@@ -10,6 +10,7 @@ export interface IAppState {
   fullLyric?: IParsedLrcItem[] | null;
   progress?: number;
   duration?: number;
+  downloadState?: DownloadState;
 }
 
 export interface ICommand {
@@ -41,6 +42,8 @@ export interface ICommand {
   ToggleMainWindowVisible: void;
   /** 切换窗口置顶 */
   ToggleAlwaysOnTop: void;
+  /** 下载音乐 */
+  DownloadMusic: IMusic.IMusicItem | null;
 }
 
 // 内部使用的消息

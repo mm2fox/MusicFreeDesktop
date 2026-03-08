@@ -81,7 +81,7 @@ export default function Extra() {
                 role="button"
                 onClick={handleDeviceSwitch}
             >
-                <SvgAsset iconName={useXiaoai ? "speaker-wave" : "speaker-x-mark"}></SvgAsset>
+                <SvgAsset iconName={useXiaoai ? "speaker" : "headphone"}></SvgAsset>
             </div>
             <div
                 className="extra-btn"

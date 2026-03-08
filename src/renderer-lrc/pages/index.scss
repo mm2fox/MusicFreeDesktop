@@ -9,6 +9,11 @@
     background-color: rgba($color: #000000, $alpha: 0.2);
   }
 
+  & .lyric-text-row {
+    -webkit-text-stroke: 2px #b48f1d;
+    text-shadow: 0 0 8px rgba($color: #b48f1d, $alpha: 0.5);
+  }
+
   &::after {
     display: block;
     content: '';
@@ -32,7 +37,6 @@
     justify-content: center;
 
     & .lyric-text-row {
-      -webkit-text-stroke: 1px #b48f1d;
       color: white;
       font-size: 48px;
       white-space: nowrap;
@@ -47,6 +51,17 @@
     align-items: center;
     justify-content: center;
     column-gap: 16px;
+
+    & .music-title {
+      color: white;
+      font-size: 14px;
+      max-width: 200px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      filter: drop-shadow(0px 0px 2px rgba($color: #000000, $alpha: 0.6));
+      margin-right: 8px;
+    }
 
     & .operation-button {
       width: 28px;

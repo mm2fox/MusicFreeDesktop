@@ -58,6 +58,7 @@ export type SvgAssetIconNames =
     | "sort-asc"
     | "sort-desc"
     | "sparkles"
+    | "speaker"
     | "speaker-wave"
     | "speaker-x-mark"
     | "square"

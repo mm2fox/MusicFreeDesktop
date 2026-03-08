@@ -129,7 +129,7 @@ export default function StarredSheets() {
                                                     const existingLocalMusic = localMusicListStore.getValue() || [];
                                                     toast.info(t("side_bar.convert_to_local_matching", { 
                                                         online: allMusic.length, 
-                                                        local: existingLocalMusic.length 
+                                                        local: existingLocalMusic.length, 
                                                     }));
                                                     const onlineMusic = allMusic.filter((it: IMusic.IMusicItem) => !isLocalMusic(it));
                                                     const musicDetails = await musicSheetDB.musicStore.bulkGet(

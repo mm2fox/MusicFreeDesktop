@@ -397,6 +397,7 @@
     "lyric": {
       "enable_status_bar_lyric": "Enable status bar lyric",
       "enable_desktop_lyric": "Enable desktop lyric",
+      "always_on_top": "Always on top",
       "lock_desktop_lyric": "Lock desktop lyric",
       "font": "Font",
       "font_size": "Font Size",
