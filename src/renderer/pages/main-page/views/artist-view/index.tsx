@@ -4,19 +4,51 @@ import "./index.scss";
 import { useEffect, useMemo } from "react";
 import Body from "./components/Body";
 import { initQueryResult, queryResultStore } from "./store";
+import currentListSourceStore from "@/renderer/core/current-list-source/store";
+import remoteSheetInfoStore from "@/renderer/core/remote-sheet-info/store";
 
 export default function ArtistView() {
     const params = useParams();
+    const platform = params?.platform;
+    const id = params?.id;
+
+    const savedSheetInfo = remoteSheetInfoStore.useValue();
 
     const artistItem = useMemo(() => {
-        const artistInState = history.state.usr?.artistItem ?? {};
+        const artistInState = history.state.usr?.artistItem ?? 
+            (savedSheetInfo?.platform === platform && savedSheetInfo?.id === id 
+                ? savedSheetInfo.sheetItem 
+                : {});
 
         return {
             ...artistInState,
-            platform: params?.platform,
-            id: params?.id,
+            platform,
+            id,
         } as IArtist.IArtistItem;
-    }, [params?.platform, params?.id]);
+    }, [platform, id, savedSheetInfo]);
+
+    useEffect(() => {
+        if (platform && id) {
+            currentListSourceStore.setValue({
+                type: "music-sheet",
+                path: `/main/artist/${encodeURIComponent(platform)}/${encodeURIComponent(id)}`,
+                title: artistItem?.name,
+            });
+        }
+    }, [platform, id, artistItem?.name]);
+
+    useEffect(() => {
+        if (platform && id && artistItem) {
+            remoteSheetInfoStore.setValue({
+                platform,
+                id,
+                sheetItem: {
+                    ...artistItem,
+                    title: artistItem.name,
+                } as IMusic.IMusicSheetItem,
+            });
+        }
+    }, [platform, id, artistItem]);
 
     useEffect(() => {
         return () => {

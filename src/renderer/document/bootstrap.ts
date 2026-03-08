@@ -19,6 +19,8 @@ import { IAppState } from "@shared/message-bus/type";
 import MusicDetail from "@renderer/components/MusicDetail";
 import shortCut from "@shared/short-cut/renderer";
 import { isSameMedia } from "@/common/media-util";
+import { initCurrentListSource } from "../core/current-list-source/store";
+import { initRemoteSheetInfo } from "../core/remote-sheet-info/store";
 
 
 setAutoFreeze(false);
@@ -44,6 +46,10 @@ export default async function () {
     });
     await Downloader.setupDownloader();
     setupRecentlyPlaylist();
+    await Promise.all([
+        initCurrentListSource(),
+        initRemoteSheetInfo(),
+    ]);
     // 本地服务
     ServiceManager.setup();
 

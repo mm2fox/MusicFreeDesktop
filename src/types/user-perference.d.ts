@@ -48,5 +48,17 @@ declare namespace IUserPreference {
     searchHistory: string[];
     /** 插件数据 */
     pluginMeta: Record<string, IPlugin.IPluginMeta>;
+    /** 当前浏览的歌单来源 */
+    currentListSource: {
+      type: "search" | "local-music" | "music-sheet" | "download" | "recently-play" | "invalid-downloads";
+      path: string;
+      title?: string;
+    };
+    /** 远程歌单信息（用于恢复浏览的网络歌单） */
+    remoteSheetInfo: {
+      platform: string;
+      id: string;
+      sheetItem?: IMusic.IMusicSheetItem;
+    };
   }
 }

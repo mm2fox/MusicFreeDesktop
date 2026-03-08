@@ -13,11 +13,19 @@ import { useTranslation } from "react-i18next";
 
 import "./index.scss";
 import PluginManager from "@shared/plugin-manager/renderer";
+import currentListSourceStore from "@/renderer/core/current-list-source/store";
 
 export default function ToplistView() {
     const availablePlugins = PluginManager.getSortedSupportedPlugin("getTopLists");
     const navigate = useNavigate();
     const { t } = useTranslation();
+
+    useEffect(() => {
+        currentListSourceStore.setValue({
+            type: "music-sheet",
+            path: "/main/toplist",
+        });
+    }, []);
 
     return (
         <div id="page-container" className="page-container toplist-view--container">

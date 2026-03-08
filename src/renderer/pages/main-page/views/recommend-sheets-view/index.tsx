@@ -2,12 +2,21 @@ import Condition from "@/renderer/components/Condition";
 import NoPlugin from "@/renderer/components/NoPlugin";
 import { Tab } from "@headlessui/react";
 import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import Body from "./components/Body";
 import PluginManager from "@shared/plugin-manager/renderer";
+import currentListSourceStore from "@/renderer/core/current-list-source/store";
 
 export default function RecommendSheetsView() {
     const availablePlugins = PluginManager.getSortedSupportedPlugin("getRecommendSheetsByTag");
     const navigate = useNavigate();
+
+    useEffect(() => {
+        currentListSourceStore.setValue({
+            type: "music-sheet",
+            path: "/main/recommend-sheets",
+        });
+    }, []);
 
     return (
         <div id="page-container" className="page-container">

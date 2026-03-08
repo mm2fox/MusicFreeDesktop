@@ -5,6 +5,7 @@ import Themepack from "@/shared/themepack/renderer";
 import logger from "@shared/logger/renderer";
 import AppConfig from "@shared/app-config/renderer";
 import messageBus from "@shared/message-bus/renderer/main";
+import { getUserPreferenceIDB } from "@/renderer/utils/user-perference";
 
 export default function useBootstrap() {
     const navigate = useNavigate();
@@ -22,5 +23,12 @@ export default function useBootstrap() {
             checkUpdate();
         }
         logger.logPerf("Bundle First Screen");
+
+        (async () => {
+            const savedSource = await getUserPreferenceIDB("currentListSource");
+            if (savedSource?.path) {
+                navigate(savedSource.path, { replace: true });
+            }
+        })();
     }, []);
 }
