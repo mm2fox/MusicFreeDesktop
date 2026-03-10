@@ -15,14 +15,17 @@ import LyricParser from "@/renderer/utils/lyric-parser";
 import { getLinkedLyric, unlinkLyric } from "@/renderer/core/link-lyric";
 import { getMediaPrimaryKey } from "@/common/media-util";
 import { useTranslation } from "react-i18next";
-import { useLyric } from "@renderer/core/track-player/hooks";
+import { useLyric, useCurrentMusic } from "@renderer/core/track-player/hooks";
 import trackPlayer from "@renderer/core/track-player";
 import { dialogUtil, fsUtil } from "@shared/utils/renderer";
+import MusicSheet from "@/renderer/core/music-sheet";
 
 export default function Lyric() {
     const lyricContext = useLyric();
     const lyricParser = lyricContext?.parser;
     const currentLrc = lyricContext?.currentLrc;
+    const currentMusic = useCurrentMusic();
+    const isFav = MusicSheet.frontend.useMusicIsFavorite(currentMusic);
 
     const containerRef = useRef<HTMLDivElement>();
 
@@ -60,6 +63,23 @@ export default function Lyric() {
 
     const optionsComponent = (
         <div className="lyric-options-container">
+            <div
+                className="lyric-option-item"
+                role="button"
+                title={isFav ? t("music_bar.unfavorite") : t("music_bar.favorite")}
+                data-active={isFav}
+                data-disabled={!currentMusic}
+                onClick={() => {
+                    if (!currentMusic) return;
+                    if (isFav) {
+                        MusicSheet.frontend.removeMusicFromFavorite(currentMusic);
+                    } else {
+                        MusicSheet.frontend.addMusicToFavorite(currentMusic);
+                    }
+                }}
+            >
+                <SvgAsset iconName={isFav ? "heart" : "heart-outline"}></SvgAsset>
+            </div>
             <div
                 className="lyric-option-item"
                 role="button"

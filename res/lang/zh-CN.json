@@ -252,7 +252,9 @@
     "playback_speed": "倍速播放",
     "choose_music_quality": "切换音质",
     "only_set_for_current_music": "仅设置当前歌曲",
-    "desktop_lyric": "桌面歌词"
+    "desktop_lyric": "桌面歌词",
+    "favorite": "添加到我喜欢",
+    "unfavorite": "从我喜欢移除"
   },
   "music_detail": {
     "search_lyric": "搜索歌词",

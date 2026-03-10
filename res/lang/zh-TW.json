@@ -257,7 +257,9 @@
     "playback_speed": "播放速度",
     "choose_music_quality": "選擇音樂音質",
     "only_set_for_current_music": "僅針對當前歌曲",
-    "desktop_lyric": "桌面歌詞"
+    "desktop_lyric": "桌面歌詞",
+    "favorite": "添加到喜愛",
+    "unfavorite": "從喜愛移除"
   },
   "music_detail": {
     "search_lyric": "搜尋歌詞",

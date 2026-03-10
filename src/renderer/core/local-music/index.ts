@@ -102,7 +102,15 @@ async function doFlush() {
                     if (typeof localPath !== "string" || localPath.length === 0) return false;
                     return !existingPaths.has(localPath);
                 },
-            );
+            ).map(item => {
+                if (item.$$localPath && !getInternalData(item, "downloadData")) {
+                    setInternalData(item, "downloadData", {
+                        path: item.$$localPath,
+                        quality: "standard",
+                    });
+                }
+                return item;
+            });
             if (newItems.length > 0) {
                 localMusicListStore.setValue([...currentListNow, ...newItems]);
             }
@@ -283,7 +291,17 @@ async function changeWatchPath(logs: Map<string, "add" | "delete">) {
         }
 
         // 刷新列表
-        localMusicListStore.setValue(await musicSheetDB.localMusicStore.toArray() || []);
+        const allMusic = await musicSheetDB.localMusicStore.toArray() || [];
+        const processedMusic = allMusic.map(item => {
+            if (item.$$localPath && !getInternalData(item, "downloadData")) {
+                setInternalData(item, "downloadData", {
+                    path: item.$$localPath,
+                    quality: "standard",
+                });
+            }
+            return item;
+        });
+        localMusicListStore.setValue(processedMusic);
     } catch (e) {
         console.error("[LocalMusic] changeWatchPath error:", e);
     }
@@ -323,12 +341,20 @@ async function rescanLocalMusic() {
 async function reloadLocalMusic() {
     try {
         const allMusic = await musicSheetDB.localMusicStore.toArray();
-        // 清除封面数据，避免内存累积
-        const cleanedMusic = (allMusic || []).map(item => {
+        const processedMusic = (allMusic || []).map(item => {
+            if (item.$$localPath && !getInternalData(item, "downloadData")) {
+                setInternalData(item, "downloadData", {
+                    path: item.$$localPath,
+                    quality: "standard",
+                });
+            }
             const { artwork, ...rest } = item as any;
+            if (item.$) {
+                rest.$ = item.$;
+            }
             return rest;
         });
-        localMusicListStore.setValue(cleanedMusic);
+        localMusicListStore.setValue(processedMusic);
     } catch (e) {
         console.error("[LocalMusic] reloadLocalMusic error:", e);
     }

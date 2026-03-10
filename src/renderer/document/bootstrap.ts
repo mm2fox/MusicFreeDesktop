@@ -40,7 +40,7 @@ export default async function () {
     clearDefaultBehavior();
     setupCommandAndEvents();
     setupDeviceChange();
-    localMusic.setupLocalMusic();
+    await localMusic.setupLocalMusic();
     window.addEventListener("beforeunload", () => {
         localMusic.terminateLocalMusic();
     });
@@ -223,6 +223,7 @@ function setupCommandAndEvents() {
             progress: trackPlayer.progress?.currentTime || 0,
             duration: trackPlayer.progress?.duration || 0,
             downloadState: Downloader.getDownloadState(currentMusic),
+            isFavorite: currentMusic ? MusicSheet.frontend.isFavoriteMusic(currentMusic) : false,
         };
 
         messageBus.syncAppState(appState, from);
@@ -278,8 +279,19 @@ function setupCommandAndEvents() {
             progress: 0,
             duration: 0,
             downloadState: Downloader.getDownloadState(musicItem),
+            isFavorite: musicItem ? MusicSheet.frontend.isFavoriteMusic(musicItem) : false,
         });
         addToRecentlyPlaylist(musicItem);
+    });
+
+    // 最爱状态变化同步
+    MusicSheet.frontend.onFavoriteStateChange(() => {
+        const currentMusic = trackPlayer.currentMusicBasicInfo;
+        if (currentMusic) {
+            messageBus.syncAppState({
+                isFavorite: MusicSheet.frontend.isFavoriteMusic(currentMusic),
+            });
+        }
     });
 
     // 下载状态变化同步

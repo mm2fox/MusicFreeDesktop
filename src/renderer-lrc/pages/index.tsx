@@ -15,6 +15,7 @@ export default function LyricWindowPage() {
     const currentMusic = useAppStatePartial("musicItem");
     const playerState = useAppStatePartial("playerState");
     const downloadState = useAppStatePartial("downloadState");
+    const isFavorite = useAppStatePartial("isFavorite");
     const lockLyric = useAppConfig("lyric.lockLyric");
     const [showOperations, setShowOperations] = useState(false);
 
@@ -128,6 +129,16 @@ export default function LyricWindowPage() {
                                 }}
                             >
                                 <SvgAsset iconName="skip-right"></SvgAsset>
+                            </div>
+                            <div
+                                className="operation-button"
+                                onClick={() => {
+                                    if (currentMusic) {
+                                        messageBus.sendCommand("ToggleFavorite", currentMusic);
+                                    }
+                                }}
+                            >
+                                <SvgAsset iconName={isFavorite ? "heart" : "heart-outline"}></SvgAsset>
                             </div>
                             <div
                                 className="operation-button"

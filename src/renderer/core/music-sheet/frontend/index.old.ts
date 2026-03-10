@@ -200,6 +200,14 @@ export function isFavoriteMusic(musicItem: IMusic.IMusicItem) {
     return backend.isFavoriteMusic(musicItem);
 }
 
+/** 监听最爱状态变化 */
+export function onFavoriteStateChange(cb: () => void) {
+    refreshFavCbs.add(cb);
+    return () => {
+        refreshFavCbs.delete(cb);
+    };
+}
+
 /** hook 某首歌曲是否被标记成喜欢 */
 export function useMusicIsFavorite(musicItem: IMusic.IMusicItem) {
     const [isFav, setIsFav] = useState(backend.isFavoriteMusic(musicItem));

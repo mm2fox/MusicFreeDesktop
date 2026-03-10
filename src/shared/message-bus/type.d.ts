@@ -11,6 +11,7 @@ export interface IAppState {
   progress?: number;
   duration?: number;
   downloadState?: DownloadState;
+  isFavorite?: boolean;
 }
 
 export interface ICommand {

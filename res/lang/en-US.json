@@ -268,7 +268,9 @@
     "playback_speed": "Playback Speed",
     "choose_music_quality": "Change Quality",
     "only_set_for_current_music": "Only for Current Song",
-    "desktop_lyric": "Desktop Lyric"
+    "desktop_lyric": "Desktop Lyric",
+    "favorite": "Add to Favorites",
+    "unfavorite": "Remove from Favorites"
   },
   "music_detail": {
     "search_lyric": "Search Lyric",
