@@ -604,5 +604,18 @@
     "close": "Close",
     "tag_to_sheet_complete": "Conversion complete. Created {{success}} playlists, skipped {{skip}} empty tags",
     "sheet_to_tag_complete": "Conversion complete. {{success}} succeeded, {{fail}} failed, {{skip}} skipped"
+  },
+  "recently_play": {
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "weekday_0": "Sunday",
+    "weekday_1": "Monday",
+    "weekday_2": "Tuesday",
+    "weekday_3": "Wednesday",
+    "weekday_4": "Thursday",
+    "weekday_5": "Friday",
+    "weekday_6": "Saturday",
+    "songs": "songs",
+    "search_placeholder": "Search recently played"
   }
 }

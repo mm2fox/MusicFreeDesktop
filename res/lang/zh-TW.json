@@ -559,5 +559,18 @@
     "close": "關閉",
     "tag_to_sheet_complete": "轉換完成，成功創建 {{success}} 個歌單，跳過 {{skip}} 個空標籤",
     "sheet_to_tag_complete": "轉換完成，成功 {{success}} 首，失敗 {{fail}} 首，跳過 {{skip}} 首"
+  },
+  "recently_play": {
+    "today": "今天",
+    "yesterday": "昨天",
+    "weekday_0": "週日",
+    "weekday_1": "週一",
+    "weekday_2": "週二",
+    "weekday_3": "週三",
+    "weekday_4": "週四",
+    "weekday_5": "週五",
+    "weekday_6": "週六",
+    "songs": "首",
+    "search_placeholder": "搜尋最近播放"
   }
 }

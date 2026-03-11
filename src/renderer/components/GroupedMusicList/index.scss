@@ -1,0 +1,63 @@
+.grouped-music-list-container {
+    width: 100%;
+}
+
+.music-group {
+    margin-bottom: 1.5rem;
+
+    &:last-child {
+        margin-bottom: 0;
+    }
+}
+
+.group-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.5rem;
+    background: var(--headerBgColor, rgba(0, 0, 0, 0.05));
+    border-radius: 8px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.2s ease;
+
+    &:hover {
+        background: var(--listHoverColor, rgba(0, 0, 0, 0.08));
+    }
+}
+
+.group-header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.collapse-icon {
+    width: 1rem;
+    height: 1rem;
+    transition: transform 0.2s ease;
+    color: var(--textSecondaryColor);
+
+    &.collapsed {
+        transform: rotate(0deg);
+    }
+
+    &:not(.collapsed) {
+        transform: rotate(90deg);
+    }
+}
+
+.group-date-label {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--textColor);
+}
+
+.group-count {
+    font-size: 0.85rem;
+    color: var(--textSecondaryColor);
+}

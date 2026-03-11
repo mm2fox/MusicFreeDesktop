@@ -8,7 +8,9 @@ import { Immer } from "immer";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
-const recentlyPlayListStore = new Store<IMusic.IMusicItem[]>([]);
+type RecentlyPlayItem = IMusic.IMusicItem & { $$playTime?: number };
+
+const recentlyPlayListStore = new Store<RecentlyPlayItem[]>([]);
 
 const immer = new Immer({
     autoFreeze: false,
@@ -20,7 +22,7 @@ async function fetchRecentlyPlaylist() {
     return (await getUserPreferenceIDB("recentlyPlayList")) || [];
 }
 
-async function setRecentlyPlaylist(musicItems: IMusic.IMusicItem[]) {
+async function setRecentlyPlaylist(musicItems: RecentlyPlayItem[]) {
     recentlyPlayListStore.setValue(musicItems);
     return await setUserPreferenceIDB("recentlyPlayList", musicItems);
 }
@@ -45,7 +47,11 @@ export async function addToRecentlyPlaylist(musicItem: IMusic.IMusicItem) {
             draft.splice(existId, 1);
         });
     }
-    newPlayList = [musicItem].concat(newPlayList).slice(0, HARD_LIMIT);
+    const itemWithTime: RecentlyPlayItem = {
+        ...musicItem,
+        $$playTime: Date.now(),
+    };
+    newPlayList = [itemWithTime].concat(newPlayList).slice(0, HARD_LIMIT);
     setRecentlyPlaylist(newPlayList);
 }
 
@@ -82,4 +88,8 @@ export function useRecentlyPlaylistSheet() {
     }, [recentlyPlayList, t]);
 
     return musicSheet;
+}
+
+export function useRecentlyPlaylistWithTime() {
+    return recentlyPlayListStore.useValue();
 }
