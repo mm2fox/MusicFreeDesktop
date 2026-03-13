@@ -1,0 +1,311 @@
+.modal--file-operation-log-container {
+    width: 700px;
+    max-width: 90vw;
+    max-height: 80vh;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    background: var(--backgroundColor);
+    color: var(--textColor);
+
+    .header-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+
+    .log-content {
+        padding: 16px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+    }
+
+    .log-toolbar {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid var(--dividerColor);
+
+        .filter-section {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+
+            .filter-label {
+                font-size: 0.9rem;
+                color: var(--textColorSecondary);
+            }
+
+            .filter-select {
+                padding: 6px 12px;
+                border-radius: 4px;
+                border: 1px solid var(--dividerColor);
+                background: var(--backgroundColor);
+                color: var(--textColor);
+                font-size: 0.9rem;
+                cursor: pointer;
+
+                &:focus {
+                    outline: none;
+                    border-color: var(--primaryColor);
+                }
+            }
+        }
+
+        .stats-section {
+            flex: 1;
+            display: flex;
+            align-items: center;
+
+            .stats-item {
+                font-size: 0.85rem;
+                color: var(--textColorSecondary);
+            }
+        }
+
+        .btn-clear {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 4px;
+            border: 1px solid var(--dividerColor);
+            background: transparent;
+            color: var(--textColor);
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+
+            &:hover:not(:disabled) {
+                background: var(--dangerColor);
+                border-color: var(--dangerColor);
+                color: white;
+            }
+
+            &:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
+        }
+    }
+
+    .log-list {
+        flex: 1;
+        overflow-y: auto;
+        padding-right: 8px;
+
+        &::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        &::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background: var(--scrollbarColor);
+            border-radius: 3px;
+        }
+    }
+
+    .loading-state,
+    .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 48px;
+        color: var(--textColorSecondary);
+        gap: 12px;
+    }
+
+    .log-item {
+        position: relative;
+        padding: 12px 16px;
+        margin-bottom: 12px;
+        border-radius: 6px;
+        background: var(--cardColor);
+        border-left: 3px solid var(--textColorSecondary);
+
+        &.status-success {
+            border-left-color: var(--successColor);
+        }
+
+        &.status-failed {
+            border-left-color: var(--dangerColor);
+        }
+
+        &.status-partial {
+            border-left-color: var(--warningColor);
+        }
+
+        .log-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+
+            .log-type {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+
+                .type-label {
+                    font-weight: 500;
+                }
+
+                .status-badge {
+                    padding: 2px 8px;
+                    border-radius: 10px;
+                    font-size: 0.75rem;
+                    font-weight: 500;
+
+                    &.status-success {
+                        background: rgba(var(--successColorRgb), 0.15);
+                        color: var(--successColor);
+                    }
+
+                    &.status-failed {
+                        background: rgba(var(--dangerColorRgb), 0.15);
+                        color: var(--dangerColor);
+                    }
+
+                    &.status-partial {
+                        background: rgba(var(--warningColorRgb), 0.15);
+                        color: var(--warningColor);
+                    }
+                }
+            }
+
+            .log-time {
+                font-size: 0.8rem;
+                color: var(--textColorSecondary);
+            }
+        }
+
+        .log-summary {
+            font-size: 0.95rem;
+            margin-bottom: 8px;
+            color: var(--textColor);
+        }
+
+        .log-music-info {
+            font-size: 0.85rem;
+            color: var(--textColorSecondary);
+            margin-bottom: 8px;
+
+            .music-title {
+                color: var(--textColor);
+                font-weight: 500;
+            }
+
+            .music-artist {
+                margin-left: 4px;
+            }
+        }
+
+        .log-details {
+            font-size: 0.8rem;
+
+            .detail-row {
+                display: flex;
+                margin-bottom: 4px;
+
+                .detail-label {
+                    color: var(--textColorSecondary);
+                    min-width: 80px;
+                }
+
+                .detail-value {
+                    color: var(--textColor);
+                    word-break: break-all;
+                }
+
+                .path-value {
+                    color: var(--primaryColor);
+                    cursor: pointer;
+
+                    &:hover {
+                        text-decoration: underline;
+                    }
+                }
+
+                &.error-row {
+                    .error-value {
+                        color: var(--dangerColor);
+                    }
+                }
+            }
+
+            .batch-items {
+                margin-top: 8px;
+                padding: 8px;
+                background: var(--backgroundColor);
+                border-radius: 4px;
+
+                .batch-header {
+                    font-weight: 500;
+                    margin-bottom: 8px;
+                    font-size: 0.85rem;
+                }
+
+                .batch-list {
+                    .batch-item {
+                        display: flex;
+                        align-items: center;
+                        gap: 6px;
+                        padding: 4px 0;
+                        font-size: 0.8rem;
+
+                        &.success {
+                            color: var(--successColor);
+                        }
+
+                        &.failed {
+                            color: var(--dangerColor);
+                        }
+
+                        .batch-item-title {
+                            flex: 1;
+                        }
+
+                        .batch-item-error {
+                            color: var(--dangerColor);
+                            font-size: 0.75rem;
+                        }
+                    }
+
+                    .batch-more {
+                        font-size: 0.75rem;
+                        color: var(--textColorSecondary);
+                        padding: 4px 0;
+                    }
+                }
+            }
+        }
+
+        .btn-delete-log {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            padding: 4px;
+            border: none;
+            background: transparent;
+            color: var(--textColorSecondary);
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+
+            &:hover {
+                color: var(--dangerColor);
+            }
+        }
+
+        &:hover .btn-delete-log {
+            opacity: 1;
+        }
+    }
+}

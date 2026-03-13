@@ -3,8 +3,10 @@ import AddNewSheet from "./AddNewSheet";
 import AssociateLocalFile from "./AssociateLocalFile";
 import Base from "./Base";
 import CustomTagsEditor from "./CustomTagsEditor";
+import DuplicateMusicManager from "./DuplicateMusicManager";
 import ExitConfirm from "./ExitConfirm";
 import FileConverter from "./FileConverter";
+import FileOperationLog from "./FileOperationLog";
 import ImportMusicSheet from "./ImportMusicSheet";
 import MusicInfo from "./MusicInfo";
 import PluginSubscription from "./PluginSubscription";
@@ -38,4 +40,6 @@ export default {
     FileConverter,
     CustomTagsEditor,
     TagSheetConverter,
+    DuplicateMusicManager,
+    FileOperationLog,
 };

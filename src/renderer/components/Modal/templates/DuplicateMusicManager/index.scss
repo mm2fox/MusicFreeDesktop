@@ -1,0 +1,476 @@
+.modal--duplicate-manager-container {
+    width: 600px;
+    max-width: 90vw;
+    max-height: 80vh;
+    border-radius: 8px;
+    overflow: hidden;
+    user-select: none;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    z-index: 1000;
+
+    .duplicate-manager-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 16px;
+        background: var(--backgroundColor);
+        border-bottom: 1px solid var(--dividerColor);
+        flex-shrink: 0;
+        cursor: move;
+
+        .duplicate-manager-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .duplicate-manager-close {
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+
+            &:hover {
+                background: var(--hoverColor);
+            }
+        }
+    }
+
+    .duplicate-manager-content {
+        padding: 16px;
+        overflow-y: auto;
+        flex: 1;
+    }
+
+    .tab-selector {
+        display: flex;
+        gap: 4px;
+        padding: 4px;
+        background: var(--backgroundColor);
+        border: 1px solid var(--dividerColor);
+        border-radius: 8px;
+        margin-bottom: 16px;
+    }
+
+    .tab-option {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 8px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s;
+        color: var(--textSecondaryColor);
+        font-size: 0.85rem;
+
+        &.active {
+            background: var(--primaryColor);
+            color: white;
+        }
+
+        &:not(.active):hover {
+            background: var(--hoverColor);
+        }
+
+        .tab-badge {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        &:not(.active) .tab-badge {
+            background: var(--primaryColor);
+            color: white;
+        }
+    }
+
+    .scanning-area {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 20px;
+        gap: 12px;
+        color: var(--textSecondaryColor);
+
+        .scan-progress {
+            font-size: 0.85rem;
+        }
+    }
+
+    .no-issues {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 20px;
+        gap: 12px;
+        color: var(--primaryColor);
+
+        span {
+            color: var(--textSecondaryColor);
+            font-size: 0.9rem;
+        }
+    }
+
+    .mode-selector {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+
+        .mode-label {
+            font-size: 0.85rem;
+            color: var(--textColor);
+        }
+
+        .mode-btn {
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: var(--hoverColor);
+            color: var(--textSecondaryColor);
+
+            &:hover {
+                background: var(--dividerColor);
+            }
+
+            &.active {
+                background: var(--primaryColor);
+                color: white;
+            }
+        }
+    }
+
+    .selection-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 12px;
+
+        .btn-action {
+            padding: 6px 12px;
+            border: 1px solid var(--dividerColor);
+            border-radius: 4px;
+            background: var(--backgroundColor);
+            color: var(--textColor);
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+
+            &:hover {
+                background: var(--hoverColor);
+            }
+        }
+
+        .selection-count {
+            margin-left: auto;
+            font-size: 0.8rem;
+            color: var(--textSecondaryColor);
+        }
+    }
+
+    .duplicate-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        max-height: 350px;
+        overflow-y: auto;
+        margin-bottom: 16px;
+    }
+
+    .duplicate-item {
+        padding: 12px;
+        background: var(--backgroundColor);
+        border: 1px solid var(--dividerColor);
+        border-radius: 6px;
+
+        .dup-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .dup-index {
+            font-weight: 600;
+            color: var(--primaryColor);
+        }
+
+        .dup-title {
+            font-weight: 500;
+        }
+
+        .dup-artist {
+            color: var(--textSecondaryColor);
+            font-size: 0.85rem;
+        }
+
+        .dup-count {
+            color: var(--textSecondaryColor);
+            font-size: 0.8rem;
+        }
+
+        .dup-files {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .dup-file {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 8px;
+            background: var(--hoverColor);
+            border-radius: 4px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 2px solid transparent;
+
+            &:hover {
+                background: var(--dividerColor);
+            }
+
+            &.selected {
+                background: rgba(var(--primaryColorRGB), 0.15);
+                border-color: var(--primaryColor);
+            }
+
+            .file-check {
+                color: var(--textSecondaryColor);
+            }
+
+            &.selected .file-check {
+                color: var(--primaryColor);
+            }
+        }
+
+        .file-ext {
+            font-weight: 600;
+            color: var(--primaryColor);
+        }
+
+        .file-size {
+            color: var(--textSecondaryColor);
+        }
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+
+        .processing-progress {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+
+            .progress-bar {
+                width: 100%;
+                height: 8px;
+                background: var(--dividerColor);
+                border-radius: 4px;
+                overflow: hidden;
+            }
+
+            .progress-fill {
+                height: 100%;
+                background: var(--primaryColor);
+                transition: width 0.3s ease;
+            }
+
+            .progress-text {
+                font-size: 0.8rem;
+                color: var(--textSecondaryColor);
+            }
+        }
+    }
+
+    .btn-secondary,
+    .btn-danger,
+    .btn-primary {
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: none;
+
+        &:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    }
+
+    .btn-secondary {
+        background: var(--hoverColor);
+        color: var(--textColor);
+
+        &:hover:not(:disabled) {
+            background: var(--dividerColor);
+        }
+    }
+
+    .btn-danger {
+        background: #e74c3c;
+        color: white;
+
+        &:hover:not(:disabled) {
+            background: #c0392b;
+        }
+    }
+
+    .btn-primary {
+        background: var(--primaryColor);
+        color: white;
+
+        &:hover:not(:disabled) {
+            opacity: 0.9;
+        }
+    }
+
+    .issue-list,
+    .filename-list,
+    .ignored-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    .issue-item,
+    .filename-item,
+    .ignored-item {
+        padding: 10px 12px;
+        background: var(--backgroundColor);
+        border: 1px solid var(--dividerColor);
+        border-radius: 6px;
+        font-size: 0.85rem;
+    }
+
+    .ignored-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+
+        .ignored-title {
+            flex: 1;
+            font-weight: 500;
+        }
+
+        .ignored-artist {
+            color: var(--textSecondaryColor);
+            font-size: 0.8rem;
+        }
+
+        .btn-restore {
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            background: var(--primaryColor);
+            color: white;
+            border: none;
+            transition: all 0.2s;
+
+            &:hover {
+                opacity: 0.9;
+            }
+        }
+    }
+
+    .filename-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+
+        &:hover {
+            background: var(--hoverColor);
+        }
+
+        &.selected {
+            background: rgba(var(--primaryColorRGB), 0.1);
+            border-color: var(--primaryColor);
+        }
+
+        .file-check {
+            color: var(--textSecondaryColor);
+            flex-shrink: 0;
+        }
+
+        &.selected .file-check {
+            color: var(--primaryColor);
+        }
+
+        .current-name {
+            flex: 1;
+            color: var(--textSecondaryColor);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .arrow {
+            color: var(--primaryColor);
+            flex-shrink: 0;
+        }
+
+        .suggested-name {
+            flex: 1;
+            color: var(--textColor);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .warning-badge {
+            background: #e74c3c;
+            color: white;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .btn-remove-item {
+            padding: 4px;
+            border: none;
+            background: transparent;
+            color: var(--textSecondaryColor);
+            cursor: pointer;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+
+            &:hover {
+                background: var(--hoverColor);
+                color: var(--textColor);
+            }
+        }
+
+        &.target-exists {
+            background: rgba(231, 76, 60, 0.1);
+            border-color: #e74c3c;
+        }
+    }
+}

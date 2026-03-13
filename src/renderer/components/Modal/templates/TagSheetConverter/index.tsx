@@ -20,7 +20,7 @@ interface IResult {
     skip: number;
 }
 
-interface ITagSheetConverterProps {}
+type ITagSheetConverterProps = Record<string, never>;
 
 export default function TagSheetConverter(props: ITagSheetConverterProps) {
     const { t } = useTranslation();

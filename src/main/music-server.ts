@@ -3,6 +3,7 @@ import * as https from "https";
 import * as fs from "fs";
 import * as path from "path";
 import * as url from "url";
+import * as os from "os";
 import logger from "@shared/logger/main";
 
 interface PlaySession {
@@ -71,7 +72,7 @@ export class MusicServer {
     }
 
     private getLocalIpAddress(): string {
-        const interfaces = require("os").networkInterfaces();
+        const interfaces = os.networkInterfaces();
         for (const name of Object.keys(interfaces)) {
             for (const iface of interfaces[name]) {
                 if (iface.family === "IPv4" && !iface.internal) {

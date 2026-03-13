@@ -9,6 +9,10 @@ interface IMod {
         isFolder: (path: string) => Promise<boolean>;
         rimraf: typeof rimraf.rimraf;
         addFileScheme: (filePath: string) => string;
+        renameFile: (oldPath: string, newPath: string) => Promise<void>;
+        moveFile: (sourcePath: string, targetPath: string) => Promise<void>;
+        getFileSize: (path: string) => Promise<number | null>;
+        getFileMd5: (path: string) => Promise<string | null>;
     },
     app: {
         exitApp: () => void;

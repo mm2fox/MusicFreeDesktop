@@ -298,6 +298,24 @@ export default function LocalMusicView() {
                 >
                     {autoTagging ? t("local_music_page.auto_tagging") : t("local_music_page.auto_tag")}
                 </div>
+                <div
+                    data-type="normalButton"
+                    role="button"
+                    onClick={() => {
+                        showModal("DuplicateMusicManager");
+                    }}
+                >
+                    {t("local_music_page.manage_duplicates")}
+                </div>
+                <div
+                    data-type="normalButton"
+                    role="button"
+                    onClick={() => {
+                        showModal("FileOperationLog");
+                    }}
+                >
+                    {t("file_operation_log.title")}
+                </div>
                 <div className="operations-layout">
                     <input
                         className="search-local-music"

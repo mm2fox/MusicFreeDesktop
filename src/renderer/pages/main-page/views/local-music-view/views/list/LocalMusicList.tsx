@@ -29,6 +29,7 @@ import { locateMusicStore } from "@/renderer/components/MusicSheetlikeView/store
 import { navigateTo } from "@/renderer/utils/navigate";
 import { getMusicTags, useAllCustomTags } from "@/renderer/core/local-music/custom-tags";
 import { getInternalData, setInternalData } from "@/common/media-util";
+import fileOperationLogger from "@/renderer/core/file-operation-log";
 
 
 interface ILocalMusicListProps {
@@ -281,10 +282,24 @@ function showLocalMusicContextMenu(
                                 }
                             }
 
+                            await fileOperationLogger.logRename(
+                                musicItem,
+                                filePath,
+                                newFilePath,
+                                true,
+                            );
+
                             toast.success(i18n.t("music_list_context_menu.rename_local_file_success", { newName: newFileName }));
                             hideModal();
                         } catch (e) {
                             console.error("[RenameLocalFile] Error:", e);
+                            await fileOperationLogger.logRename(
+                                musicItem,
+                                filePath,
+                                newFilePath,
+                                false,
+                                String(e),
+                            );
                             toast.error(i18n.t("music_list_context_menu.rename_local_file_failed"));
                             return Promise.reject(e);
                         }
@@ -319,6 +334,12 @@ function showLocalMusicContextMenu(
                             );
                             localMusicListStore.setValue(updatedList);
 
+                            await fileOperationLogger.logDelete(
+                                musicItem,
+                                filePath,
+                                true,
+                            );
+
                             toast.success(
                                 i18n.t("music_list_context_menu.delete_local_file_success", {
                                     songName: musicItem.title,
@@ -326,6 +347,12 @@ function showLocalMusicContextMenu(
                             );
                         } catch (e) {
                             console.error("[DeleteLocalFile] Error:", e);
+                            await fileOperationLogger.logDelete(
+                                musicItem,
+                                filePath,
+                                false,
+                                String(e),
+                            );
                             toast.error(i18n.t("music_list_context_menu.delete_local_file_failed"));
                         }
                     },

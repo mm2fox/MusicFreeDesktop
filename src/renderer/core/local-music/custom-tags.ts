@@ -176,7 +176,7 @@ export async function autoTagFromArtist(musicItems: IMusic.IMusicItem[]): Promis
         if (!artistStr) continue;
         
         const artists = artistStr
-            .split(/[,，、\/\\&]/)
+            .split(/[,，、/\\&]/)
             .map(a => a.trim())
             .filter(a => a.length > 0);
         

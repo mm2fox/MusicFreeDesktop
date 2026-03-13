@@ -2,6 +2,7 @@ import { contextBridge, ipcRenderer } from "electron";
 import fs from "fs/promises";
 import { rimraf } from "rimraf";
 import url from "url";
+import crypto from "crypto";
 
 
 /****** fs utils ******/
@@ -44,6 +45,37 @@ async function renameFile(oldPath: string, newPath: string) {
     return fs.rename(oldPath, newPath);
 }
 
+async function moveFile(sourcePath: string, targetPath: string) {
+    try {
+        await fs.rename(sourcePath, targetPath);
+    } catch (err: any) {
+        if (err.code === "EXDEV") {
+            await fs.copyFile(sourcePath, targetPath);
+            await fs.unlink(sourcePath);
+        } else {
+            throw err;
+        }
+    }
+}
+
+async function getFileSize(path: string): Promise<number | null> {
+    try {
+        const stat = await fs.stat(path);
+        return stat.size;
+    } catch {
+        return null;
+    }
+}
+
+async function getFileMd5(path: string): Promise<string | null> {
+    try {
+        const content = await fs.readFile(path);
+        return crypto.createHash("md5").update(content).digest("hex");
+    } catch {
+        return null;
+    }
+}
+
 const fsUtil = {
     writeFile,
     readFile,
@@ -52,6 +84,9 @@ const fsUtil = {
     rimraf,
     addFileScheme,
     renameFile,
+    moveFile,
+    getFileSize,
+    getFileMd5,
 };
 
 /****** app utils *****/
