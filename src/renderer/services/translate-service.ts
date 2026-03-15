@@ -349,11 +349,37 @@ export function isLyricChinese(rawLrc: string): boolean {
     if (!rawLrc) return false;
     const lines = rawLrc.split('\n').filter(line => {
         const trimmed = line.trim();
-        return trimmed && !trimmed.startsWith('[');
+        if (!trimmed) return false;
+        if (trimmed.startsWith('[')) {
+            const closingBracket = trimmed.indexOf(']');
+            if (closingBracket !== -1) {
+                const content = trimmed.substring(closingBracket + 1).trim();
+                return content.length > 0;
+            }
+            return false;
+        }
+        return true;
     });
     if (lines.length === 0) return false;
-    const chineseLineCount = lines.filter(line => containsChinese(line)).length;
-    return chineseLineCount / lines.length > 0.3;
+    let chineseCharCount = 0;
+    let totalCharCount = 0;
+    for (const line of lines) {
+        let content = line;
+        const bracketIdx = line.indexOf(']');
+        if (bracketIdx !== -1) {
+            content = line.substring(bracketIdx + 1);
+        }
+        for (const char of content) {
+            if (/[\u4e00-\u9fff]/.test(char)) {
+                chineseCharCount++;
+            }
+            if (/[a-zA-Z\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff\uac00-\ud7af]/.test(char)) {
+                totalCharCount++;
+            }
+        }
+    }
+    if (totalCharCount === 0) return false;
+    return chineseCharCount / totalCharCount > 0.5;
 }
 
 export function getAutoTranslateNonChinese(): boolean {

@@ -191,12 +191,22 @@ function LyricContent() {
 
     const [enableTransition, setEnableTransition] = useState(false);
 
+    const hasTranslation = currentLyric?.translation && currentLyric.translation.trim() !== "";
+
     const textWidth = useMemo(() => {
         if (currentLyric?.lrc) {
-            return getTextWidth(currentLyric?.lrc, {
+            const lrcWidth = getTextWidth(currentLyric?.lrc, {
                 fontSize: fontSizeConfig ?? 48,
                 fontFamily: fontDataConfig?.family || undefined,
             });
+            if (hasTranslation) {
+                const transWidth = getTextWidth(currentLyric.translation, {
+                    fontSize: (fontSizeConfig ?? 48) * 0.6,
+                    fontFamily: fontDataConfig?.family || undefined,
+                });
+                return Math.max(lrcWidth, transWidth);
+            }
+            return lrcWidth;
         } else if (currentMusic) {
             return getTextWidth(`${currentMusic.title} - ${currentMusic.artist}`, {
                 fontSize: fontSizeConfig ?? 48,
@@ -204,7 +214,7 @@ function LyricContent() {
             });
         }
         return 0;
-    }, [currentLyric, fontDataConfig, fontSizeConfig, currentMusic]);
+    }, [currentLyric, fontDataConfig, fontSizeConfig, currentMusic, hasTranslation]);
 
     const [left, setLeft] = useState(null);
 
@@ -263,10 +273,22 @@ function LyricContent() {
                 transition: enableTransition ? "left 900ms linear" : "none",
             }}
         >
-            {currentLyric?.lrc ??
-                (currentMusic
-                    ? `${currentMusic.title} - ${currentMusic.artist}`
-                    : "暂无歌词")}
+            <div className="lyric-main">
+                {currentLyric?.lrc ??
+                    (currentMusic
+                        ? `${currentMusic.title} - ${currentMusic.artist}`
+                        : "暂无歌词")}
+            </div>
+            {hasTranslation && (
+                <div
+                    className="lyric-translation"
+                    style={{
+                        fontSize: `calc(${fontSizeConfig ?? 48}px * 0.6)`,
+                    }}
+                >
+                    {currentLyric.translation}
+                </div>
+            )}
         </div>
     );
 }
