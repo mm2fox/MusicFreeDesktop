@@ -12,13 +12,14 @@ import { toast } from "react-toastify";
 import { showModal } from "@/renderer/components/Modal";
 import SvgAsset from "@/renderer/components/SvgAsset";
 import LyricParser from "@/renderer/utils/lyric-parser";
-import { getLinkedLyric, unlinkLyric } from "@/renderer/core/link-lyric";
+import { getLinkedLyric, unlinkLyric, saveTranslation, getSavedTranslation } from "@/renderer/core/link-lyric";
 import { getMediaPrimaryKey } from "@/common/media-util";
 import { useTranslation } from "react-i18next";
 import { useLyric } from "@renderer/core/track-player/hooks";
 import trackPlayer from "@renderer/core/track-player";
 import { dialogUtil, fsUtil } from "@shared/utils/renderer";
-import { translateLyricLines } from "@/renderer/services/translate-service";
+import { translateLyricLines, isLyricChinese, getAutoTranslateNonChinese } from "@/renderer/services/translate-service";
+import AppConfig from "@shared/app-config/renderer";
 
 export default function Lyric() {
     const lyricContext = useLyric();
@@ -38,6 +39,7 @@ export default function Lyric() {
     const { t } = useTranslation();
 
     const mountRef = useRef(false);
+    const lastAutoTranslateMusicRef = useRef<string | null>(null);
 
     const cancelTranslation = () => {
         if (abortControllerRef.current) {
@@ -117,6 +119,11 @@ export default function Lyric() {
             
             setShowTranslation(true);
             
+            const autoSaveTranslation = AppConfig.getConfig("translate.autoSaveTranslation") ?? true;
+            if (autoSaveTranslation) {
+                await saveTranslation(currentMusic, translationWithTimestamp);
+            }
+            
             const successMsg = result.failedCount > 0 
                 ? `${t("music_detail.auto_translate_success")} (${result.failedCount} ${t("music_detail.translate_lines_failed")})`
                 : t("music_detail.auto_translate_success");
@@ -172,6 +179,25 @@ export default function Lyric() {
         }
         mountRef.current = true;
     }, [currentLrc]);
+
+    useEffect(() => {
+        const autoTranslateNonChinese = getAutoTranslateNonChinese();
+        if (!autoTranslateNonChinese || !lyricParser || isTranslating) return;
+        
+        if (lyricParser.hasTranslation) return;
+        
+        const currentMusic = trackPlayer.currentMusic;
+        if (!currentMusic) return;
+        
+        const musicKey = getMediaPrimaryKey(currentMusic);
+        if (lastAutoTranslateMusicRef.current === musicKey) return;
+        lastAutoTranslateMusicRef.current = musicKey;
+        
+        const rawLrc = lyricParser.toString({ withTimestamp: true });
+        if (isLyricChinese(rawLrc)) return;
+        
+        handleAutoTranslate();
+    }, [lyricParser]);
 
     const optionsComponent = (
         <div className="lyric-options-container">

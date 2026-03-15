@@ -32,6 +32,8 @@ const _defaultAppConfig: IAppConfig = {
     "translate.baiduSecretKey": "",
     "translate.baiduLLMAppId": "",
     "translate.baiduLLMApiKey": "",
+    "translate.autoSaveTranslation": true,
+    "translate.autoTranslateNonChinese": true,
     "shortCut.enableLocal": true,
     "shortCut.enableGlobal": false,
     "download.concurrency": 5,

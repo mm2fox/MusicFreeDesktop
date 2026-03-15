@@ -156,3 +156,51 @@ export async function getLinkedLyric(musicItem: IMusic.IMusicItem) {
     }
     return null;
 }
+
+const translationCache = new LRUCache<string, string>({
+    max: 500,
+    allowStale: false,
+});
+
+export async function saveTranslation(
+    musicItem: IMusic.IMusicItem,
+    translation: string,
+) {
+    const pk = getMediaPrimaryKey(musicItem);
+    translationCache.set(pk, translation);
+
+    try {
+        await musicSheetDB.translationStore.put({
+            id: musicItem.id,
+            platform: musicItem.platform,
+            translation: translation,
+            updatedAt: Date.now(),
+        });
+    } catch (e) {
+        console.log(e);
+    }
+}
+
+export async function getSavedTranslation(musicItem: IMusic.IMusicItem): Promise<string | null> {
+    const pk = getMediaPrimaryKey(musicItem);
+
+    const cachedTranslation = translationCache.get(pk);
+    if (cachedTranslation) {
+        return cachedTranslation;
+    }
+
+    try {
+        const record = await musicSheetDB.translationStore.get([
+            musicItem.platform,
+            musicItem.id,
+        ]);
+        if (record?.translation) {
+            translationCache.set(pk, record.translation);
+            return record.translation;
+        }
+    } catch (e) {
+        console.log(e);
+    }
+
+    return null;
+}

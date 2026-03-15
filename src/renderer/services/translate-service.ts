@@ -136,9 +136,7 @@ function md5(string: string): string {
     }
 
     function hex(x: number[]) {
-        for (let i = 0; i < x.length; i++)
-            x[i] = rhex(x[i]);
-        return x.join('');
+        return x.map(rhex).join('');
     }
 
     function add32(a: number, b: number) {
@@ -340,6 +338,31 @@ export const TARGET_LANGUAGES: { value: TargetLanguage; label: string }[] = [
     { value: "ko", label: "韩语" },
     { value: "en", label: "英语" }
 ];
+
+const chineseCharRegex = /[\u4e00-\u9fff]/;
+
+export function containsChinese(text: string): boolean {
+    return chineseCharRegex.test(text);
+}
+
+export function isLyricChinese(rawLrc: string): boolean {
+    if (!rawLrc) return false;
+    const lines = rawLrc.split('\n').filter(line => {
+        const trimmed = line.trim();
+        return trimmed && !trimmed.startsWith('[');
+    });
+    if (lines.length === 0) return false;
+    const chineseLineCount = lines.filter(line => containsChinese(line)).length;
+    return chineseLineCount / lines.length > 0.3;
+}
+
+export function getAutoTranslateNonChinese(): boolean {
+    return AppConfig.getConfig("translate.autoTranslateNonChinese") ?? true;
+}
+
+export function setAutoTranslateNonChinese(enabled: boolean): void {
+    AppConfig.setConfig({ "translate.autoTranslateNonChinese": enabled });
+}
 
 export function getTargetLanguage(): TargetLanguage {
     return AppConfig.getConfig("translate.targetLanguage") || "zh";

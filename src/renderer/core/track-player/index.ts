@@ -27,7 +27,7 @@ import logger from "@shared/logger/renderer";
 import voidCallback from "@/common/void-callback";
 import { delay } from "@/common/time-util";
 import { createUniqueMap } from "@/common/unique-map";
-import { getLinkedLyric } from "@renderer/core/link-lyric";
+import { getLinkedLyric, getSavedTranslation } from "@renderer/core/link-lyric";
 import { fsUtil } from "@shared/utils/renderer";
 import PluginManager from "@shared/plugin-manager/renderer";
 import musicSheetDB from "@/renderer/core/db/music-sheet-db";
@@ -784,9 +784,18 @@ class TrackPlayer {
                 this.setCurrentLyric({});
                 return;
             }
+            
+            let translation = lyricSource.translation;
+            if (!translation) {
+                const savedTranslation = await getSavedTranslation(currentMusic);
+                if (savedTranslation) {
+                    translation = savedTranslation;
+                }
+            }
+            
             const parser = new LyricParser(lyricSource.rawLrc, {
                 musicItem: currentMusic,
-                translation: lyricSource.translation,
+                translation: translation,
             });
 
             this.setCurrentLyric({

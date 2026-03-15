@@ -83,6 +83,16 @@ export default function Lyric() {
                 }}
             ></ListBoxSettingItem>
             
+            <CheckBoxSettingItem
+                label={t("settings.lyric.auto_save_translation")}
+                keyPath="translate.autoSaveTranslation"
+            ></CheckBoxSettingItem>
+            
+            <CheckBoxSettingItem
+                label={t("settings.lyric.auto_translate_non_chinese")}
+                keyPath="translate.autoTranslateNonChinese"
+            ></CheckBoxSettingItem>
+            
             <IfTruthy condition={translateProvider === "baidu"}>
                 <ListBoxSettingItem
                     keyPath="translate.baiduType"

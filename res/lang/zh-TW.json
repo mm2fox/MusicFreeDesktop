@@ -392,7 +392,19 @@
       "font": "字體",
       "font_size": "字體大小",
       "font_color": "字體顏色",
-      "stroke_color": "描邊顏色"
+      "stroke_color": "描邊顏色",
+      "translate_section": "翻譯設置",
+      "target_language": "目標語言",
+      "translate_provider": "翻譯服務",
+      "requires_config": "需要配置",
+      "baidu_type": "百度翻譯類型",
+      "baidu_app_id": "APP ID",
+      "baidu_secret_key": "密鑰",
+      "baidu_standard_hint": "在 fanyi-api.baidu.com 申請 APP ID 和密鑰",
+      "baidu_llm_api_key": "API Key",
+      "baidu_llm_hint": "在 fanyi-api.baidu.com 的 API Keys 管理頁面獲取 API Key",
+      "auto_save_translation": "翻譯後自動保存",
+      "auto_translate_non_chinese": "非中文歌詞自動翻譯"
     },
     "plugin": {
       "auto_update_plugin": "啟動應用時自動更新插件",

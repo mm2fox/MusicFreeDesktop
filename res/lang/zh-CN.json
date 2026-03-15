@@ -471,7 +471,9 @@
       "baidu_secret_key": "密钥",
       "baidu_standard_hint": "在 fanyi-api.baidu.com 申请 APP ID 和密钥",
       "baidu_llm_api_key": "API Key",
-      "baidu_llm_hint": "在 fanyi-api.baidu.com 的 API Keys 管理页面获取 API Key"
+      "baidu_llm_hint": "在 fanyi-api.baidu.com 的 API Keys 管理页面获取 API Key",
+      "auto_save_translation": "翻译后自动保存",
+      "auto_translate_non_chinese": "非中文歌词自动翻译"
     },
     "plugin": {
       "auto_update_plugin": "打开软件时自动更新插件",

@@ -57,6 +57,10 @@ interface _IAppConfig {
     "translate.baiduLLMAppId": string;
     /** 百度翻译大模型版 API Key */
     "translate.baiduLLMApiKey": string;
+    /** 翻译后自动保存 */
+    "translate.autoSaveTranslation": boolean;
+    /** 非中文歌曲自动翻译 */
+    "translate.autoTranslateNonChinese": boolean;
 
     /** 是否启用本地快捷键 */
     "shortCut.enableLocal": boolean;

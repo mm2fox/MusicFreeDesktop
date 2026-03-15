@@ -490,7 +490,9 @@
       "baidu_standard_hint": "Apply at fanyi-api.baidu.com, use same APP ID and Secret Key",
       "baidu_llm_api_key": "APP ID",
       "baidu_llm_secret_key": "Secret Key",
-      "baidu_llm_hint": "Enable LLM translation at fanyi-api.baidu.com, use same APP ID and Secret Key"
+      "baidu_llm_hint": "Enable LLM translation at fanyi-api.baidu.com, use same APP ID and Secret Key",
+      "auto_save_translation": "Auto-save translation",
+      "auto_translate_non_chinese": "Auto-translate non-Chinese lyrics"
     },
     "plugin": {
       "auto_update_plugin": "Automatically update plugins on startup",

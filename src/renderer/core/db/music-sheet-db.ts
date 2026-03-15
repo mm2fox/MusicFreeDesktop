@@ -1,6 +1,13 @@
 import { musicRefSymbol } from "@/common/constant";
 import Dexie, { Table } from "dexie";
 
+interface ITranslationRecord {
+    id: string;
+    platform: string;
+    translation: string;
+    updatedAt: number;
+}
+
 class MusicSheetDB extends Dexie {
     // 歌单信息，其中musiclist只存有platform和id
     sheets: Table<IMusic.IDBMusicSheetItem>;
@@ -14,14 +21,17 @@ class MusicSheetDB extends Dexie {
         $$localPath: string; // 本地地址
         $$customTags?: string[]; // 自定义标签
     }>;
+    translationStore: Table<ITranslationRecord>;
 
     constructor() {
         super("musicSheetDB");
-        this.version(1.1).stores({
+        this.version(1.2).stores({
             sheets: "&id, title, artist, createAt, $$sortIndex",
             musicStore: "[platform+id], title, artist, album",
             /** 本地音乐 */
             localMusicStore: "[platform+id], title, artist, album, $$localPath",
+            /** 翻译存储 */
+            translationStore: "[platform+id], updatedAt",
         });
     }
 }
