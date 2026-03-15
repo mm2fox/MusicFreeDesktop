@@ -19,6 +19,8 @@ declare namespace IUserPreference {
     inlineLyricFontSize: string;
     /** 展示翻译 */
     showTranslation: boolean;
+    /** 翻译服务提供商 */
+    translateServiceProvider: "libretranslate" | "mymemory";
     /** 小米账号用户名 */
     xiaoaiUsername: string;
     /** 小米账号密码 */

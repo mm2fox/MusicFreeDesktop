@@ -42,7 +42,7 @@ export const useLangList = langListStore.useValue;
 
 export const getLangList = langListStore.getValue;
 
-export const isCN = () => i18n.language.includes("zh-CN");
+export const isCN = () => i18n.language?.includes("zh-CN") ?? false;
 
 export { i18n };
 

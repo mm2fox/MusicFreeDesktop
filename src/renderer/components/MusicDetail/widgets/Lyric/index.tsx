@@ -15,17 +15,15 @@ import LyricParser from "@/renderer/utils/lyric-parser";
 import { getLinkedLyric, unlinkLyric } from "@/renderer/core/link-lyric";
 import { getMediaPrimaryKey } from "@/common/media-util";
 import { useTranslation } from "react-i18next";
-import { useLyric, useCurrentMusic } from "@renderer/core/track-player/hooks";
+import { useLyric } from "@renderer/core/track-player/hooks";
 import trackPlayer from "@renderer/core/track-player";
 import { dialogUtil, fsUtil } from "@shared/utils/renderer";
-import MusicSheet from "@/renderer/core/music-sheet";
+import { translateLyricLines } from "@/renderer/services/translate-service";
 
 export default function Lyric() {
     const lyricContext = useLyric();
     const lyricParser = lyricContext?.parser;
     const currentLrc = lyricContext?.currentLrc;
-    const currentMusic = useCurrentMusic();
-    const isFav = MusicSheet.frontend.useMusicIsFavorite(currentMusic);
 
     const containerRef = useRef<HTMLDivElement>();
 
@@ -35,9 +33,123 @@ export default function Lyric() {
 
     const [showTranslation, setShowTranslation] =
     useUserPreference("showTranslation");
+    const [isTranslating, setIsTranslating] = useState(false);
+    const abortControllerRef = useRef<AbortController | null>(null);
     const { t } = useTranslation();
 
     const mountRef = useRef(false);
+
+    const cancelTranslation = () => {
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+            abortControllerRef.current = null;
+        }
+    };
+
+    const handleAutoTranslate = async () => {
+        if (!lyricParser || isTranslating) return;
+        
+        const lyricItems = lyricParser.getLyricItems();
+        if (!lyricItems || lyricItems.length === 0) return;
+
+        const currentMusic = trackPlayer.currentMusic;
+        if (!currentMusic) {
+            toast.error(t("music_detail.auto_translate_fail"));
+            return;
+        }
+
+        setIsTranslating(true);
+        abortControllerRef.current = new AbortController();
+        const toastId = toast.loading(
+            <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                <span>{t("music_detail.auto_translating")}</span>
+                <button 
+                    onClick={() => {
+                        cancelTranslation();
+                        toast.dismiss(toastId);
+                    }}
+                    style={{
+                        background: "transparent",
+                        border: "1px solid currentColor",
+                        borderRadius: "4px",
+                        padding: "2px 8px",
+                        cursor: "pointer",
+                        fontSize: "12px",
+                    }}
+                >
+                    {t("music_detail.cancel")}
+                </button>
+            </div>,
+            { autoClose: false }
+        );
+
+        try {
+            const lines = lyricItems.map(item => item.lrc);
+            const result = await translateLyricLines(lines, abortControllerRef.current.signal);
+            
+            if (!result.success) {
+                throw new Error(result.error || "Translation failed");
+            }
+            
+            const timeToLrctime = (sec: number) => {
+                const min = Math.floor(sec / 60);
+                sec = sec - min * 60;
+                const secInt = Math.floor(sec);
+                const secFloat = sec - secInt;
+                return `[${min.toFixed(0).padStart(2, "0")}:${secInt
+                    .toString()
+                    .padStart(2, "0")}.${secFloat.toFixed(2).slice(2)}]`;
+            };
+            
+            const translationWithTimestamp = lyricItems
+                .map((item, index) => `${timeToLrctime(item.time)} ${result.lines[index] || ""}`)
+                .join("\r\n");
+            
+            const newParser = new LyricParser(lyricParser.toString({ withTimestamp: true }), {
+                musicItem: currentMusic,
+                translation: translationWithTimestamp,
+            });
+            
+            trackPlayer.setCurrentLyric({
+                parser: newParser,
+                currentLrc: newParser.getPosition(trackPlayer.progress.currentTime || 0),
+            });
+            
+            setShowTranslation(true);
+            
+            const successMsg = result.failedCount > 0 
+                ? `${t("music_detail.auto_translate_success")} (${result.failedCount} ${t("music_detail.translate_lines_failed")})`
+                : t("music_detail.auto_translate_success");
+            
+            toast.update(toastId, {
+                render: successMsg,
+                type: result.failedCount > 0 ? "warning" : "success",
+                isLoading: false,
+                autoClose: 3000,
+            });
+        } catch (error) {
+            const errorMessage = (error as Error).message;
+            if (errorMessage === "Translation cancelled") {
+                toast.update(toastId, {
+                    render: t("music_detail.translate_cancelled"),
+                    type: "info",
+                    isLoading: false,
+                    autoClose: 2000,
+                });
+            } else {
+                console.error("Auto translate error:", error);
+                toast.update(toastId, {
+                    render: `${t("music_detail.auto_translate_fail")}: ${errorMessage}`,
+                    type: "error",
+                    isLoading: false,
+                    autoClose: 3000,
+                });
+            }
+        } finally {
+            setIsTranslating(false);
+            abortControllerRef.current = null;
+        }
+    };
 
     useEffect(() => {
         if (containerRef.current) {
@@ -66,23 +178,6 @@ export default function Lyric() {
             <div
                 className="lyric-option-item"
                 role="button"
-                title={isFav ? t("music_bar.unfavorite") : t("music_bar.favorite")}
-                data-active={isFav}
-                data-disabled={!currentMusic}
-                onClick={() => {
-                    if (!currentMusic) return;
-                    if (isFav) {
-                        MusicSheet.frontend.removeMusicFromFavorite(currentMusic);
-                    } else {
-                        MusicSheet.frontend.addMusicToFavorite(currentMusic);
-                    }
-                }}
-            >
-                <SvgAsset iconName={isFav ? "heart" : "heart-outline"}></SvgAsset>
-            </div>
-            <div
-                className="lyric-option-item"
-                role="button"
                 title={t("music_detail.translation")}
                 data-active={
                     !!showTranslation && (lyricParser?.hasTranslation ?? false)
@@ -93,6 +188,15 @@ export default function Lyric() {
                 }}
             >
                 <SvgAsset iconName="language"></SvgAsset>
+            </div>
+            <div
+                className="lyric-option-item"
+                role="button"
+                title={t("music_detail.auto_translate")}
+                data-disabled={!lyricParser || isTranslating}
+                onClick={handleAutoTranslate}
+            >
+                <SvgAsset iconName={isTranslating ? "rolling-1s" : "sparkles"}></SvgAsset>
             </div>
         </div>
     );

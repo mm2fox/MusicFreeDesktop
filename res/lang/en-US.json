@@ -357,7 +357,14 @@
     "toast_media_lyric_unlinked": "Lyric Unlinked",
     "translation": "Translation",
     "show_translation": "Show Translation",
-    "hide_translation": "Hide Translation"
+    "hide_translation": "Hide Translation",
+    "auto_translate": "Auto Translate",
+    "auto_translating": "Translating...",
+    "auto_translate_success": "Translation Complete",
+    "auto_translate_fail": "Translation Failed",
+    "cancel": "Cancel",
+    "translate_cancelled": "Translation Cancelled",
+    "translate_lines_failed": "lines failed to translate"
   },
   "bottom_loading_state": {
     "reached_end": "~~~ End ~~~",
@@ -472,7 +479,18 @@
       "font": "Font",
       "font_size": "Font Size",
       "font_color": "Font Color",
-      "stroke_color": "Stroke Color"
+      "stroke_color": "Stroke Color",
+      "translate_section": "Translation Settings",
+      "target_language": "Target Language",
+      "translate_provider": "Translation Provider",
+      "requires_config": "Requires Config",
+      "baidu_type": "Baidu Type",
+      "baidu_app_id": "APP ID",
+      "baidu_secret_key": "Secret Key",
+      "baidu_standard_hint": "Apply at fanyi-api.baidu.com, use same APP ID and Secret Key",
+      "baidu_llm_api_key": "APP ID",
+      "baidu_llm_secret_key": "Secret Key",
+      "baidu_llm_hint": "Enable LLM translation at fanyi-api.baidu.com, use same APP ID and Secret Key"
     },
     "plugin": {
       "auto_update_plugin": "Automatically update plugins on startup",

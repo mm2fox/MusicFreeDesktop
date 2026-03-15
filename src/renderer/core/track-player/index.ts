@@ -896,7 +896,7 @@ class TrackPlayer {
         currentQualityStore.setValue(quality);
     }
 
-    private setCurrentLyric(lyric?: ICurrentLyric) {
+    public setCurrentLyric(lyric?: ICurrentLyric) {
         const prev = this.lyric;
         currentLyricStore.setValue(lyric);
 

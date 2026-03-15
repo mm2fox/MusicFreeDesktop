@@ -65,7 +65,6 @@ export default function InputSettingItem<T extends keyof IAppConfig>(
                         });
                     }
                 }}
-                defaultValue={value as string}
                 value={(tmpValue || "") as string}
             ></input>
         </div>

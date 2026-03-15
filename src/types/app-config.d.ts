@@ -43,6 +43,21 @@ interface _IAppConfig {
     /** 描边颜色 */
     "lyric.strokeColor": string;
 
+    /** 翻译服务提供商 */
+    "translate.provider": "libretranslate" | "mymemory" | "baidu";
+    /** 百度翻译类型 */
+    "translate.baiduType": "standard" | "llm";
+    /** 翻译目标语言 */
+    "translate.targetLanguage": "zh" | "ja" | "ko" | "en";
+    /** 百度翻译标准版 APP ID */
+    "translate.baiduAppId": string;
+    /** 百度翻译标准版密钥 */
+    "translate.baiduSecretKey": string;
+    /** 百度翻译大模型版 APP ID */
+    "translate.baiduLLMAppId": string;
+    /** 百度翻译大模型版 API Key */
+    "translate.baiduLLMApiKey": string;
+
     /** 是否启用本地快捷键 */
     "shortCut.enableLocal": boolean;
     /** 是否启用全局快捷键 */

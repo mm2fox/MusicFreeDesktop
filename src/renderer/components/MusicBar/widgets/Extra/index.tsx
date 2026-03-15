@@ -322,11 +322,11 @@ function LyricBtn() {
         <div
             className={classNames({
                 "extra-btn": true,
-                highlight: enableDesktopLyric,
+                highlight: enableDesktopLyric ?? false,
             })}
             role="button"
             onClick={async () => {
-                appWindowUtil.setLyricWindow(!enableDesktopLyric);
+                appWindowUtil.setLyricWindow(!(enableDesktopLyric ?? false));
             }}
         >
             <SvgAsset
