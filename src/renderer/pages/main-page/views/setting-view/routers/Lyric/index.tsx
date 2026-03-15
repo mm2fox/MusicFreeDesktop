@@ -41,6 +41,10 @@ export default function Lyric() {
                 label={t("settings.lyric.lock_desktop_lyric")}
                 keyPath="lyric.lockLyric"
             ></CheckBoxSettingItem>
+            <CheckBoxSettingItem
+                label={t("settings.lyric.show_translation")}
+                keyPath="lyric.showTranslation"
+            ></CheckBoxSettingItem>
             <FontPickerSettingItem
                 label={t("settings.lyric.font")}
                 keyPath="lyric.fontData"

@@ -389,6 +389,7 @@
       "enable_desktop_lyric": "啟用桌面歌詞",
       "always_on_top": "置頂桌面歌詞",
       "lock_desktop_lyric": "鎖定桌面歌詞",
+      "show_translation": "桌面歌詞顯示翻譯",
       "font": "字體",
       "font_size": "字體大小",
       "font_color": "字體顏色",

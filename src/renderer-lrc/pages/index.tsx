@@ -17,6 +17,7 @@ export default function LyricWindowPage() {
     const downloadState = useAppStatePartial("downloadState");
     const isFavorite = useAppStatePartial("isFavorite");
     const lockLyric = useAppConfig("lyric.lockLyric");
+    const showTranslationConfig = useAppConfig("lyric.showTranslation");
     const [showOperations, setShowOperations] = useState(false);
 
     const mouseOverTimerRef = useRef<number | null>(null);
@@ -42,6 +43,12 @@ export default function LyricWindowPage() {
     } else if (isDownloading) {
         downloadIconName = "rolling-1s";
     }
+
+    const toggleTranslation = () => {
+        AppConfig.setConfig({
+            "lyric.showTranslation": showTranslationConfig === false ? true : false,
+        });
+    };
 
     return (
         <div
@@ -151,6 +158,16 @@ export default function LyricWindowPage() {
                                 <SvgAsset iconName={downloadIconName}></SvgAsset>
                             </div>
                             <div
+                                className={classNames({
+                                    "operation-button": true,
+                                    "active": showTranslationConfig !== false,
+                                })}
+                                onClick={toggleTranslation}
+                                title={showTranslationConfig !== false ? "隐藏翻译" : "显示翻译"}
+                            >
+                                <SvgAsset iconName="language"></SvgAsset>
+                            </div>
+                            <div
                                 className="operation-button"
                                 onClick={() => {
                                     AppConfig.setConfig({
@@ -188,10 +205,11 @@ function LyricContent() {
     const fontSizeConfig = useAppConfig("lyric.fontSize");
     const fontColorConfig = useAppConfig("lyric.fontColor");
     const fontStrokeConfig = useAppConfig("lyric.strokeColor");
+    const showTranslationConfig = useAppConfig("lyric.showTranslation");
 
     const [enableTransition, setEnableTransition] = useState(false);
 
-    const hasTranslation = currentLyric?.translation && currentLyric.translation.trim() !== "";
+    const hasTranslation = showTranslationConfig !== false && currentLyric?.translation && currentLyric.translation.trim() !== "";
 
     const textWidth = useMemo(() => {
         if (currentLyric?.lrc) {

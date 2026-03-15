@@ -90,6 +90,10 @@
         width: 24px;
         height: 24px;
       }
+
+      &.active {
+        color: #ffd700;
+      }
     }
   }
 }

@@ -21,6 +21,7 @@ const _defaultAppConfig: IAppConfig = {
     "lyric.enableDesktopLyric": false,
     "lyric.alwaysOnTop": false,
     "lyric.lockLyric": false,
+    "lyric.showTranslation": true,
     "lyric.fontData": defaultFont,
     "lyric.fontColor": "#fff",
     "lyric.strokeColor": "#b48f1d",

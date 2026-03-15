@@ -458,6 +458,7 @@
       "enable_desktop_lyric": "启用桌面歌词",
       "always_on_top": "置顶桌面歌词",
       "lock_desktop_lyric": "锁定桌面歌词",
+      "show_translation": "桌面歌词显示翻译",
       "font": "字体",
       "font_size": "字体大小",
       "font_color": "字体颜色",
