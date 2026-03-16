@@ -11,6 +11,20 @@ import AppConfig from "@shared/app-config/renderer";
 import messageBus, { useAppStatePartial } from "@shared/message-bus/renderer/extension";
 import { IAppState } from "@shared/message-bus/type";
 
+type TranslationMode = "both" | "none" | "translation";
+
+const translationModeTitle: Record<TranslationMode, string> = {
+    both: "显示原歌词和翻译",
+    none: "只显示原歌词",
+    translation: "只显示翻译",
+};
+
+const nextTranslationMode: Record<TranslationMode, TranslationMode> = {
+    both: "none",
+    none: "translation",
+    translation: "both",
+};
+
 export default function LyricWindowPage() {
     const currentMusic = useAppStatePartial("musicItem");
     const playerState = useAppStatePartial("playerState");
@@ -22,9 +36,17 @@ export default function LyricWindowPage() {
 
     const mouseOverTimerRef = useRef<number | null>(null);
 
+    const translationMode: TranslationMode = showTranslationConfig ?? "both";
+
     useEffect(() => {
         if (lockLyric) {
             setShowOperations(false);
+        }
+    }, [lockLyric]);
+
+    useEffect(() => {
+        if (!lockLyric) {
+            appWindowUtil.ignoreMouseEvent(true);
         }
     }, [lockLyric]);
 
@@ -45,8 +67,9 @@ export default function LyricWindowPage() {
     }
 
     const toggleTranslation = () => {
+        const nextMode = nextTranslationMode[translationMode];
         AppConfig.setConfig({
-            "lyric.showTranslation": showTranslationConfig === false ? true : false,
+            "lyric.showTranslation": nextMode,
         });
     };
 
@@ -82,110 +105,115 @@ export default function LyricWindowPage() {
         >
             <div className='operation-outer-container'>
                 <Condition condition={showOperations}>
-                    <div className="operation-container">
+                    <div
+                        className="operation-container"
+                        onMouseOver={() => {
+                            appWindowUtil.ignoreMouseEvent(false);
+                        }}
+                        onMouseLeave={() => {
+                            appWindowUtil.ignoreMouseEvent(true);
+                        }}
+                    >
+                        <Condition condition={!lockLyric}>
+                            <div className="music-title">
+                                {currentMusic ? `${currentMusic.title} - ${currentMusic.artist}` : ""}
+                            </div>
+                        </Condition>
+                        <div
+                            className="operation-button"
+                            onClick={() => {
+                                messageBus.sendCommand("SkipToPrevious");
+                            }}
+                        >
+                            <SvgAsset iconName="skip-left"></SvgAsset>
+                        </div>
+                        <div
+                            className="operation-button"
+                            onClick={() => {
+                                if (currentMusic) {
+                                    messageBus.sendCommand("TogglePlayerState");
+                                }
+                            }}
+                        >
+                            <SvgAsset
+                                iconName={
+                                    playerState === PlayerState.Playing ? "pause" : "play"
+                                }
+                            ></SvgAsset>
+                        </div>
+                        <div
+                            className="operation-button"
+                            onClick={() => {
+                                messageBus.sendCommand("SkipToNext");
+                            }}
+                        >
+                            <SvgAsset iconName="skip-right"></SvgAsset>
+                        </div>
+                        <div
+                            className="operation-button"
+                            onClick={() => {
+                                if (currentMusic) {
+                                    messageBus.sendCommand("ToggleFavorite", currentMusic);
+                                }
+                            }}
+                        >
+                            <SvgAsset iconName={isFavorite ? "heart" : "heart-outline"}></SvgAsset>
+                        </div>
+                        <div
+                            className="operation-button"
+                            onClick={() => {
+                                if (currentMusic && !isDownloadedOrLocal && !isDownloading) {
+                                    messageBus.sendCommand("DownloadMusic", currentMusic);
+                                }
+                            }}
+                        >
+                            <SvgAsset iconName={downloadIconName}></SvgAsset>
+                        </div>
+                        <div
+                            className={classNames({
+                                "operation-button": true,
+                                "active": translationMode === "both",
+                                "translation-only": translationMode === "translation",
+                            })}
+                            onClick={toggleTranslation}
+                            title={translationModeTitle[translationMode]}
+                        >
+                            <SvgAsset iconName="language"></SvgAsset>
+                        </div>
                         <Condition
-                            condition={!lockLyric}
+                            condition={lockLyric}
                             falsy={
                                 <div
                                     className="operation-button"
                                     onClick={() => {
                                         AppConfig.setConfig({
-                                            "lyric.lockLyric": false,
+                                            "lyric.lockLyric": true,
                                         });
                                     }}
-                                    onMouseOver={() => {
-                                        appWindowUtil.ignoreMouseEvent(false);
-                                    }}
-                                    onMouseLeave={() => {
-                                        appWindowUtil.ignoreMouseEvent(true);
-                                    }}
                                 >
-                                    <SvgAsset iconName="lock-open"></SvgAsset>
+                                    <SvgAsset iconName="lock-closed"></SvgAsset>
                                 </div>
                             }
                         >
-                            <div className="music-title">
-                                {currentMusic ? `${currentMusic.title} - ${currentMusic.artist}` : ""}
-                            </div>
-                            <div
-                                className="operation-button"
-                                onClick={() => {
-                                    messageBus.sendCommand("SkipToPrevious");
-                                }}
-                            >
-                                <SvgAsset iconName="skip-left"></SvgAsset>
-                            </div>
-                            <div
-                                className="operation-button"
-                                onClick={() => {
-                                    if (currentMusic) {
-                                        messageBus.sendCommand("TogglePlayerState");
-                                    }
-                                }}
-                            >
-                                <SvgAsset
-                                    iconName={
-                                        playerState === PlayerState.Playing ? "pause" : "play"
-                                    }
-                                ></SvgAsset>
-                            </div>
-                            <div
-                                className="operation-button"
-                                onClick={() => {
-                                    messageBus.sendCommand("SkipToNext");
-                                }}
-                            >
-                                <SvgAsset iconName="skip-right"></SvgAsset>
-                            </div>
-                            <div
-                                className="operation-button"
-                                onClick={() => {
-                                    if (currentMusic) {
-                                        messageBus.sendCommand("ToggleFavorite", currentMusic);
-                                    }
-                                }}
-                            >
-                                <SvgAsset iconName={isFavorite ? "heart" : "heart-outline"}></SvgAsset>
-                            </div>
-                            <div
-                                className="operation-button"
-                                onClick={() => {
-                                    if (currentMusic && !isDownloadedOrLocal && !isDownloading) {
-                                        messageBus.sendCommand("DownloadMusic", currentMusic);
-                                    }
-                                }}
-                            >
-                                <SvgAsset iconName={downloadIconName}></SvgAsset>
-                            </div>
-                            <div
-                                className={classNames({
-                                    "operation-button": true,
-                                    "active": showTranslationConfig !== false,
-                                })}
-                                onClick={toggleTranslation}
-                                title={showTranslationConfig !== false ? "隐藏翻译" : "显示翻译"}
-                            >
-                                <SvgAsset iconName="language"></SvgAsset>
-                            </div>
                             <div
                                 className="operation-button"
                                 onClick={() => {
                                     AppConfig.setConfig({
-                                        "lyric.lockLyric": true,
+                                        "lyric.lockLyric": false,
                                     });
                                 }}
                             >
-                                <SvgAsset iconName="lock-closed"></SvgAsset>
-                            </div>
-                            <div
-                                className="operation-button"
-                                onClick={() => {
-                                    appWindowUtil.setLyricWindow(false);
-                                }}
-                            >
-                                <SvgAsset iconName="x-mark"></SvgAsset>
+                                <SvgAsset iconName="lock-open"></SvgAsset>
                             </div>
                         </Condition>
+                        <div
+                            className="operation-button"
+                            onClick={() => {
+                                appWindowUtil.setLyricWindow(false);
+                            }}
+                        >
+                            <SvgAsset iconName="x-mark"></SvgAsset>
+                        </div>
                     </div>
                 </Condition>
             </div>
@@ -209,17 +237,31 @@ function LyricContent() {
 
     const [enableTransition, setEnableTransition] = useState(false);
 
-    const hasTranslation = showTranslationConfig !== false && currentLyric?.translation && currentLyric.translation.trim() !== "";
+    const translationMode: TranslationMode = showTranslationConfig ?? "both";
+    const hasTranslation = currentLyric?.translation && currentLyric.translation.trim() !== "";
+    const showLrc = translationMode !== "translation";
+    const showTrans = translationMode === "both" && hasTranslation;
+    const showOnlyTranslation = translationMode === "translation" && hasTranslation;
 
     const textWidth = useMemo(() => {
-        if (currentLyric?.lrc) {
-            const lrcWidth = getTextWidth(currentLyric?.lrc, {
-                fontSize: fontSizeConfig ?? 48,
+        const mainFontSize = fontSizeConfig ?? 48;
+        const transFontSize = mainFontSize * 0.6;
+
+        if (showOnlyTranslation && currentLyric?.translation) {
+            return getTextWidth(currentLyric.translation, {
+                fontSize: transFontSize,
                 fontFamily: fontDataConfig?.family || undefined,
             });
-            if (hasTranslation) {
+        }
+
+        if (currentLyric?.lrc) {
+            const lrcWidth = getTextWidth(currentLyric?.lrc, {
+                fontSize: mainFontSize,
+                fontFamily: fontDataConfig?.family || undefined,
+            });
+            if (showTrans) {
                 const transWidth = getTextWidth(currentLyric.translation, {
-                    fontSize: (fontSizeConfig ?? 48) * 0.6,
+                    fontSize: transFontSize,
                     fontFamily: fontDataConfig?.family || undefined,
                 });
                 return Math.max(lrcWidth, transWidth);
@@ -227,12 +269,12 @@ function LyricContent() {
             return lrcWidth;
         } else if (currentMusic) {
             return getTextWidth(`${currentMusic.title} - ${currentMusic.artist}`, {
-                fontSize: fontSizeConfig ?? 48,
+                fontSize: mainFontSize,
                 fontFamily: fontDataConfig?.family || undefined,
             });
         }
         return 0;
-    }, [currentLyric, fontDataConfig, fontSizeConfig, currentMusic, hasTranslation]);
+    }, [currentLyric, fontDataConfig, fontSizeConfig, currentMusic, showTrans, showOnlyTranslation]);
 
     const [left, setLeft] = useState(null);
 
@@ -246,7 +288,7 @@ function LyricContent() {
     }, [textWidth]);
 
     useLayoutEffect(() => {
-        const callback = (_: any, patch: IAppState) => {
+        const callback =(_: any, patch: IAppState) => {
             if (!patch.progress) {
                 return;
             }
@@ -291,21 +333,34 @@ function LyricContent() {
                 transition: enableTransition ? "left 900ms linear" : "none",
             }}
         >
-            <div className="lyric-main">
-                {currentLyric?.lrc ??
-                    (currentMusic
-                        ? `${currentMusic.title} - ${currentMusic.artist}`
-                        : "暂无歌词")}
-            </div>
-            {hasTranslation && (
+            {showOnlyTranslation ? (
                 <div
-                    className="lyric-translation"
+                    className="lyric-translation-only"
                     style={{
-                        fontSize: `calc(${fontSizeConfig ?? 48}px * 0.6)`,
+                        fontSize: `calc(${fontSizeConfig ?? 48}px * 0.8)`,
                     }}
                 >
-                    {currentLyric.translation}
+                    {currentLyric?.translation ?? (currentMusic ? `${currentMusic.title} - ${currentMusic.artist}` : "暂无歌词")}
                 </div>
+            ) : (
+                <>
+                    <div className="lyric-main">
+                        {currentLyric?.lrc ??
+                            (currentMusic
+                                ? `${currentMusic.title} - ${currentMusic.artist}`
+                                : "暂无歌词")}
+                    </div>
+                    {showTrans && (
+                        <div
+                            className="lyric-translation"
+                            style={{
+                                fontSize: `calc(${fontSizeConfig ?? 48}px * 0.6)`,
+                            }}
+                        >
+                            {currentLyric.translation}
+                        </div>
+                    )}
+                </>
             )}
         </div>
     );

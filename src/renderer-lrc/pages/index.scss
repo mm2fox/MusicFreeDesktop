@@ -54,6 +54,11 @@
         opacity: 0.85;
         margin-top: 8px;
       }
+
+      & .lyric-translation-only {
+        white-space: nowrap;
+        opacity: 0.95;
+      }
     }
   }
 
@@ -93,6 +98,10 @@
 
       &.active {
         color: #ffd700;
+      }
+
+      &.translation-only {
+        color: #00bfff;
       }
     }
   }
