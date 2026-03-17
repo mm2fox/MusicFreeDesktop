@@ -223,19 +223,6 @@ export default function LocalMusicView() {
         e.preventDefault();
         const menuItems: IContextMenuItem[] = [
             {
-                icon: "chevron-double-up",
-                title: t("local_music_page.scroll_to_top"),
-                onClick: () => {
-                    const container = document.querySelector("#page-container");
-                    if (container) {
-                        container.scrollTo({ top: 0, behavior: "smooth" });
-                    }
-                },
-            },
-            {
-                divider: true,
-            },
-            {
                 icon: "trash",
                 title: t("local_music_page.clear_local_music"),
                 onClick: async () => {

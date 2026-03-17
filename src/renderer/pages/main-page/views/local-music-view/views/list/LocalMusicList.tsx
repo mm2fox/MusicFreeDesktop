@@ -359,6 +359,19 @@ function showLocalMusicContextMenu(
                 });
             },
         },
+        {
+            divider: true,
+        },
+        {
+            title: i18n.t("local_music_page.scroll_to_top"),
+            icon: "chevron-double-up",
+            onClick() {
+                const container = document.querySelector("#page-container");
+                if (container) {
+                    container.scrollTo({ top: 0, behavior: "smooth" });
+                }
+            },
+        },
     );
 
     showContextMenu({ x, y, menuItems });
