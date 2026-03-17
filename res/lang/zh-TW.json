@@ -159,6 +159,7 @@
     "manual_scanning": "掃描中...",
     "rescan": "掃描完成",
     "tag_sheet_convert": "標籤/歌單轉換",
+    "scroll_to_top": "回到頂部",
     "auto_tag": "自動標籤",
     "auto_tagging": "自動標籤中...",
     "auto_tag_complete": "自動標籤完成，成功 {{success}}/{{total}} 首",

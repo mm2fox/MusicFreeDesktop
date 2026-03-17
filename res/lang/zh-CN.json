@@ -157,6 +157,7 @@
     "rescan": "扫描完成",
     "format_convert": "格式转换",
     "tag_sheet_convert": "标签/歌单转换",
+    "scroll_to_top": "回到顶部",
     "auto_tag": "自动标签",
     "auto_tagging": "自动标签中...",
     "auto_tag_complete": "自动标签完成，成功 {{success}}/{{total}} 首",

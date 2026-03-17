@@ -169,6 +169,7 @@
     "rescan": "Scan complete",
     "format_convert": "Format Convert",
     "tag_sheet_convert": "Tag/Sheet Convert",
+    "scroll_to_top": "Scroll to Top",
     "auto_tag": "Auto Tag",
     "auto_tagging": "Auto Tagging...",
     "auto_tag_complete": "Auto tag complete, {{success}}/{{total}} succeeded",
