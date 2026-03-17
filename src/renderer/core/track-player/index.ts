@@ -445,25 +445,6 @@ class TrackPlayer {
             return;
         }
 
-        const MAX_QUEUE_SIZE = 100;
-        if (musicList.length > MAX_QUEUE_SIZE) {
-            const targetIndex = musicItem ? musicList.findIndex(it => isSameMedia(it, musicItem)) : -1;
-            if (targetIndex !== -1) {
-                const start = Math.max(0, targetIndex - Math.floor(MAX_QUEUE_SIZE / 2));
-                const end = Math.min(musicList.length, start + MAX_QUEUE_SIZE);
-                musicList = musicList.slice(start, end);
-                const newIndex = musicList.findIndex(it => isSameMedia(it, musicItem));
-                if (newIndex !== -1) {
-                    musicItem = musicList[newIndex];
-                } else {
-                    musicItem = musicList[0];
-                }
-            } else {
-                musicList = musicList.slice(0, MAX_QUEUE_SIZE);
-                musicItem = musicItem ?? musicList[0];
-            }
-        }
-
         addSortProperty(musicList);
         if (this.repeatMode === RepeatMode.Shuffle) {
             musicList = shuffle(musicList);

@@ -542,6 +542,8 @@ function _LocalMusicList(props: ILocalMusicListProps) {
     const [activeItems, setActiveItems] = useState<Set<number>>(new Set());
     const lastActiveIndexRef = useRef(0);
     const [isHovering, setIsHovering] = useState(false);
+    const lastClickTimeRef = useRef(0);
+    const lastClickRowIndexRef = useRef(-1);
 
     useEffect(() => {
         setActiveItems(new Set());
@@ -740,6 +742,18 @@ function _LocalMusicList(props: ILocalMusicListProps) {
                                     }
                                 }}
                                 onClick={(e) => {
+                                    const now = Date.now();
+                                    const timeDiff = now - lastClickTimeRef.current;
+                                    const isSameRow = lastClickRowIndexRef.current === virtualItem.rowIndex;
+                                    const isDoubleClick = timeDiff < 300 && isSameRow;
+                                    
+                                    lastClickTimeRef.current = now;
+                                    lastClickRowIndexRef.current = virtualItem.rowIndex;
+                                    
+                                    if (isDoubleClick) {
+                                        return;
+                                    }
+                                    
                                     hotkeys.setScope("music-list");
                                     if (hotkeys.shift) {
                                         let start = lastActiveIndexRef.current;
