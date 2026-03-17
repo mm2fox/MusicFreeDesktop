@@ -111,7 +111,7 @@ class AppConfig {
                 "lyric.enableDesktopLyric": oldConfig.lyric?.enableDesktopLyric,
                 "lyric.alwaysOnTop": oldConfig.lyric?.alwaysOnTop,
                 "lyric.lockLyric": oldConfig.lyric?.lockLyric,
-                "lyric.showTranslation": oldConfig.lyric?.showTranslation ?? true,
+                "lyric.showTranslation": oldConfig.lyric?.showTranslation === true ? "both" : (oldConfig.lyric?.showTranslation === false ? "none" : (oldConfig.lyric?.showTranslation ?? "both")),
                 "lyric.fontData": oldConfig.lyric?.fontData,
                 "lyric.fontColor": oldConfig.lyric?.fontColor,
                 "lyric.fontSize": oldConfig.lyric?.fontSize,

@@ -714,5 +714,30 @@
     "batch_items": "批量操作项",
     "more_items": "还有 {{count}} 项...",
     "delete_log": "删除此记录"
+  },
+  "path_replacer": {
+    "title": "修复失效本地音乐",
+    "hint": "当本地音乐路径变化后（如 NAS IP 改变)，重新扫描本地音乐会导致歌单和「我喜欢」中的旧歌曲失效。此功能会自动匹配失效歌曲与新扫描的本地音乐，并更新歌单引用。",
+    "scanning": "正在扫描失效音乐...",
+    "no_invalid_music": "没有发现失效的本地音乐，所有歌单引用正常！",
+    "matched_count": "可修复: {{count}} 首",
+    "unmatched_count": "无法匹配: {{count}} 首",
+    "in_sheets": "所在歌单",
+    "new": "新",
+    "unmatched_hint": "以下歌曲无法在本地音乐中找到匹配项（标题和艺术家不一致），需要手动处理：",
+    "more_unmatched": "还有 {{count}} 首无法匹配...",
+    "rescan": "重新扫描",
+    "replace": "修复选中项",
+    "processing": "处理中...",
+    "no_selection": "请选择要修复的歌曲",
+    "replace_success": "成功修复 {{count}} 馒歌曲的引用！",
+    "replace_failed": "修复失败，请查看控制台日志",
+    "scan_failed": "扫描失败",
+    "manual_match": "手动匹配",
+    "select_local_music": "选择本地音乐",
+    "search_local_music": "搜索标题、艺术家或专辑...",
+    "no_local_music_found": "未找到匹配的本地音乐",
+    "more_results": "还有 {{count}} 馴结果...",
+    "confirm_manual": "确认手动匹配 ({{count}} 首)"
   }
 }

@@ -27,14 +27,13 @@ export default function PlayMusic() {
     useEffect(() => {
         const init = async () => {
             const savedDeviceId = getUserPreference("xiaoaiDeviceId");
-            const savedUseXiaoai = getUserPreference("useXiaoaiOutput");
             
             if (savedDeviceId) {
                 setSelectedDeviceId(savedDeviceId);
             }
             
-            // 恢复上次的输出模式UI 状态
-            setUseXiaoai(savedUseXiaoai === true);
+            // 启动时始终使用本地播放，不恢复小爱音箱模式
+            setUseXiaoai(false);
 
             const savedUsername = getUserPreference("xiaoaiUsername") || "";
             const savedPassword = getUserPreference("xiaoaiPassword") || "";

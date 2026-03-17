@@ -25,7 +25,7 @@ function getMusicKey(musicItem: IMusic.IMusicItem | null): string | null {
 }
 
 export async function getCachedTranslation(
-    musicItem: IMusic.IMusicItem | null
+    musicItem: IMusic.IMusicItem | null,
 ): Promise<string | null> {
     const key = getMusicKey(musicItem);
     if (!key) return null;
@@ -40,7 +40,7 @@ export async function getCachedTranslation(
 
 export async function saveCachedTranslation(
     musicItem: IMusic.IMusicItem | null,
-    translation: string
+    translation: string,
 ): Promise<void> {
     const key = getMusicKey(musicItem);
     if (!key || !translation) return;

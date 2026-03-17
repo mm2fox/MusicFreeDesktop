@@ -34,7 +34,13 @@ export class MusicServer {
                 const address = this.server?.address();
                 if (address && typeof address === "object") {
                     this.port = address.port;
-                    logger.logInfo("音乐服务器启动成功", { port: this.port });
+                    const serverUrl = this.getServerUrl();
+                    logger.logInfo("音乐服务器启动成功", { 
+                        port: this.port, 
+                        hostname: this.hostname,
+                        serverUrl: serverUrl,
+                        localIp: this.getLocalIpAddress()
+                    });
                     resolve(this.port);
                 } else {
                     reject(new Error("无法获取服务器地址"));
@@ -87,8 +93,6 @@ export class MusicServer {
         try {
             const parsedUrl = url.parse(req.url || "", true);
             const pathname = parsedUrl.pathname || "";
-
-            logger.logInfo("音乐服务器收到请求", { method: req.method, path: pathname });
 
             if (pathname.startsWith("/stream/")) {
                 const sessionId = pathname.slice("/stream/".length);
@@ -173,16 +177,7 @@ export class MusicServer {
             
             let filePath: string;
             if (fileUrl.startsWith("file://")) {
-                // 先去掉 file:// 前缀
-                filePath = fileUrl.slice("file://".length);
-                // 解码 URL 编码
-                filePath = decodeURIComponent(filePath);
-                // 将 / 替换为 \
-                filePath = filePath.replace(/\//g, "\\");
-                // 确保是 UNC 路径
-                if (!filePath.startsWith("\\\\")) {
-                    filePath = "\\\\" + filePath;
-                }
+                filePath = url.fileURLToPath(fileUrl);
             } else {
                 filePath = fileUrl;
             }
@@ -511,16 +506,7 @@ export class MusicServer {
         try {
             let filePath: string;
             if (fileUrl.startsWith("file://")) {
-                // 先去掉 file:// 前缀
-                filePath = fileUrl.slice("file://".length);
-                // 解码 URL 编码
-                filePath = decodeURIComponent(filePath);
-                // 将 / 替换为 \
-                filePath = filePath.replace(/\//g, "\\");
-                // 确保是 UNC 路径
-                if (!filePath.startsWith("\\\\")) {
-                    filePath = "\\\\" + filePath;
-                }
+                filePath = url.fileURLToPath(fileUrl);
             } else {
                 filePath = fileUrl;
             }

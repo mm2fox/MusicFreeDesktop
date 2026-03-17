@@ -1,6 +1,7 @@
 import log from "electron-log/main";
 import { safeStringify } from "@/common/safe-serialization";
 
+log.initialize();
 
 function logError(msg: string, error: Error, extra?: any) {
     log.error(msg, error?.name, error?.message, error?.stack, safeStringify(extra));

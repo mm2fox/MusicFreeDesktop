@@ -3,6 +3,7 @@ import { ipcMain } from "electron";
 import { IXiaoaiDevice, IXiaoaiPlayOptions } from "@/types/xiaoai-service";
 import logger from "@shared/logger/main";
 import crypto from "crypto";
+import * as url from "url";
 import { musicServer } from "./music-server";
 
 function getRandom(length: number): string {
@@ -351,36 +352,22 @@ class XiaoaiService {
                 return false;
             }
 
-            logger.logInfo(`原始播放URL: ${playUrl}`);
-
-            // 创建流会话以支持暂停/恢复/跳转
             let sessionId: string | null = null;
-            if (playUrl.startsWith("file:///")) {
-                const filePath = decodeURIComponent(playUrl.slice("file:///".length));
+            if (playUrl.startsWith("file://")) {
+                const filePath = url.fileURLToPath(playUrl);
                 sessionId = musicServer.createStreamSession(filePath);
                 if (sessionId) {
                     playUrl = musicServer.getStreamUrl(sessionId);
-                    logger.logInfo(`本地文件创建流会话: ${sessionId}`);
                 } else {
                     playUrl = musicServer.getMusicUrl(filePath);
                 }
-            } else if (playUrl.startsWith("file://")) {
-                sessionId = musicServer.createStreamSession(playUrl);
-                if (sessionId) {
-                    playUrl = musicServer.getStreamUrl(sessionId);
-                    logger.logInfo(`网络文件创建流会话: ${sessionId}`);
-                } else {
-                    playUrl = musicServer.getProxyUrl(playUrl);
-                }
             } else if (playUrl.startsWith("http://") || playUrl.startsWith("https://")) {
                 playUrl = musicServer.getProxyUrl(playUrl);
-                logger.logInfo(`HTTP URL转换为代理URL: ${playUrl}`);
             }
 
             this.currentSessionId = sessionId;
             this.currentPlayUrl = playUrl;
             this.currentDeviceId = deviceId;
-            logger.logInfo(`最终播放URL: ${playUrl}, sessionId: ${sessionId}`);
 
             const hardware = this.deviceHardwareMap.get(deviceId) || "";
             logger.logInfo(`设备硬件: ${hardware}`);

@@ -585,5 +585,30 @@
     "weekday_6": "週六",
     "songs": "首",
     "search_placeholder": "搜尋最近播放"
+  },
+  "path_replacer": {
+    "title": "修復失效本地音樂",
+    "hint": "當本地音樂路徑變化後（如 NAS IP 改變），重新掃描本地音樂會導致歌單和「我喜歡」中的舊歌曲失效。此功能會自動匹配失效歌曲與新掃描的本地音樂，並更新歌單引用。",
+    "scanning": "正在掃描失效音樂...",
+    "no_invalid_music": "沒有發現失效的本地音樂，所有歌單引用正常！",
+    "matched_count": "可修復: {{count}} 首",
+    "unmatched_count": "無法匹配: {{count}} 首",
+    "in_sheets": "所在歌單",
+    "new": "新",
+    "unmatched_hint": "以下歌曲無法在本地音樂中找到匹配項（標題和藝術家不一致），需要手動處理：",
+    "more_unmatched": "還有 {{count}} 首無法匹配...",
+    "rescan": "重新掃描",
+    "replace": "修復選中項",
+    "processing": "處理中...",
+    "no_selection": "請選擇要修復的歌曲",
+    "replace_success": "成功修復 {{count}} 鉒歌曲的引用！",
+    "replace_failed": "修復失敗，請查看控制台日誌",
+    "scan_failed": "掃描失敗",
+    "manual_match": "手動匹配",
+    "select_local_music": "選擇本地音樂",
+    "search_local_music": "搜索標題、藝術家或專輯...",
+    "no_local_music_found": "未找到匹配的本地音樂",
+    "more_results": "還有 {{count}} 馴結果...",
+    "confirm_manual": "確認手動匹配 ({{count}} 首)"
   }
 }

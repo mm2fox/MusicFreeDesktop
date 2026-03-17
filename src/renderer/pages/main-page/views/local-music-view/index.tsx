@@ -16,6 +16,7 @@ import { toast } from "react-toastify";
 import musicSheetDB from "@/renderer/core/db/music-sheet-db";
 import localMusic from "@/renderer/core/local-music";
 import { autoTagFromArtist } from "@/renderer/core/local-music/custom-tags";
+import { showContextMenu, IContextMenuItem } from "@/renderer/components/ContextMenu";
 
 enum DisplayView {
     LIST,
@@ -99,7 +100,6 @@ export default function LocalMusicView() {
             return;
         }
 
-        // 如果包含封面，过滤掉已有封面的文件
         const itemsToRefresh = includeArtwork 
             ? musicList.filter(item => !item.artwork)
             : musicList;
@@ -119,7 +119,6 @@ export default function LocalMusicView() {
 
         let successCount = 0;
         let failCount = 0;
-        // 包含封面时，一次只处理 1 个文件
         const batchSize = includeArtwork ? 1 : 5;
         const totalItems = itemsToRefresh.length;
 
@@ -168,7 +167,6 @@ export default function LocalMusicView() {
             }
         }
 
-        // 刷新完成后，从数据库重新加载（不包含封面）
         await localMusic.reloadLocalMusic();
 
         setRefreshing(false);
@@ -221,14 +219,88 @@ export default function LocalMusicView() {
         }
     };
 
+    const handleContextMenu = (e: React.MouseEvent) => {
+        e.preventDefault();
+        const menuItems: IContextMenuItem[] = [
+            {
+                icon: "trash",
+                title: t("local_music_page.clear_local_music"),
+                onClick: async () => {
+                    await localMusic.clearLocalMusic();
+                    toast.success(t("local_music_page.clear_local_music_success"));
+                },
+            },
+            {
+                divider: true,
+            },
+            {
+                icon: "code-bracket-square",
+                title: t("local_music_page.format_convert"),
+                onClick: () => {
+                    const musicList = localMusicListStore.getValue();
+                    if (musicList.length === 0) {
+                        toast.info(t("file_converter.no_music_to_convert"));
+                        return;
+                    }
+                    showModal("FileConverter", {
+                        musicItems: musicList,
+                        defaultFormat: "flac",
+                    });
+                },
+            },
+            {
+                icon: "tag",
+                title: t("local_music_page.tag_sheet_convert"),
+                onClick: () => {
+                    showModal("TagSheetConverter");
+                },
+            },
+            {
+                icon: "tag",
+                title: t("local_music_page.auto_tag"),
+                onClick: handleAutoTag,
+            },
+            {
+                divider: true,
+            },
+            {
+                icon: "musical-note",
+                title: t("local_music_page.manage_duplicates"),
+                onClick: () => {
+                    showModal("DuplicateMusicManager");
+                },
+            },
+            {
+                icon: "document-plus",
+                title: t("file_operation_log.title"),
+                onClick: () => {
+                    showModal("FileOperationLog");
+                },
+            },
+            {
+                icon: "pencil-square",
+                title: t("path_replacer.title"),
+                onClick: () => {
+                    showModal("PathReplacer");
+                },
+            },
+        ];
+
+        showContextMenu({
+            menuItems,
+            x: e.clientX,
+            y: e.clientY,
+        });
+    };
+
     return (
         <div
             id="page-container"
             className="page-container local-music-view--container"
             data-full-page={displayView !== DisplayView.LIST}
         >
-            <div className="header">{t("local_music_page.local_music")}</div>
-            <div className="operations">
+            <div className="header" onContextMenu={handleContextMenu}>{t("local_music_page.local_music")}</div>
+            <div className="operations" onContextMenu={handleContextMenu}>
                 <div
                     data-type="normalButton"
                     role="button"
@@ -249,72 +321,10 @@ export default function LocalMusicView() {
                 <div
                     data-type="normalButton"
                     role="button"
-                    onClick={async () => {
-                        await localMusic.clearLocalMusic();
-                        toast.success(t("local_music_page.clear_local_music_success"));
-                    }}
-                >
-                    {t("local_music_page.clear_local_music")}
-                </div>
-                <div
-                    data-type="normalButton"
-                    role="button"
                     onClick={showRefreshTagsDialog}
                     data-disabled={refreshing}
                 >
                     {refreshing ? t("local_music_page.refreshing") : t("local_music_page.refresh_tags")}
-                </div>
-                <div
-                    data-type="normalButton"
-                    role="button"
-                    onClick={() => {
-                        const musicList = localMusicListStore.getValue();
-                        if (musicList.length === 0) {
-                            toast.info(t("file_converter.no_music_to_convert"));
-                            return;
-                        }
-                        showModal("FileConverter", {
-                            musicItems: musicList,
-                            defaultFormat: "flac",
-                        });
-                    }}
-                >
-                    {t("local_music_page.format_convert")}
-                </div>
-                <div
-                    data-type="normalButton"
-                    role="button"
-                    onClick={() => {
-                        showModal("TagSheetConverter");
-                    }}
-                >
-                    {t("local_music_page.tag_sheet_convert")}
-                </div>
-                <div
-                    data-type="normalButton"
-                    role="button"
-                    onClick={handleAutoTag}
-                    data-disabled={autoTagging}
-                >
-                    {autoTagging ? t("local_music_page.auto_tagging") : t("local_music_page.auto_tag")}
-                </div>
-                <div
-                    data-type="normalButton"
-                    role="button"
-                    onClick={() => {
-                        showModal("DuplicateMusicManager");
-                    }}
-                >
-                    {t("local_music_page.manage_duplicates")}
-                </div>
-                <div
-                    data-type="normalButton"
-                    role="button"
-                    onClick={() => {
-                        showModal("FileOperationLog");
-                    }}
-                >
-                    {t("file_operation_log.title")}
                 </div>
                 <div className="operations-layout">
                     <input

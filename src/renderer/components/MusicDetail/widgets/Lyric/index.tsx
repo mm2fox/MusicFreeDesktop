@@ -82,7 +82,7 @@ export default function Lyric() {
                     {t("music_detail.cancel")}
                 </button>
             </div>,
-            { autoClose: false }
+            { autoClose: false },
         );
 
         try {

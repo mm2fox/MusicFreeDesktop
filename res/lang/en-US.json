@@ -733,5 +733,30 @@
     "batch_items": "Batch Items",
     "more_items": "{{count}} more items...",
     "delete_log": "Delete this record"
+  },
+  "path_replacer": {
+    "title": "Fix Invalid Local Music",
+    "hint": "When local music paths change (e.g., NAS IP changes), rescanning local music causes old songs in playlists and favorites to become invalid. This feature automatically matches invalid songs with newly scanned local music and updates playlist references.",
+    "scanning": "Scanning for invalid music...",
+    "no_invalid_music": "No invalid local music found. All playlist references are normal!",
+    "matched_count": "Fixable: {{count}} songs",
+    "unmatched_count": "Unmatched: {{count}} songs",
+    "in_sheets": "In playlists",
+    "new": "New",
+    "unmatched_hint": "The following songs could not be matched in local music (title and artist don't match) and need manual handling:",
+    "more_unmatched": "{{count}} more unmatched songs...",
+    "rescan": "Rescan",
+    "replace": "Fix Selected",
+    "processing": "Processing...",
+    "no_selection": "Please select songs to fix",
+    "replace_success": "Successfully fixed references for {{count}} songs!",
+    "replace_failed": "Fix failed, please check console logs",
+    "scan_failed": "Scan failed",
+    "manual_match": "Manual Match",
+    "select_local_music": "Select Local Music",
+    "search_local_music": "Search title, artist or album...",
+    "no_local_music_found": "No matching local music found",
+    "more_results": "{{count}} more results...",
+    "confirm_manual": "Confirm Manual Matches ({{count}})"
   }
 }

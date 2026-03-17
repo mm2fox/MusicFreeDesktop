@@ -9,6 +9,7 @@ import FileConverter from "./FileConverter";
 import FileOperationLog from "./FileOperationLog";
 import ImportMusicSheet from "./ImportMusicSheet";
 import MusicInfo from "./MusicInfo";
+import PathReplacer from "./PathReplacer";
 import PluginSubscription from "./PluginSubscription";
 import Reconfirm from "./Reconfirm";
 import SearchLyric from "./SearchLyric";
@@ -42,4 +43,5 @@ export default {
     TagSheetConverter,
     DuplicateMusicManager,
     FileOperationLog,
+    PathReplacer,
 };

@@ -126,17 +126,17 @@ function md5(string: string): string {
         return md5blks;
     }
 
-    const hex_chr = '0123456789abcdef'.split('');
+    const hex_chr = "0123456789abcdef".split("");
 
     function rhex(n: number) {
-        let s = '';
+        let s = "";
         for (let j = 0; j < 4; j++)
             s += hex_chr[(n >> (j * 8 + 4)) & 0x0F] + hex_chr[(n >> (j * 8)) & 0x0F];
         return s;
     }
 
     function hex(x: number[]) {
-        return x.map(rhex).join('');
+        return x.map(rhex).join("");
     }
 
     function add32(a: number, b: number) {
@@ -163,12 +163,12 @@ const createLibreTranslateApi = (targetLang: TargetLanguage): TranslateApi => ({
                     q: text,
                     source: "auto",
                     target: targetLang,
-                    format: "text"
+                    format: "text",
                 }),
                 headers: {
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
                 },
-                signal
+                signal,
             });
             
             if (!response.ok) return null;
@@ -178,7 +178,7 @@ const createLibreTranslateApi = (targetLang: TargetLanguage): TranslateApi => ({
         } catch {
             return null;
         }
-    }
+    },
 });
 
 const createMyMemoryApi = (targetLang: TargetLanguage): TranslateApi => ({
@@ -189,7 +189,7 @@ const createMyMemoryApi = (targetLang: TargetLanguage): TranslateApi => ({
             const langPair = `autodetect|${targetLang}`;
             const response = await fetch(
                 `https://api.mymemory.translated.net/get?q=${encodeURIComponent(text)}&langpair=${langPair}`,
-                { signal }
+                { signal },
             );
             
             if (!response.ok) return null;
@@ -202,7 +202,7 @@ const createMyMemoryApi = (targetLang: TargetLanguage): TranslateApi => ({
         } catch {
             return null;
         }
-    }
+    },
 });
 
 const createBaiduStandardApi = (appId: string, secretKey: string, targetLang: TargetLanguage): TranslateApi => ({
@@ -244,7 +244,7 @@ const createBaiduStandardApi = (appId: string, secretKey: string, targetLang: Ta
             console.error("[BaiduStandard] Error:", error);
             return null;
         }
-    }
+    },
 });
 
 const createBaiduLLMApi = (appId: string, apiKey: string, targetLang: TargetLanguage): TranslateApi => ({
@@ -260,7 +260,7 @@ const createBaiduLLMApi = (appId: string, apiKey: string, targetLang: TargetLang
                 appid: appId,
                 from: "auto",
                 to: targetLang,
-                q: text.substring(0, 50) + "..."
+                q: text.substring(0, 50) + "...",
             });
             
             const response = await fetch(
@@ -269,16 +269,16 @@ const createBaiduLLMApi = (appId: string, apiKey: string, targetLang: TargetLang
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
-                        "Authorization": `Bearer ${apiKey}`
+                        "Authorization": `Bearer ${apiKey}`,
                     },
                     body: JSON.stringify({
                         appid: appId,
                         from: "auto",
                         to: targetLang,
-                        q: text
+                        q: text,
                     }),
-                    signal
-                }
+                    signal,
+                },
             );
             
             console.log("[BaiduLLM] Response status:", response.status);
@@ -319,7 +319,7 @@ const createBaiduLLMApi = (appId: string, apiKey: string, targetLang: TargetLang
             console.error("[BaiduLLM] Error:", error);
             throw error;
         }
-    }
+    },
 });
 
 async function generateBaiduSign(appId: string, query: string, salt: string, secretKey: string): Promise<string> {
@@ -336,7 +336,7 @@ export const TARGET_LANGUAGES: { value: TargetLanguage; label: string }[] = [
     { value: "zh", label: "中文" },
     { value: "ja", label: "日语" },
     { value: "ko", label: "韩语" },
-    { value: "en", label: "英语" }
+    { value: "en", label: "英语" },
 ];
 
 const chineseCharRegex = /[\u4e00-\u9fff]/;
@@ -347,11 +347,11 @@ export function containsChinese(text: string): boolean {
 
 export function isLyricChinese(rawLrc: string): boolean {
     if (!rawLrc) return false;
-    const lines = rawLrc.split('\n').filter(line => {
+    const lines = rawLrc.split("\n").filter(line => {
         const trimmed = line.trim();
         if (!trimmed) return false;
-        if (trimmed.startsWith('[')) {
-            const closingBracket = trimmed.indexOf(']');
+        if (trimmed.startsWith("[")) {
+            const closingBracket = trimmed.indexOf("]");
             if (closingBracket !== -1) {
                 const content = trimmed.substring(closingBracket + 1).trim();
                 return content.length > 0;
@@ -365,7 +365,7 @@ export function isLyricChinese(rawLrc: string): boolean {
     let totalCharCount = 0;
     for (const line of lines) {
         let content = line;
-        const bracketIdx = line.indexOf(']');
+        const bracketIdx = line.indexOf("]");
         if (bracketIdx !== -1) {
             content = line.substring(bracketIdx + 1);
         }
@@ -417,28 +417,28 @@ export function setBaiduTranslateType(type: BaiduTranslateType): void {
 export function getBaiduStandardCredentials(): { appId: string; secretKey: string } {
     return {
         appId: AppConfig.getConfig("translate.baiduAppId") || "",
-        secretKey: AppConfig.getConfig("translate.baiduSecretKey") || ""
+        secretKey: AppConfig.getConfig("translate.baiduSecretKey") || "",
     };
 }
 
 export function setBaiduStandardCredentials(appId: string, secretKey: string): void {
     AppConfig.setConfig({
         "translate.baiduAppId": appId,
-        "translate.baiduSecretKey": secretKey
+        "translate.baiduSecretKey": secretKey,
     });
 }
 
 export function getBaiduLLMCredentials(): { appId: string; apiKey: string } {
     return {
         appId: AppConfig.getConfig("translate.baiduLLMAppId") || "",
-        apiKey: AppConfig.getConfig("translate.baiduLLMApiKey") || ""
+        apiKey: AppConfig.getConfig("translate.baiduLLMApiKey") || "",
     };
 }
 
 export function setBaiduLLMCredentials(appId: string, apiKey: string): void {
     AppConfig.setConfig({
         "translate.baiduLLMAppId": appId,
-        "translate.baiduLLMApiKey": apiKey
+        "translate.baiduLLMApiKey": apiKey,
     });
 }
 
@@ -446,14 +446,14 @@ export function getAvailableProviders(): { value: TranslateServiceProvider; labe
     return [
         { value: "baidu", label: "百度翻译", requiresKey: true },
         { value: "libretranslate", label: "LibreTranslate", requiresKey: false },
-        { value: "mymemory", label: "MyMemory", requiresKey: false }
+        { value: "mymemory", label: "MyMemory", requiresKey: false },
     ];
 }
 
 export function getBaiduTypes(): { value: BaiduTranslateType; label: string; description: string }[] {
     return [
         { value: "standard", label: "标准版", description: "在 fanyi-api.baidu.com 申请" },
-        { value: "llm", label: "大模型版", description: "在 fanyi-api.baidu.com 申请" }
+        { value: "llm", label: "大模型版", description: "在 fanyi-api.baidu.com 申请" },
     ];
 }
 
@@ -466,7 +466,7 @@ export interface TranslateResult {
 
 export async function translateText(
     text: string, 
-    signal?: AbortSignal
+    signal?: AbortSignal,
 ): Promise<TranslateResult> {
     if (!text || text.trim() === "") {
         return { success: true, text: "" };
@@ -495,7 +495,7 @@ export async function translateText(
                 return {
                     success: false,
                     text: "",
-                    error: "百度翻译(大模型) 未配置 APP ID 和 API Key"
+                    error: "百度翻译(大模型) 未配置 APP ID 和 API Key",
                 };
             }
         } else {
@@ -505,7 +505,7 @@ export async function translateText(
                 return {
                     success: false,
                     text: "",
-                    error: "百度翻译(标准版) 未配置 APP ID 和密钥"
+                    error: "百度翻译(标准版) 未配置 APP ID 和密钥",
                 };
             }
         }
@@ -519,7 +519,7 @@ export async function translateText(
         return {
             success: false,
             text: "",
-            error: "未知的翻译服务"
+            error: "未知的翻译服务",
         };
     }
     
@@ -530,28 +530,28 @@ export async function translateText(
             return { 
                 success: true, 
                 text: result, 
-                provider: api.name 
+                provider: api.name, 
             };
         }
         
         return {
             success: false,
             text: "",
-            error: `${api.name} 翻译失败`
+            error: `${api.name} 翻译失败`,
         };
     } catch (error) {
         if ((error as Error).name === "AbortError") {
             return { 
                 success: false, 
                 text: "", 
-                error: "Translation cancelled" 
+                error: "Translation cancelled", 
             };
         }
         console.warn(`[AutoTranslate] Provider ${api.name} failed:`, error);
         return {
             success: false,
             text: "",
-            error: `${api.name} 翻译失败: ${(error as Error).message}`
+            error: `${api.name} 翻译失败: ${(error as Error).message}`,
         };
     }
 }
@@ -567,14 +567,14 @@ export interface TranslateLyricResult {
 export async function translateLyricLines(
     lines: string[],
     signal?: AbortSignal,
-    onProgress?: (current: number, total: number) => void
+    onProgress?: (current: number, total: number) => void,
 ): Promise<TranslateLyricResult> {
     const linesToTranslate = lines.filter(l => l && l.trim());
     if (linesToTranslate.length === 0) {
         return {
             success: true,
             lines: lines.map(() => ""),
-            failedCount: 0
+            failedCount: 0,
         };
     }
     
@@ -590,7 +590,7 @@ export async function translateLyricLines(
 async function translateLyricLinesBatch(
     lines: string[],
     signal?: AbortSignal,
-    onProgress?: (current: number, total: number) => void
+    onProgress?: (current: number, total: number) => void,
 ): Promise<TranslateLyricResult> {
     const results: string[] = new Array(lines.length).fill("");
     let failedCount = 0;
@@ -616,7 +616,7 @@ async function translateLyricLinesBatch(
                 start: batches.length > 0 ? batches[batches.length - 1].end : 0,
                 end: i,
                 lines: [...currentBatchLines],
-                originalIndices: [...currentBatchIndices]
+                originalIndices: [...currentBatchIndices],
             });
             currentBatchLines = [];
             currentBatchIndices = [];
@@ -633,7 +633,7 @@ async function translateLyricLinesBatch(
             start: batches.length > 0 ? batches[batches.length - 1].end : 0,
             end: lines.length,
             lines: currentBatchLines,
-            originalIndices: currentBatchIndices
+            originalIndices: currentBatchIndices,
         });
     }
     
@@ -645,7 +645,7 @@ async function translateLyricLinesBatch(
                 success: false,
                 lines: results,
                 failedCount,
-                error: "Translation cancelled"
+                error: "Translation cancelled",
             };
         }
         
@@ -682,14 +682,14 @@ async function translateLyricLinesBatch(
         lines: results,
         failedCount,
         provider: lastProvider,
-        error: success ? undefined : "All batches failed"
+        error: success ? undefined : "All batches failed",
     };
 }
 
 async function translateLyricLinesOneByOne(
     lines: string[],
     signal?: AbortSignal,
-    onProgress?: (current: number, total: number) => void
+    onProgress?: (current: number, total: number) => void,
 ): Promise<TranslateLyricResult> {
     const results: string[] = [];
     let failedCount = 0;
@@ -701,7 +701,7 @@ async function translateLyricLinesOneByOne(
         return {
             success: true,
             lines: lines.map(() => ""),
-            failedCount: 0
+            failedCount: 0,
         };
     }
     
@@ -711,7 +711,7 @@ async function translateLyricLinesOneByOne(
             success: false,
             lines: [],
             failedCount: linesToTranslate.length,
-            error: testResult.error || "翻译服务不可用"
+            error: testResult.error || "翻译服务不可用",
         };
     }
     
@@ -729,7 +729,7 @@ async function translateLyricLinesOneByOne(
                 success: false,
                 lines: results,
                 failedCount,
-                error: "Translation cancelled"
+                error: "Translation cancelled",
             };
         }
         
@@ -764,7 +764,7 @@ async function translateLyricLinesOneByOne(
         lines: results,
         failedCount,
         provider: lastProvider,
-        error: success ? undefined : (firstError || `Failed to translate ${failedCount} lines`)
+        error: success ? undefined : (firstError || `Failed to translate ${failedCount} lines`),
     };
 }
 

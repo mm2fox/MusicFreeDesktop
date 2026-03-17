@@ -22,7 +22,7 @@ import XiaoaiService from "@renderer/services/xiaoai-service";
 export default function Extra() {
     const repeatMode = useRepeatMode();
     const { t } = useTranslation();
-    const [useXiaoai, setUseXiaoai] = useState(!!getUserPreference("xiaoaiDeviceId"));
+    const [useXiaoai, setUseXiaoai] = useState(false);
 
     const handleDeviceSwitch = async () => {
         const newMode = !useXiaoai;

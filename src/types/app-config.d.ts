@@ -34,8 +34,8 @@ interface _IAppConfig {
     "lyric.alwaysOnTop": boolean;
     /** 锁定桌面歌词 */
     "lyric.lockLyric": boolean;
-    /** 桌面歌词显示翻译 */
-    "lyric.showTranslation": boolean;
+    /** 桌面歌词翻译显示模式: both-显示原歌词和翻译, none-只显示原歌词, translation-只显示翻译 */
+    "lyric.showTranslation": "both" | "none" | "translation";
     /** 字体 */
     "lyric.fontData": FontData;
     /** 字体颜色 */
