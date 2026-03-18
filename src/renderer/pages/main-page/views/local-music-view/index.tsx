@@ -1,5 +1,6 @@
 import localMusicListStore from "@/renderer/core/local-music/store";
 import { useTranslation } from "react-i18next";
+import { matchByPinyin } from "@/renderer/utils/pinyin-match";
 
 import "./index.scss";
 import { showModal } from "@/renderer/components/Modal";
@@ -11,7 +12,6 @@ import ArtistView from "./views/artist";
 import AlbumView from "./views/album";
 import FolderView from "./views/folder";
 import TagView from "./views/tag";
-import AppConfig from "@shared/app-config/renderer";
 import { toast } from "react-toastify";
 import musicSheetDB from "@/renderer/core/db/music-sheet-db";
 import localMusic from "@/renderer/core/local-music";
@@ -43,33 +43,16 @@ export default function LocalMusicView() {
             setFilterMusicList(null);
         } else {
             startTransition(() => {
-                const caseSensitive = AppConfig.getConfig(
-                    "playMusic.caseSensitiveInSearch",
+                setFilterMusicList(
+                    localMusicListStore
+                        .getValue()
+                        .filter(
+                            (item) =>
+                                matchByPinyin(item.title ?? "", inputSearch) ||
+                                matchByPinyin(item.artist ?? "", inputSearch) ||
+                                matchByPinyin(item.album ?? "", inputSearch),
+                        ),
                 );
-                if (caseSensitive) {
-                    setFilterMusicList(
-                        localMusicListStore
-                            .getValue()
-                            .filter(
-                                (item) =>
-                                    item.title?.includes(inputSearch) ||
-                  item.artist?.includes(inputSearch) ||
-                  item.album?.includes(inputSearch),
-                            ),
-                    );
-                } else {
-                    const searchText = inputSearch.toLocaleLowerCase();
-                    setFilterMusicList(
-                        localMusicListStore
-                            .getValue()
-                            .filter(
-                                (item) =>
-                                    item.title?.toLocaleLowerCase()?.includes(searchText) ||
-                  item.artist?.toLocaleLowerCase()?.includes(searchText) ||
-                  item.album?.toLocaleLowerCase()?.includes(searchText),
-                            ),
-                    );
-                }
             });
         }
     }, [inputSearch]);

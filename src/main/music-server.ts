@@ -39,7 +39,7 @@ export class MusicServer {
                         port: this.port, 
                         hostname: this.hostname,
                         serverUrl: serverUrl,
-                        localIp: this.getLocalIpAddress()
+                        localIp: this.getLocalIpAddress(),
                     });
                     resolve(this.port);
                 } else {
