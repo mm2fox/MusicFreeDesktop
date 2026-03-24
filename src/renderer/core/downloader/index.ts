@@ -6,6 +6,7 @@ import {
 } from "@/common/media-util";
 import * as Comlink from "comlink";
 import { DownloadState, localPluginName } from "@/common/constant";
+import CryptoJS from "crypto-js";
 import PQueue from "p-queue";
 import {
     addDownloadedMusicToList,
@@ -22,6 +23,7 @@ import { DownloadEvts, ee } from "./ee";
 import AppConfig from "@shared/app-config/renderer";
 import PluginManager from "@shared/plugin-manager/renderer";
 import MusicTag from "@shared/music-tag/renderer";
+import LocalMusic from "../local-music";
 
 
 export interface IDownloadStatus {
@@ -208,17 +210,29 @@ async function downloadMusicImpl(
                         } catch (e) {
                             console.warn("[Downloader] Failed to write tags:", e);
                         }
-                        addDownloadedMusicToList(
-                            setInternalData<IMusic.IMusicItemInternalData>(
-                                musicItem as any,
-                                "downloadData",
-                                {
-                                    path: downloadPath,
-                                    quality: realQuality,
-                                },
-                                true,
-                            ) as IMusic.IMusicItem,
-                        );
+                        const downloadedItem = setInternalData<IMusic.IMusicItemInternalData>(
+                            musicItem as any,
+                            "downloadData",
+                            {
+                                path: downloadPath,
+                                quality: realQuality,
+                            },
+                            true,
+                        ) as IMusic.IMusicItem;
+                        addDownloadedMusicToList(downloadedItem);
+
+                        try {
+                            const localMusicItem: IMusic.IMusicItem & { $$localPath: string } = {
+                                ...musicItem,
+                                id: CryptoJS.MD5(downloadPath).toString(),
+                                platform: localPluginName,
+                                $$localPath: downloadPath,
+                                url: `file://${downloadPath}`,
+                            };
+                            await LocalMusic.addLocalMusicItem(localMusicItem);
+                        } catch (e) {
+                            console.warn("[Downloader] Failed to add to local music:", e);
+                        }
                     } else if (dataState.state === DownloadState.ERROR) {
                         downloadCompleted = true;
                     }

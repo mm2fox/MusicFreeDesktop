@@ -360,6 +360,27 @@ async function reloadLocalMusic() {
     }
 }
 
+async function addLocalMusicItem(
+    musicItem: IMusic.IMusicItem & { $$localPath: string },
+) {
+    try {
+        const existingItem = await musicSheetDB.localMusicStore.get([
+            musicItem.platform,
+            musicItem.id,
+        ]);
+        if (existingItem) {
+            return false;
+        }
+        await musicSheetDB.localMusicStore.put(musicItem);
+        const currentList = localMusicListStore.getValue() || [];
+        localMusicListStore.setValue([...currentList, musicItem]);
+        return true;
+    } catch (e) {
+        console.error("[LocalMusic] addLocalMusicItem error:", e);
+        return false;
+    }
+}
+
 export default {
     setupLocalMusic,
     changeWatchPath,
@@ -367,4 +388,5 @@ export default {
     rescanLocalMusic,
     reloadLocalMusic,
     terminateLocalMusic,
+    addLocalMusicItem,
 };
