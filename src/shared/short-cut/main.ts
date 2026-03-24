@@ -7,8 +7,13 @@ import messageBus from "@shared/message-bus/main";
 type IShortCutKeys = keyof IAppConfig["shortCut.shortcuts"];
 
 class ShortCut {
+    private pendingShortCuts: Map<IShortCutKeys, string[]> = new Map();
+    private retryTimer: NodeJS.Timeout | null = null;
+    private readonly RETRY_INTERVAL = 5000;
+
     async setup() {
         await this.registerAllGlobalShortCuts();
+        this.startRetryTimer();
 
         ipcMain.on("@shared/short-cut/register-global-short-cut", async (_, key, shortCut) => {
             await this.registerGlobalShortCut(key, shortCut);
@@ -19,14 +24,39 @@ class ShortCut {
         });
     }
 
+    private startRetryTimer() {
+        if (this.retryTimer) {
+            clearInterval(this.retryTimer);
+        }
+        this.retryTimer = setInterval(() => {
+            if (this.pendingShortCuts.size > 0) {
+                this.retryPendingShortCuts();
+            }
+        }, this.RETRY_INTERVAL);
+    }
+
+    public stopRetryTimer() {
+        if (this.retryTimer) {
+            clearInterval(this.retryTimer);
+            this.retryTimer = null;
+        }
+    }
+
     public async registerAllGlobalShortCuts() {
         try {
             const shortCuts = AppConfig.getConfig("shortCut.shortcuts");
+            const enableGlobal = AppConfig.getConfig("shortCut.enableGlobal");
+            
+            if (!enableGlobal) {
+                return;
+            }
+
             for (const shortCutKey of shortCutKeys) {
                 const globalShortCutConfig = shortCuts?.[shortCutKey]?.global;
 
                 if (globalShortCutConfig?.length) {
-                    await this.registerGlobalShortCut(shortCutKey, globalShortCutConfig);
+                    this.pendingShortCuts.set(shortCutKey as IShortCutKeys, globalShortCutConfig);
+                    await this.registerGlobalShortCut(shortCutKey as IShortCutKeys, globalShortCutConfig);
                 }
             }
         } catch {
@@ -42,33 +72,40 @@ class ShortCut {
     public async registerGlobalShortCut(key: IShortCutKeys, shortCut: string[]) {
         try {
             if (shortCut.length) {
-                // 1. 取之前的快捷键
                 const prevConfig = AppConfig.getConfig("shortCut.shortcuts");
 
                 if (prevConfig?.[key]?.global?.length) {
                     globalShortcut.unregister(prevConfig[key].global.join("+"));
                 }
 
-                // 2. 注册新的快捷键
                 const reg = globalShortcut.register(shortCut.join("+"), () => {
                     messageBus.sendCommand(shortCutKeysCommands[key]);
                 });
 
-                // 3. 合并配置
-                const newConfig = {
-                    ...(prevConfig || {} as any),
-                    [key]: {
-                        ...(prevConfig?.[key] || {}),
-                        global: reg ? shortCut : null,
-                    },
-                };
-                // 4. 更新配置
-                AppConfig.setConfig({
-                    "shortCut.shortcuts": newConfig,
-                });
+                if (reg) {
+                    this.pendingShortCuts.delete(key);
+                    const newConfig = {
+                        ...(prevConfig || {} as any),
+                        [key]: {
+                            ...(prevConfig?.[key] || {}),
+                            global: shortCut,
+                        },
+                    };
+                    AppConfig.setConfig({
+                        "shortCut.shortcuts": newConfig,
+                    });
+                } else {
+                    this.pendingShortCuts.set(key, shortCut);
+                }
             }
         } catch {
             // pass
+        }
+    }
+
+    public retryPendingShortCuts() {
+        for (const [key, shortCut] of this.pendingShortCuts) {
+            this.registerGlobalShortCut(key, shortCut);
         }
     }
 
